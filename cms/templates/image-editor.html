@@ -1,0 +1,38 @@
+<div id="neoCMSPrompt" class="neoCMSImgSelect neoCMSPrompt clearfix">
+    <h4 id="neoCMSPromptTitle" class="neoCMSPromptTitle">Edit Image</h4>
+    <div class="neoCMSImgChoose neoCMSImgChooseInline clearfix" id="neoCMSImgChoose">
+        <h4>Upload A New Image</h4>
+        <p>First select the folder you want to upload to:</p>
+        <form target="neoCMSImgUploadIframe" action="functions/upload.php?type=img" method="POST" id="neoCMSImgLoc"
+              class="neoCMSImgLoc" enctype="multipart/form-data">
+            <select id="neoCMSImgFolder" name="neoCMSImgFolder">
+                <option id="neoCMSImgFolderDefault" selected="selected" class="defaultFolder" value="">Loading&hellip;
+                </option>
+            </select>
+            <p>Then, upload an image from your computer:</p>
+            <input id="neoCMSImgUpload" name="neoCMSImgUpload" class="neoCMSImgUpload" type="file">
+        </form>
+        <form action="javascript:" method="POST" name="neoCMSImgSrc" class="neoCMSImgLoc" enctype="multipart/form-data">
+            <h4 class="neoCMSImgURLTitle">Or Choose An Existing Image</h4>
+            <p>To use an image that already exists on the web, enter the URL of the image below:</p>
+            <div><input id="neoCMSImgAddress" name="neoCMSImgAddress" class="neoCMSImgAddress" type="text"
+                        value="http://"/><a href="javascript:" class="neoCMSFBrowse" rel="#neoCMSImgAddress"
+                                            title="Link to a file on the server">browse</a></div>
+            <p><a id="neoCMSApplyBtn" class="neoCMSApplyBtn" href="javascript:">&laquo; apply</a></p>
+        </form>
+    </div>
+    <ul class="neoCMSImgProperties">
+        <li class="neoCMSImgAltText clearfix"><label>Alt Text</label><input id="neoCMSImgAltTxt" name="neoCMSImgAltTxt"
+                                                                            type="text"></li>
+        <li class="clearfix"><label>Class</label><input id="neoCMSImgClass" name="neoCMSImgClass" type="text"></li>
+        <li class="clearfix"><label>Link URL</label><input id="neoCMSImgLink" name="neoCMSImgLink" type="text"><a
+                href="javascript:" class="neoCMSFBrowse" rel="#neoCMSImgLink" title="Link to an image on the server">browse</a>
+        </li>
+        <li class="neoCMSImgRel disabled clearfix"><label>Link Rel</label><input id="neoCMSImgRel" name="neoCMSImgRel"
+                                                                                 type="text" disabled="disabled"></li>
+    </ul>
+    <div class="neoCMSImgInsert neoCMSPromptInsert">
+        <a title="Apply these changes" href="javascript:" id="neoCMSPromptBtn">done</a>
+        <a id="neoCMSPromptCancel" title="cancel" href="javascript:">cancel</a>
+    </div>
+</div>

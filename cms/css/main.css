@@ -1,0 +1,589 @@
+/* NORMALIZATION STYLES --------------------------------------------- */
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    font-size: 100%;
+    vertical-align: baseline;
+    background: transparent;
+    text-align: left;
+}
+
+body {
+    line-height: 1;
+    font-size: 62.5%;
+    text-align: center;
+    color: #333;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: normal;
+}
+
+ol, ul {
+    list-style: none;
+}
+
+blockquote, q {
+    quotes: none;
+}
+
+abbr, acronym {
+    border-bottom: 1px dashed #999;
+    cursor: help;
+}
+
+:focus {
+    outline: 0;
+}
+
+ins {
+    text-decoration: none;
+}
+
+del {
+    text-decoration: line-through;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* LOGIN STYLES --------------------------------------------- */
+
+#neoCMSPromptWrap {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 350;
+    display: block;
+    background: none;
+}
+
+.neoCMSLoginWrap {
+    position: relative;
+    border: 1px solid;
+    border-color: #666 #000 #000 #000;
+    margin: 7% auto 0;
+    padding: 20px 20px 40px;
+    width: 542px;
+    z-index: 10000;
+    display: none;
+    -moz-box-shadow: 0 0 10px #666;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+}
+
+.neoCMSLoginWrap h1.logo {
+    height: 73px;
+    background: #000 url(../images/neocms_sprite1.png) no-repeat -813px -47px;
+    margin: 0 auto 19px;
+    width: 537px;
+    text-indent: -5000px;
+    display: block;
+    overflow: hidden;
+}
+
+.neoCMSLoginWrap h2 {
+    color: #fff;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.neoCMSLoginConfig {
+    margin: 0 auto 20px;
+    text-align: left;
+    width: 535px;
+    display: inline;
+}
+
+.neoCMSLoginConfig li {
+    margin: 0;
+    display: block;
+    padding: 0 0 2px;
+}
+
+.neoCMSLoginConfig li a {
+    background: url(../images/prompt.gif) repeat-x left bottom #666;
+    height: 28px;
+    display: block;
+    padding: 12px 0 0 20px;
+    font-size: 1.4em;
+    color: #ccc;
+    text-decoration: none;
+    position: relative;
+}
+
+.neoCMSLoginConfig li a strong {
+    color: #fff;
+}
+
+.neoCMSLoginConfig li a span {
+    background: url(../images/neocms_sprite1.png) no-repeat;
+    background-position: -689px 0;
+    height: 22px;
+    width: 90px;
+    overflow: hidden;
+    display: block;
+    position: absolute;
+    right: 10px;
+    text-indent: -5000px;
+    top: 9px;
+}
+
+.neoCMSLoginConfig li a:hover {
+    background: #fff;
+    color: #666;
+}
+
+.neoCMSLoginConfig li a:hover strong {
+    color: #82ac3f;
+}
+
+.neoCMSAppInfo {
+    margin: 0;
+    padding: 0;
+    float: left;
+    background: transparent;
+    text-align: left;
+    width: 252px;
+    display: inline;
+}
+
+.neoCMSAppInfo p {
+    padding: 0;
+    margin: 0;
+    font-size: 11px;
+    text-align: left;
+    color: #ccc;
+    line-height: 1.3em;
+}
+
+.neoCMSAppInfo p a:link, .neoCMSAppInfo p a:visited {
+    color: #82ac3f;
+    text-decoration: none;
+}
+
+.neoCMSAppInfo p a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+p.neoCMSTopBorder {
+    margin-top: 15px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    border-top: 1px solid #333;
+}
+
+.neoCMSLoginCont {
+    float: left;
+    margin: 0 0 0 21px;
+    padding: 0;
+    width: 260px;
+    height: 135px;
+    display: inline;
+    position: relative;
+}
+
+.neoCMSLoginCont form {
+    margin: 0;
+    padding: 0;
+    width: 260px;
+}
+
+.neoCMSLoginCont fieldset {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.neoCMSLoginCont legend, .neoCMSLogin h1 {
+    margin: 0;
+    padding: 0 0 5px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    width: 257px;
+}
+
+.neoCMSLogin h1 {
+    padding: 0 0 5px;
+    margin: 0 auto 10px;
+    width: auto;
+    display: block;
+    width: 535px;
+}
+
+.neoCMSLoginCont ol {
+    margin: 0;
+    padding: 10px 0 0;
+    list-style: none;
+    border-top: 1px solid #333;
+}
+
+.neoCMSLoginCont li {
+    margin: 0;
+    padding: 0;
+    color: #fff;
+}
+
+li#neoCMSEnter {
+    padding-top: 13px;
+    font-size: 11px;
+    display: block;
+}
+
+li#neoCMSEnter p {
+    float: left;
+    width: auto;
+    line-height: 22px;
+}
+
+li p.error {
+    display: none;
+    color: #f00;
+    font-style: italic;
+    margin-left: 10px;
+}
+
+li#neoCMSEnter p.invalid {
+    clear: both;
+    margin: 5px 0 0 0;
+    width: 257px;
+}
+
+li#neoCMSEnter a:link, li#neoCMSEnter a:visited {
+    color: #82ac3f;
+    text-decoration: none;
+    margin-left: 20px;
+    display: inline;
+    line-height: 22px;
+}
+
+li#neoCMSEnter p.invalid a {
+    margin-left: 0;
+}
+
+li#neoCMSEnter a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.neoCMSLoginCont label {
+    font-size: 12px;
+    line-height: 18px;
+}
+
+input.neoCMSInput {
+    width: 183px;
+    padding: 2px;
+    background: #fff;
+    border: none;
+}
+
+#neoCMSPromptBtn, #neoCMSSubmitBtn, #neoCMSLoginBtn, #neoCMSPrefBtn, #neoCMSAutoUpdate, .userSave, #neoCMSFTPBtn, #neoCMSConfigRetry {
+    float: left;
+    padding: 0;
+    width: 57px;
+    height: 22px;
+    line-height: 22px;
+    display: block;
+    background: url(../images/neocms_sprite1.png) no-repeat -1221px 0;
+    text-indent: 0;
+    text-align: center;
+    border: 0;
+    margin: 0;
+    font-size: 12px;
+    cursor: pointer;
+    color: #fff !important;
+    text-decoration: none !important;
+}
+
+.userSave {
+    float: none;
+    margin: 10px 0 0 113px;
+}
+
+#neoCMSAutoUpdate {
+    background-position: -1149px -22px;
+    width: 71px;
+    margin: 0 10px 0 0 !important;
+    position: relative;
+    top: -5px;
+    color: #333 !important;
+}
+
+#neoCMSSubmitBtn, #neoCMSLoginBtn {
+    margin-top: 0;
+    padding-bottom: 3px;
+}
+
+#neoCMSLoginWrap #neoCMSSubmitBtn {
+    margin-top: 5px;
+}
+
+#neoCMSPromptBtn:hover, #neoCMSSubmitBtn:hover, #neoCMSLoginBtn:hover, #neoCMSAutoUpdate:hover, .userSave:hover, #neoCMSConfigRetry:hover {
+    background-position: -1221px -22px;
+    color: #000 !important;
+    text-decoration: none !important;
+}
+
+#neoCMSAutoUpdate:hover {
+    background-position: -1279px -22px;
+}
+
+#neoCMSPrefBtn:hover, #neoCMSFTPBtn:hover {
+    background-position: -1164px 0;
+    color: #000 !important;
+    text-decoration: none;
+}
+
+div.forgotLogin {
+    background: #000;
+    padding: 4px 0 10px;
+    *padding: 7px 0 10px;
+    position: absolute;
+    top: 69px;
+    *top: 75px;
+    left: 0;
+    width: 257px;
+    display: none;
+}
+
+div.forgotLogin p {
+    color: #ccc;
+    margin: 0 0 10px;
+    font-size: 11px;
+    line-height: 14px;
+}
+
+div.forgotLogin p a {
+    color: #82ac3f;
+    float: left;
+    margin: 5px 0 0 20px;
+    text-decoration: none;
+    line-height: 22px;
+}
+
+div.forgotLogin p a:hover {
+    color: #82ac3f;
+    text-decoration: underline;
+}
+
+div.forgotLogin p.message {
+    color: #82ac3f;
+    display: none;
+    clear: both;
+    width: auto;
+    margin: 10px 0 0 0;
+}
+
+#neoCMSPageSrc {
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    position: relative;
+    top: 0 !important;
+    left: 0;
+    margin: 0 !important;
+    padding: 0;
+    overflow: visible;
+    border: none !important;
+    display: block;
+    *zoom: 1; /* ie7 */
+}
+
+div#overlay, div#overlayEditWrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    display: none;
+    z-index: 100;
+}
+
+div#overlay {
+    background: #eee;
+}
+
+div#overlayEditWrap {
+    display: block;
+}
+
+/* FILE BROWSER STYLES --------------------------------------------- */
+
+#neoCMSFilesWrap {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 351;
+    display: block;
+    background: none;
+    overflow: auto;
+}
+
+#neoCMSFiles {
+    border: 1px solid;
+    border-color: #eee #ddd #bbb #ddd;
+    *border-color: #eee #ccc #999 #ccc;
+    position: relative;
+    display: block;
+    margin: 0 auto;
+    background: #ddd;
+    padding: 10px 20px 20px;
+    width: 314px;
+    top: 100px;
+    font-size: 1.2em;
+    z-index: 10;
+    -moz-border-radius: 14px;
+    -webkit-border-radius: 14px;
+    -moz-box-shadow: 0 0 10px #666;
+}
+
+.clear {
+    clear: left;
+}
+
+div.neoCMSFiles h2 {
+    color: #666;
+    padding: 10px 0 0;
+    margin: 0 0 15px;
+    font-size: 1.1em;
+}
+
+#neoCMSFClose {
+    float: right;
+    padding: 10px 0 0;
+    color: #82ac3f;
+}
+
+#filesTab {
+    display: none;
+    overflow: hidden;
+    margin: 0 0 -1px 1px;
+    position: relative;
+    z-index: 10;
+}
+
+#filesTab li {
+    display: block;
+    float: left;
+    margin-right: 3px;
+}
+
+#filesTab li a {
+    display: block;
+    color: #000;
+    padding: 7px 10px 3px;
+    font-size: 12px;
+    text-decoration: none;
+    background: #bbb;
+    -moz-border-radius-topleft: 10px;
+    -moz-border-radius-topright: 10px;
+    -webkit-border-top-left-radius: 10px;
+    -webkit-border-top-right-radius: 10px;
+}
+
+#filesTab li.on a {
+    background: #fff;
+    color: #888;
+}
+
+#neoCMSFileULs {
+    height: 300px;
+    padding: 0;
+    overflow: auto;
+    background: #fff;
+    border: 1px solid;
+    border-color: #ccc #ddd #eee #ddd;
+    display: block;
+    position: relative;
+}
+
+#neoCMSFileULs ul {
+    margin: 0;
+    padding-top: 15px;
+    position: relative;
+}
+
+#neoCMSFileULs li {
+    padding: 7px 10px;
+    cursor: pointer;
+    line-height: 1.2em;
+    overflow: hidden;
+    position: relative;
+}
+
+#neoCMSFileULs li div.mask {
+    height: 15px;
+    width: 20px;
+    float: left;
+    margin: 0 10px 0 0;
+    overflow: hidden;
+    display: block;
+    position: relative;
+    text-align: center;
+}
+
+#neoCMSFileULs li img {
+    height: 100%;
+    width: auto;
+    border: 1px solid #ddd;
+    margin: 0 auto;
+    position: relative;
+}
+
+#neoCMSFileULs li p {
+    display: block;
+    float: left;
+    width: 245px;
+}
+
+#neoCMSFileULs li:hover {
+    background: #82ac3f;
+    color: #fff;
+}
+
+div.disabled {
+    opacity: 0.3 !important;
+    *filter: alpha(opacity=30) !important;
+}
+
+
+/* FLOAT CLEARING STYLES
+------------------------------------------------------------------------ */
+.clearfix:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+}
+
+.clearfix {
+    display: inline-block;
+}
+
+/* Hide from IE Mac \*/
+.clearfix {
+    display: block;
+}
+
+/* End hide from IE Mac */

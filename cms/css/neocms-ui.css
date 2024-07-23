@@ -1,0 +1,2751 @@
+/* HEADER STYLES --------------------------------------------- */
+
+body {
+    background: url(../neocms-images/prompt.gif) repeat-x top;
+}
+
+.neoCMSTopBanner {
+    margin: 0;
+    padding: 0;
+    clear: both;
+    width: 100%;
+    height: 60px;
+    display: block;
+    font-family: Arial, Helvetica, sans-serif;
+    position: relative;
+    z-index: 10;
+    border-bottom: 1px solid #999;
+}
+
+body.neoCMSAcct .neoCMSTopBanner, body.neoCMSPref .neoCMSTopBanner {
+    margin-top: 0px;
+}
+
+.neoCMSHeader {
+    margin: 0 auto;
+    padding: 0;
+    width: 960px;
+    height: 60px;
+    display: block;
+    text-align: left;
+}
+
+.neoCMSHeader h1 {
+    margin: 0;
+    padding: 0 60px 0 0;
+    float: left;
+    display: block;
+}
+
+.neoCMSHeader h1 a {
+    font-size: 10px;
+    color: #fff;
+    width: 60px;
+    height: 57px;
+    display: block;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat 0 0;
+    text-indent: -5000px;
+}
+
+.neoCMSHeader h1 a:hover {
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat 0 0;
+}
+
+ul.neoCMSInfo {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: block;
+    color: #fff;
+}
+
+.neoCMSInfo li {
+    float: left;
+    display: inline;
+    margin: 0;
+    padding: 0 15px 0 0;
+    line-height: 60px;
+    color: #555;
+}
+
+.neoCMSInfo li a:link, .neoCMSInfo li a:visited {
+    font-size: 11px;
+    color: #82ac3f;
+    text-decoration: none;
+    padding: 0 15px 0 0;
+}
+
+.neoCMSInfo li a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+ul.neoCMSTopNav {
+    margin: 0;
+    padding: 0;
+    float: right;
+    height: 30px;
+    display: inline;
+    list-style: none;
+    text-align: left;
+    font-size: 10px;
+    color: #fff;
+    overflow: hidden;
+    padding-top: 15px;
+}
+
+.neoCMSTopNav li {
+    margin: 0;
+    padding: 0;
+    float: left;
+    line-height: 30px;
+    padding: 0 15px 0 0;
+}
+
+#neoCMSPublish {
+    padding: 0;
+}
+
+li#neoCMSRestore {
+    padding-right: 0;
+    margin-right: 19px;
+    color: #222;
+    font-size: 30px;
+    text-shadow: 0 1px 1px #555;
+}
+
+.neoCMSTopNav li a {
+    margin: 0;
+    padding: 0;
+    color: #fff;
+    height: 57px;
+    top: -15px;
+    position: relative;
+    display: block;
+    overflow: hidden;
+    text-indent: -5000px;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat;
+    text-decoration: none;
+}
+
+li#neoCMSUndo a:link, li#neoCMSUndo a:visited {
+    width: 72px;
+    background-position: -62px 0;
+}
+
+li#neoCMSRedo a:link, li#neoCMSRedo a:visited {
+    width: 72px;
+    background-position: -134px 0;
+}
+
+li#neoCMSCxl a:link, li#neoCMSCxl a:visited {
+    width: 87px;
+    background-position: -206px 0;
+}
+
+li#neoCMSPublish a:link, li#neoCMSPublish a:visited {
+    width: 84px;
+    background-position: -385px 0;
+}
+
+li#neoCMSRestore a:link, li#neoCMSRestore a:visited {
+    width: 80px;
+    background-position: -294px 0;
+    margin-right: 20px;
+    float: left;
+}
+
+li#neoCMSUndo a:hover {
+    background-position: -62px -60px;
+}
+
+li#neoCMSRedo a:hover {
+    background-position: -134px -60px;
+}
+
+li#neoCMSCxl a:hover {
+    background-position: -206px -60px;
+}
+
+li#neoCMSPublish a:hover {
+    background-position: -385px -60px;
+}
+
+li#neoCMSRestore a:hover {
+    background-position: -294px -60px;
+}
+
+/* neocms FEEDBACK BAR --------------------------------------------- */
+
+div.neoCMSUserBar {
+    width: 100%;
+    padding: 5px 0;
+    height: 15px;
+    border-bottom: 1px solid #eee;
+    margin: 0;
+}
+
+#neoCMSUserBar {
+    background-color: #82ac3f;
+    position: absolute;
+    top: 61px;
+    display: block;
+    z-index: 250;
+    left: 0;
+}
+
+div.neoCMSUserBarIn {
+    width: 960px;
+    position: relative;
+    margin: auto;
+}
+
+div.neoCMSUserBar p {
+    color: #fff;
+    font-size: 1.1em;
+}
+
+div.neoCMSUserBar p strong {
+    color: #eee;
+}
+
+div.neoCMSUserBar a:link, div.neoCMSUserBar a:visited {
+    float: right;
+    display: block;
+    margin-right: 20px;
+    color: #fff;
+    text-decoration: none;
+}
+
+div.neoCMSUserBar a:hover {
+    text-decoration: underline;
+}
+
+div.neoCMSUserBar p a {
+    float: none !important;
+    display: inline !important;
+    margin: 0 !important;
+    text-decoration: underline !important;
+}
+
+/* EDIT INTERFACE STYLES --------------------------------------------- */
+
+.neoCMSEditWrap {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    font-family: Arial, Helvetica, sans-serif;
+    z-index: 110;
+    position: absolute !important;
+    display: block;
+    height: auto;
+}
+
+.neoCMSEditWrap #highlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: #fff;
+    display: block;
+}
+
+/*.neoCMSEditTopBar {
+	background: url(../neocms-images/neocms_sprite1.png) no-repeat -516px -50px;
+	display: block;
+	position: relative;
+	height: 40px;
+	width: 100%;
+}*/
+
+.neoCMSEditWrap #neoCMSEditContent_parent, .neoCMSEditWrap #neoCMSEditContent_ifr, .neoCMSEditWrap #neoCMSEditContent_tbl {
+    clear: both;
+    float: left;
+    display: block;
+    height: auto;
+}
+
+/*.neoCMSEditTop {
+	display: block;
+	margin: 0 0 0 10px;
+	padding: 0 10px 0 0;
+	position: relative;
+	background: url(../neocms-images/edit_corner_right.png) no-repeat right top;
+	height: 40px;
+	width: auto;
+	text-align: left;
+}*/
+
+#neoCMSEditTopUl {
+    margin: 0;
+    padding: 0 10px;
+    height: 40px;
+    list-style: none;
+    display: block;
+    text-align: left;
+    clear: both;
+    background: #000;
+    -moz-border-radius-topleft: 14px;
+    -moz-border-radius-topright: 14px;
+    -webkit-border-top-left-radius: 14px;
+    -webkit-border-top-right-radius: 14px;
+    overflow: hidden;
+}
+
+#neoCMSEditTopUl li {
+    margin: 0;
+    padding: 0;
+    float: left;
+    line-height: 40px;
+    margin-right: 20px;
+}
+
+a#neoCMSEditHTML, #neoCMSEditTopUl li#neoCMSFullscreen, a.fullscreen, #neoCMSEditTopUl li#neoCMSContrast {
+    float: right;
+    margin: 0;
+}
+
+li#neoCMSFullscreen a.fullscreen {
+    float: none;
+    margin: 10px 0 0 0;
+}
+
+#neoCMSEditTopUl li a:link, #neoCMSEditTopUl li a:visited {
+    color: #fff;
+    text-decoration: none;
+    font-size: 11px;
+}
+
+#neoCMSEditTopUl li a:hover {
+    color: #82ac3f;
+    text-decoration: underline;
+}
+
+li#neoCMSEditDone a {
+    margin-top: 9px;
+    width: 56px;
+    height: 22px;
+    line-height: 22px;
+    font-size: 12px !important;
+    display: block;
+    text-decoration: none;
+    color: #fff;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -1221px 0;
+    border: none;
+    text-align: center;
+    cursor: pointer;
+}
+
+li#neoCMSEditDone a:hover {
+    text-decoration: none;
+    color: #000;
+    background-position: -1221px -22px;
+}
+
+a#neoCMSEditHTML:link, a#neoCMSEditHTML:visited {
+    margin: 1px 0 0 20px;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -578px -76px;
+    width: 56px;
+    height: 22px;
+    display: block;
+    overflow: hidden;
+    text-indent: -5000px;
+    cursor: pointer;
+}
+
+a#neoCMSEditHTML:hover {
+    background-position: -578px -98px;
+}
+
+a.fullscreen:link, a.fullscreen:visited {
+    margin: 0;
+    display: block;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat;
+    background-position: -576px 0;
+    height: 22px;
+    width: 31px;
+    overflow: hidden;
+    text-indent: -5000px;
+}
+
+a.fullscreen:hover {
+    background-position: -576px -22px;
+}
+
+a.neoCMSMinimize:link, a.neoCMSMinimize:visited {
+    background-position: -607px 0;
+}
+
+a.neoCMSMinimize:hover {
+    background-position: -607px -22px;
+}
+
+a#neoCMSEditorContrast:link, a#neoCMSEditorContrast:visited {
+    margin: 10px 20px 0 0;
+    display: block;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat;
+    background-position: -576px -50px;
+    height: 20px;
+    width: 20px;
+    border: 1px solid #777;
+    overflow: hidden;
+}
+
+a#neoCMSEditorContrast:hover {
+    border: 1px solid #ccc;
+}
+
+.neoCMSEditTools {
+    clear: both;
+    float: left;
+    background: #000;
+    text-align: left;
+}
+
+ul.neoCMSEditLinks {
+    float: left;
+    clear: left;
+    list-style: none;
+    display: inline;
+    margin: 0 3px;
+    padding: 5px 0;
+    border-top: 1px solid #666;
+    font-size: 11px;
+    color: #fff;
+    height: 22px;
+    overflow: visible;
+    background: #000;
+}
+
+.neoCMSEditLinks li {
+    float: left;
+    margin: 0;
+    padding: 0;
+    line-height: 22px;
+    border-right: 1px solid #666;
+}
+
+.neoCMSEditLinks li a:link, .neoCMSEditLinks li a:visited {
+    color: #fff;
+    text-decoration: none;
+    margin: 0 3px;
+    padding: 5px 4px;
+}
+
+.neoCMSEditLinks li a:hover {
+    color: #fff;
+    text-decoration: none;
+    background: #666;
+}
+
+a#neoCMSEditContent_bullist:link, a#neoCMSEditContent_bullist:visited {
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -1013px 5px;
+    padding-right: 7px;
+}
+
+a#neoCMSEditContent_numlist:link, a#neoCMSEditContent_numlist:visited {
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -1045px 3px;
+    padding-right: 7px;
+}
+
+a#neoCMSEditContent_deflist:link, a#neoCMSEditContent_deflist:visited {
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -1013px -24px;
+    padding-right: 7px;
+}
+
+.neoCMSEditContent {
+    clear: both;
+    float: left;
+    display: block;
+    margin: 0;
+    padding: 4px;
+
+    .padding:
+
+    5px;
+    border-right: 3px solid #000;
+    border-bottom: 3px solid #000;
+    border-left: 3px solid #000;
+    background: #fff;
+    height: auto !important;
+    overflow-x: none;
+    overflow-y: auto;
+}
+
+a img.neoCMSCloseAlert {
+    border: none;
+    float: right;
+}
+
+.neoCMSDefAlert p {
+    margin: 0 30px 0 0;
+    padding: 0;
+    font-size: 12px;
+    line-height: 1.4em;
+    color: #fff !important;
+}
+
+.neoCMSDefAlert a.neoCMSDefAlertLink:link, .neoCMSDefAlert a.neoCMSDefAlertLink:link {
+    margin: 0;
+    padding: 0;
+    font-size: 11px;
+    line-height: 1em;
+    float: right;
+    clear: left;
+    text-align: left;
+    text-decoration: none;
+    color: #999;
+}
+
+.neoCMSDefAlert a.neoCMSDefAlertLabel:hover {
+    text-decoration: underline;
+}
+
+form.neoCMSDlGenerator {
+    margin: 0;
+    padding: 0;
+}
+
+.neoCMSDlBox {
+    clear: both;
+    display: block;
+    margin: 0 0 2px 0;
+    padding: 5px 10px;
+    background: #f0f0f0;
+    overflow: visible;
+    position: relative;
+}
+
+p.neoCMSDlDel {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    margin: 0;
+    padding: 0;
+    display: none;
+    z-index: 100;
+    cursor: pointer;
+}
+
+p.neoCMSDlDel a:link, p.neoCMSDlDel a:visited {
+    text-decoration: none;
+    width: 17px;
+    height: 15px;
+    display: block;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -1084px 0;
+    text-indent: -5000px;
+    overflow: hidden;
+}
+
+p.neoCMSDlDel a:hover {
+    text-decoration: none;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -1084px -16px;
+}
+
+.neoCMSDlBox ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 12px;
+    color: #333;
+}
+
+.neoCMSDlBox li {
+    padding: 3px 0;
+    position: relative;
+}
+
+.neoCMSDlGenerator label {
+    padding: 0 !important;
+    color: #333 !important;
+}
+
+input.neoCMSDlTerm, textarea.neoCMSDlDefinition {
+    font-family: Arial, Helvetica, sans-serif;
+    border: 1px dashed #999;
+    font-size: 12px;
+    height: auto;
+    background: #f0f0f0;
+    padding: 2px;
+    width: 268px;
+    margin: 0 0 0 22px;
+}
+
+input.neoCMSDlTerm {
+    width: 260px;
+    margin: 0;
+}
+
+textarea.neoCMSDlDefinition {
+    height: 35px;
+}
+
+.neoCMSDlBox input:focus, .neoCMSDlBox textarea:focus {
+    border: 1px solid #82ac3f !important;
+    background: #fff !important;
+}
+
+a.neoCMSAddDef, a.neoCMSDeleteDef {
+    margin: 0 4px 0 0;
+    padding: 0;
+    width: 18px;
+    height: 18px;
+    display: block;
+    position: absolute;
+    top: 10;
+    left: 0;
+    overflow: hidden;
+    text-indent: -5000px;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -1104px 0;
+}
+
+a.neoCMSDeleteDef {
+    margin: 0;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -1125px 0;
+    top: 38px;
+    display: none;
+}
+
+p.neoCMSAddTerm {
+    clear: both;
+    display: block;
+    margin: 0 0 10px 0;
+    padding: 4px 0 4px 10px !important;
+    background: #999;
+}
+
+p.neoCMSAddTerm a:link, p.neoCMSAddTerm a:visited {
+    clear: both;
+    width: 85px;
+    height: 21px;
+    display: block;
+    text-decoration: none;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -576px 0;
+    text-indent: -5000px;
+}
+
+p.neoCMSAddTerm a:hover {
+    text-decoration: none;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -576px -22px;
+}
+
+/* ARE YOU SURE BOX STYLES --------------------------------------------- */
+
+.neoCMSSureBox1 {
+    margin: 0 auto;
+    padding: 0;
+    width: 353px;
+    height: 135px;
+    display: block;
+    background: transparent url(../neocms-images/areyousure_bg.png) no-repeat top center;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.neoCMSSureBox1 p {
+    margin: 0;
+    padding: 20px 20px 20px 100px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #000;
+    line-height: 1.4em;
+}
+
+.neoCMSSureBox1 ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: inline;
+}
+
+.neoCMSSureBox1 li {
+    float: left;
+    margin: 0;
+    padding: 0;
+}
+
+li.neoCMSYesCxl a:link, li.neoCMSYesCxl a:visited {
+    margin: 0;
+    text-decoration: none;
+    width: 114px;
+    height: 22px;
+    display: block;
+    text-indent: -5000px;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -663px 0;
+    overflow: hidden;
+}
+
+li.neoCMSYesCxl a:hover {
+    text-decoration: none;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -663px -22px;
+}
+
+li.neoCMSNoGoback a:link, li.neoCMSNoGoback a:visited {
+    margin: 0 15px 0 110px;
+    text-decoration: none;
+    width: 97px;
+    height: 22px;
+    display: block;
+    text-indent: -5000px;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -780px 0;
+    overflow: hidden;
+}
+
+li.neoCMSNoGoback a:hover {
+    text-decoration: none;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -780px -22px;
+}
+
+/* IMAGE UPLOAD SELECT & LINK PROMPT BOX STYLES --------------------------------------------- */
+
+#neoCMSPrompt {
+    border: 1px solid;
+    border-color: #888 #666 #444 #666;
+    position: relative;
+    top: 10%;
+    margin: 0 auto;
+    padding: 20px;
+    display: none;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: left;
+    overflow: hidden;
+    background: url(../neocms-images/prompt.gif) repeat-x left bottom #666;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -moz-box-shadow: 0 0 10px #666;
+}
+
+.neoCMSPrompt {
+    width: 314px;
+}
+
+.neoCMSImgVidSelect, .neoCMSTables {
+    width: 650px;
+}
+
+.neoCMSHtmlPrompt {
+    top: 20px;
+    width: 800px;
+}
+
+.neoCMSPrompt p.neoCMSPromptAlert {
+    padding: 3px 10px 3px 8px;
+    margin-bottom: 10px;
+    filter: alpha(opacity=0);
+    -moz-opacity: 0;
+    opacity: 0;
+    color: #fff;
+    line-height: 1.2em;
+}
+
+.neoCMSPrompt p.neoCMSPromptAlert a {
+    color: #82ac3f;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+.neoCMSPrompt p.neoCMSPromptAlert a:hover {
+    text-decoration: underline;
+}
+
+.neoCMSPrompt img {
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+
+#neoCMSPrompt h4.neoCMSPromptTitle {
+    cursor: move;
+}
+
+.neoCMSHtmlPrompt textarea {
+    display: block;
+}
+
+#neoCMSPrompt h4.neoCMSPromptTitle, div.neoCMSImgChooseInline h4, div.neoCMSVidChooseInline h4, #neoCMSTableOptions h4 {
+    margin: 0 0 10px 0;
+    width: auto;
+    padding: 0 0 10px 0;
+    font: normal normal 15px/18px Arial, Helvetica, sans-serif;
+    display: block;
+    color: #bbb;
+    text-align: left;
+    letter-spacing: 0;
+    text-transform: none;
+    background: none;
+    border-bottom: 1px solid #444;
+}
+
+#neoCMSPrompt h4.neoCMSImageTitle, #neoCMSPrompt h4.neoCMSVidTitle, .neoCMSFileInfo h4 {
+    margin: 0 0 10px 0;
+    width: auto;
+    padding: 0;
+    font: normal normal 14px/18px Arial, Helvetica, sans-serif;
+    display: block;
+    color: #fff;
+    text-align: left;
+    letter-spacing: 0;
+    text-transform: none;
+    background: none;
+}
+
+#neoCMSPrompt h4.neoCMSImageTitle span, #neoCMSPrompt h4.neoCMSVidTitle span, .neoCMSFileInfo h4 span {
+    margin: 5px 0 0 0;
+    padding: 5px 0 5px 0;
+    border-top: 1px solid #666;
+    font: normal normal 11px/14px Arial, Helvetica, sans-serif;
+    display: block;
+    text-align: left;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #ccc;
+}
+
+.neoCMSPrompt p {
+    margin: 0 0 10px 0;
+    padding: 0;
+    font-size: 11px;
+    color: #ddd;
+    text-align: left;
+}
+
+.neoCMSSimplePrompt p {
+    padding: 0 0 10px 0;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+#neoCMSPrompt div.neoCMSImgChooseInline, #neoCMSPrompt div.neoCMSVidChooseInline, #neoCMSTableOptions {
+    padding: 0;
+    margin: 0;
+    display: block;
+    width: 314px;
+    float: right;
+}
+
+div.neoCMSImgChooseInline h4, div.neoCMSVidChooseInline h4, #neoCMSTableOptions h4 {
+    border: 0;
+    padding: 12px 0 0;
+    font-size: 13px;
+}
+
+div.neoCMSImgChooseInline h4.neoCMSImgURLTitle {
+    border-top: 1px solid #555;
+    padding-top: 10px;
+}
+
+#neoCMSImgFolder, #neoCMSFolder {
+    padding: 4px 3px 0;
+    line-height: 1.0em;
+    font-size: 11px;
+    margin-bottom: 20px;
+    width: 253px;
+}
+
+#neoCMSImgFolder option, #neoCMSFolder option {
+    padding: 3px;
+}
+
+option.defaultFolder {
+    color: #999;
+}
+
+input.neoCMSImgUpload, input.neoCMSUpload {
+    font-size: 11px;
+    cursor: pointer;
+    height: 22px;
+    margin: 0 0 20px 0;
+}
+
+form.neoCMSImgLoc, form.neoCMSVidLoc {
+    float: left;
+    clear: both;
+    margin: 0;
+    padding: 5px 0 0;
+    text-align: left;
+    display: inline;
+    width: 314px;
+}
+
+div.neoCMSImgChooseInline form.neoCMSImgLoc, div.neoCMSVidChooseInline form.neoCMSVidLoc {
+    margin: 0;
+}
+
+.neoCMSPrompt label {
+    margin: 0;
+    padding: 5px 0 10px;
+    font-size: 11px;
+    color: #ccc;
+    display: block;
+    text-align: left;
+}
+
+.neoCMSImgChooseInline label, .neoCMSVidChooseInline label {
+    padding: 5px 0;
+}
+
+input.neoCMSImgAddress, textarea.neoCMSVidEmbed {
+    margin: 0 0 10px 0;
+    padding: 2px;
+    background: #fff;
+    font-size: 11px;
+    border: none;
+    float: left;
+    clear: left;
+    display: block;
+}
+
+input.neoCMSImgAddress {
+    margin-right: 1px;
+    width: 221px !important;
+}
+
+textarea.neoCMSVidEmbed {
+    width: 314px;
+}
+
+#neoCMSImgChoose form div {
+    display: block;
+    overflow: hidden;
+    width: 253px;
+}
+
+.neoCMSApplyBtn {
+    float: left;
+}
+
+#neoCMSImgStatArea, #neoCMSVidStatArea, div.neoCMSFileInfo, #neoCMSTablePrev {
+    width: 294px;
+    float: left;
+    display: inline;
+    background: #444;
+    padding: 10px;
+}
+
+div.neoCMSFileInfo {
+    margin-bottom: 20px;
+}
+
+div.neoCMSFileInfo p {
+    color: #888;
+}
+
+#neoCMSPrompt h6 {
+    text-align: center;
+    margin: 0 auto;
+    padding: 0 0 26px;
+    font-size: 11px;
+    color: #ccc;
+    font-weight: normal;
+}
+
+img.neoCMSImgPreview, div#neoCMSEmbedWrap {
+    float: right;
+    margin: 0;
+    width: 145px;
+    height: auto;
+    padding: 0;
+    border: 1px solid #999;
+    background: #fff url('../neocms-images/neocms_sprite1.png') repeat-y -1350px 0;
+}
+
+form.neoCMSImgStats, form.neoCMSVidStats {
+    margin: 0 0 10px 0;
+    padding: 0;
+    line-height: 20px;
+}
+
+form.neoCMSImgStats label, form.neoCMSVidStats label {
+    display: block;
+    width: 147px;
+    margin: 0 0 5px 0;
+    padding: 0;
+}
+
+form.neoCMSImgStats label input, form.neoCMSVidStats label input {
+    float: right;
+    padding: 2px;
+    background: #fff;
+    font-size: 11px;
+    border: none;
+    width: 95px;
+    margin-right: 10px;
+    display: inline;
+}
+
+form.neoCMSImgStats label input.neoCMSOrigSize, form.neoCMSImgStats label input.neoCMSConstrain, form.neoCMSVidStats label input.neoCMSOrigSize, form.neoCMSVidStats label input.neoCMSConstrain {
+    float: left;
+    display: block;
+    padding: 0;
+    margin: 2px 5px 0 0;
+    width: 10px;
+    height: 10px;
+}
+
+form.neoCMSImgStats label input.neoCMSConstrain, form.neoCMSVidStats label input.neoCMSConstrain {
+    margin: 0 5px 15px 0;
+}
+
+form.neoCMSImgStats label.neoCMSConstrainLabel, form.neoCMSVidStats label.neoCMSConstrainLabel {
+    padding-left: 36px;
+    line-height: 1.1em;
+    clear: left;
+    width: 111px;
+}
+
+form.neoCMSImgStats label span, form.neoCMSVidStats label span {
+    float: right;
+    font-size: 11px;
+    width: 84px;
+    display: inline;
+}
+
+div.neoCMSFileInfo label span {
+    margin-left: 10px;
+}
+
+form.neoCMSLinkProperties, form.neoCMSDlGenerator {
+    margin: 10px 0 0 0;
+    padding: 15px 0 0;
+
+    .padding:
+
+    5px;
+    border-top: 1px solid #444;
+    clear: both;
+}
+
+form.neoCMSLinkProperties, form.neoCMSDlGenerator {
+    padding: 0;
+    border-top: none;
+}
+
+ul.neoCMSImgProperties, .neoCMSLinkProperties ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: block;
+    clear: left;
+    font-size: 12px;
+}
+
+ul.neoCMSImgProperties {
+    float: left;
+    display: none;
+    padding: 1px 0 0 0;
+    width: 314px;
+}
+
+.neoCMSImgSelect li, .neoCMSLinkPrompt li {
+    margin: 0;
+    padding: 0;
+    display: block;
+    overflow: hidden;
+    clear: both;
+}
+
+ul.neoCMSImgProperties li {
+    background: #444;
+    padding: 0 10px;
+    display: inline;
+    position: relative;
+    height: 22px;
+    float: left;
+    clear: both;
+    overflow: hidden;
+    width: 294px;
+}
+
+.neoCMSImgProperties label, .neoCMSLinkPrompt label {
+    margin: 0 10px 0 0;
+    padding: 0;
+    width: 60px;
+    float: left;
+    line-height: 22px;
+    display: block;
+    clear: none;
+}
+
+.neoCMSImgProperties input, .neoCMSLinkPrompt input, #neoCMSTableOptions input {
+    width: 217px;
+    padding: 2px;
+    height: 14px;
+    margin: 0 0 5px;
+    background: #fff;
+    font-size: 11px;
+    border: none;
+    float: left;
+    clear: none;
+}
+
+.neoCMSImgProperties label, #neoCMSTableOptions label {
+    margin: 0;
+    padding: 0;
+    width: 60px;
+    float: left;
+    clear: none;
+    line-height: 22px;
+    display: block;
+}
+
+.neoCMSImgSelect input {
+    width: 207px;
+}
+
+#neoCMSImgLink {
+    margin-right: 1px;
+}
+
+li.neoCMSLinkInsert, div.neoCMSDefInsert {
+    padding: 5px 0 0 70px;
+}
+
+ul.neoCMSImgProperties li.neoCMSImgAltText {
+    padding-top: 10px;
+}
+
+ul.neoCMSImgProperties li.neoCMSImgRel {
+    padding-bottom: 10px;
+}
+
+ul.neoCMSImgProperties li.disabled input {
+    background: #bbb;
+    color: #666;
+}
+
+ul.neoCMSImgProperties li.disabled label {
+    color: #666;
+}
+
+div.neoCMSImgInsert, div.neoCMSVidInsert {
+    margin: 10px 0 0 0;
+    padding: 10px 0 0 0;
+    border-top: 1px solid #555;
+    background: none;
+    clear: both;
+    float: left;
+    display: block;
+    width: 100%;
+    *zoom: 1;
+}
+
+div.neoCMSDefInsert {
+    margin: 5px 0 0 0;
+}
+
+div.neoCMSHtmlInsert {
+    margin: 0 0 10px 0;
+}
+
+.neoCMSPromptInsert a:link, .neoCMSPromptInsert a:visited, p.neoCMSLinkRemove a:link, p.neoCMSLinkRemove a:visited, a.neoCMSApplyBtn:link, a.neoCMSApplyBtn:visited {
+    line-height: 22px;
+    font-size: 11px;
+    margin: 0 0 0 20px;
+    color: #fff;
+    text-decoration: none;
+    background: none;
+}
+
+p.neoCMSLinkRemove a:link, p.neoCMSLinkRemove a:visited, a.neoCMSApplyBtn:link, a.neoCMSApplyBtn:visited {
+    margin: 0;
+    padding: 0 0 10px;
+    display: block;
+}
+
+#neoCMSLinkURL {
+    width: 217px;
+    margin-right: 1px;
+}
+
+li.neoCMSLinkID {
+    padding-bottom: 5px;
+    border-bottom: 1px solid #444;
+    margin-bottom: 10px;
+}
+
+#neoCMSPrompt .neoCMSFBrowse {
+    display: block;
+    clear: none;
+    float: left;
+    height: 18px;
+    width: 22px;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -660px 0;
+    text-indent: -5000px;
+}
+
+#neoCMSPrompt .neoCMSFBrowse:hover {
+    background-position: -660px -19px;
+}
+
+p.neoCMSLinkRemove {
+    display: block;
+    padding: 0;
+    margin: 0 0 0 70px;
+}
+
+.neoCMSPromptInsert a:hover, p.neoCMSLinkRemove a:hover, a.neoCMSApplyBtn:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+#neoCMSTablePrev {
+    margin-bottom: 20px;
+}
+
+#neoCMSTablePrev table {
+    height: 200px;
+    width: 200px;
+    margin: 30px auto;
+    border: 1px solid #eee;
+    display: table;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+#neoCMSTablePrev table tbody {
+    display: table-row-group;
+    height: auto;
+}
+
+#neoCMSTablePrev table tr {
+    display: table-row;
+    height: auto;
+}
+
+#neoCMSTablePrev table td, #neoCMSTablePrev table th {
+    border: 1px solid #eee;
+    display: table-cell;
+    height: auto;
+    width: auto;
+}
+
+#neoCMSTablePrev table th, #neoCMSTablePrev table tfoot td {
+    border: 1px solid #eee;
+    background: #666;
+}
+
+#neoCMSTableOptions ul {
+    padding: 10px 0;
+    border-top: 1px solid #555555;
+    overflow: hidden;
+}
+
+#tableRowsCols input {
+    width: 85px;
+}
+
+#neoCMSTableOptions ul#tableHeadFoot {
+    border-top: 0;
+    padding: 0 0 10px 60px;
+}
+
+#tableHeadFoot input {
+    width: 10px;
+    height: 10px;
+    margin: 3px 10px 0 0;
+}
+
+/* STYLES REQUIRED FOR EFFECTS --------------------------------------------- */
+
+div.neoCMSUploadingImg {
+    height: 120px;
+    background: url(../neocms-images/uploading.gif) no-repeat center #505050 !important;
+}
+
+
+/* HIDDEN ELEMENTS --------------------------------------------- */
+
+form#neoCMSPageEdits textarea {
+    padding: 10px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #666;
+    width: 800px;
+    height: 50px;
+    margin: 0 auto;
+}
+
+#neoCMSImgUploadIframe {
+    border: 0;
+    background: none;
+    display: none;
+}
+
+#neoCMSGlobalUndo, #neoCMSGlobalRedo {
+    display: none;
+}
+
+/* DASHBOARD STYLES ---------------------------------------------------- */
+
+li#neoCMSGoUpdate a:link, li#neoCMSGoUpdate a:visited {
+    margin: 0 244px 0 0;
+    padding: 0;
+    color: #fff;
+    text-decoration: none;
+    width: 106px;
+    height: 57px;
+    display: block;
+    overflow: hidden;
+    background: url(../neocms-images/neocms_sprite1.png) no-repeat -470px 0;
+    text-indent: -5000px;
+}
+
+li#neoCMSGoUpdate a:hover {
+    background-position: -470px -60px;
+}
+
+.neoCMSTopBuffer {
+    clear: both;
+    width: 100%;
+    height: 50px;
+    background: #e1e1e1;
+    display: block;
+    text-align: center;
+    display: block;
+}
+
+.neoCMSTabNav {
+    margin: 0 auto;
+    width: 960px;
+    text-align: left;
+    display: block;
+}
+
+.neoCMSTabNav ul {
+    margin: 0;
+    padding: 0 0 0 20px;
+    height: 60px;
+    display: block;
+    list-style: none;
+    text-align: left;
+    font-size: 10px;
+    color: #fff;
+}
+
+.neoCMSTabNav li {
+    margin: 0;
+    padding: 0;
+    float: left;
+    padding: 0 10px 0 0;
+    display: inline;
+    padding-top: 20px;
+}
+
+.neoCMSTabNav li a:link, .neoCMSTabNav li a:visited {
+    margin: 0;
+    padding: 3px 7px 0;
+    font-size: 13px;
+    color: #000;
+    background: #ccc;
+    text-decoration: none;
+    width: 120px;
+    font-weight: bold;
+    display: block;
+    line-height: 27px;
+    text-align: center;
+    -moz-border-radius-topleft: 7px;
+    -moz-border-radius-topright: 7px;
+    -webkit-border-top-left-radius: 7px;
+    -webkit-border-top-right-radius: 7px;
+}
+
+.neoCMSTabNav li a:hover {
+    background: #333;
+    color: #fff;
+}
+
+.neoCMSPref li#neoCMSTabPreferences a, .neoCMSAcct li#neoCMSTabMyAccount a, .neoCMSFTP li#neoCMSTabFTPInfo a {
+    background: #fff;
+    color: #000;
+}
+
+.neoCMSDashboardWrap {
+    margin: 0 auto;
+    width: 960px;
+    text-align: left;
+}
+
+#neoCMSDashScrollWrap {
+    overflow: auto;
+    position: relative;
+    display: block;
+}
+
+.neoCMSDashTop {
+    clear: both;
+    margin: 0 auto;
+    width: 960px;
+    padding: 30px 0 20px;
+    border-bottom: 1px solid #ccc;
+}
+
+.neoCMSDashTop p {
+    line-height: 1.4em;
+    width: 580px;
+    display: block;
+    font-size: 12px;
+}
+
+#neoCMSUpdates {
+    float: right;
+    width: 360px;
+    display: inline;
+    background: #333;
+    padding: 10px 0;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+}
+
+#neoCMSUpdates h3 {
+    font-size: 14px;
+    color: #fff;
+    font-weight: bold;
+    padding: 0 10px 5px;
+}
+
+#neoCMSUpdates h3 span {
+    color: #fff;
+    font-weight: normal;
+    font-size: 0.9em;
+    display: block;
+    margin-top: 7px;
+}
+
+#neoCMSUpdates p {
+    padding: 9px 10px 0;
+    font-size: 12px;
+    color: #aaa;
+    width: auto;
+}
+
+#neoCMSUpdates p a:link, #neoCMSUpdates p a:visited {
+    color: #82ac3f;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+#neoCMSUpdates p a:first-child, #neoCMSUpdates p a.second {
+    margin: 0 10px 0 0;
+}
+
+#neoCMSUpdates p a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+#neoCMSUpdates p a.updateLink {
+    margin: 0 0 0 10px;
+}
+
+#neoCMSUpdates p a.autoUpdate {
+    margin: 0;
+}
+
+.neoCMSDashContent {
+    clear: both;
+    width: 960px;
+    padding: 40px 0 10px;
+    border-bottom: 5px solid #e1e1e1;
+}
+
+.neoCMSDashContent h2 {
+    margin: 20px 0 0;
+}
+
+#neoCMSFTPClearBtn {
+    background: none;
+    text-indent: 0;
+    display: inline;
+    width: auto;
+    margin: 0 0 0 20px;
+    font-size: 12px;
+    line-height: 22px;
+}
+
+.neoCMSDashLeft {
+    float: left;
+    margin: 0 20px 0 0;
+    width: 580px;
+    padding-bottom: 30px;
+}
+
+.neoCMSDashLeft a:link, .neoCMSDashLeft a:visited {
+    color: #82ac3f;
+    text-decoration: none;
+}
+
+.neoCMSDashLeft a:hover {
+    color: #000;
+    text-decoration: underline;
+}
+
+.neoCMSDashLeft h4 {
+    font-size: 16px;
+    font-weight: normal;
+    color: #000;
+    margin: 18px 0;
+}
+
+.neoCMSDashLeft h4 span {
+    font-size: 12px;
+    font-weight: normal;
+    margin-left: 20px;
+    color: #999;
+    font-style: italic;
+}
+
+.neoCMSDashElement, .neoCMSNewUserElement {
+    clear: both;
+    margin: 0 0 10px;
+    padding: 10px;
+    background: #e1e1e1;
+    position: relative;
+}
+
+.neoCMSDashElement h3, .neoCMSNewUserElement h3 {
+    font-size: 15px;
+    height: 1.0em;
+    font-weight: bold;
+    color: #000;
+    margin: 0;
+    padding: 0 0 5px;
+    border-bottom: 1px solid #ccc;
+    display: block;
+}
+
+.neoCMSDashElement h3 strong, .neoCMSNewUserElement h3 strong {
+    color: #999;
+    font-size: 0.8em;
+    margin-left: 10px;
+}
+
+.neoCMSDashElement h3 span, .neoCMSNewUserElement h3 span {
+    font-size: 12px;
+    font-weight: bold;
+    float: right;
+    color: #aaa;
+}
+
+.neoCMSDashElement p, .neoCMSNewUserElement p {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.3em;
+    margin: 0;
+    padding: 10px 0 0;
+}
+
+p.FTPtext {
+    margin: 0 0 30px;
+    padding: 10px 0 0;
+    border-bottom: 1px solid #ccc;
+    font-size: 12px;
+    line-height: 18px;
+    height: 80px;
+}
+
+.neoCMSDashElement ul, .neoCMSNewUserElement ul {
+    display: block;
+}
+
+.neoCMSDashElement li, .neoCMSNewUserElement li {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.3em;
+    margin: 0;
+    padding: 10px 0 0;
+}
+
+li.neoCMSPath {
+    font-size: 12px;
+    padding-bottom: 8px;
+    height: 1.3em;
+    font-weight: bold;
+}
+
+#neoCMSNewUser {
+    display: none;
+}
+
+span.neoCMSPathDeclar {
+    width: 200px;
+    display: inline-block;
+    background: #ccc;
+    padding: 7px 5px 4px;
+    margin: 0 10px 0 5px;
+    font-weight: normal;
+
+    .position: relative
+;
+
+    .top:
+
+    4px;
+}
+
+.neoCMSDashSidebar {
+    float: left;
+    width: 360px;
+    min-height: 288px;
+    margin-top: 30px;
+}
+
+.neoCMSDashSidebar h3 {
+    font-size: 16px;
+    font-weight: bold;
+    color: #999;
+    padding: 0 0 5px;
+    border-bottom: 1px solid #ccc;
+}
+
+.neoCMSDashSidebar p, .neoCMSDashSidebar li {
+    font-size: 11px;
+    line-height: 1.4em;
+    padding: 10px 0;
+    border-bottom: 1px solid #ccc;
+}
+
+.neoCMSDashSidebar p.follow {
+    border-top: 1px solid #ccc;
+    text-align: right;
+}
+
+.neoCMSDashSidebar p a:link, .neoCMSDashSidebar p a:visited, .neoCMSDashSidebar li a:link, .neoCMSDashSidebar li a:visited {
+    color: #82ac3f;
+    text-decoration: none;
+}
+
+.neoCMSDashSidebar p a:hover, .neoCMSDashSidebar li a:hover {
+    color: #000;
+    text-decoration: underline;
+}
+
+.neoCMSDashSidebar p span {
+    font-style: italic;
+    color: #999;
+}
+
+/* DASHBOARD PREFERENCES FORM STYLES ---------------------------------------------------- */
+
+form.neoCMSPrefForm {
+    font-size: 12px;
+}
+
+label.neoCMSPrefHtmlOn {
+    position: absolute;
+    left: 180px;
+    top: 8px;
+}
+
+label.neoCMSPrefHtmlOff {
+    position: absolute;
+    left: 255px;
+    top: 8px;
+}
+
+label.neoCMSDashPath {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+input.filepath {
+    border: 1px solid #ccc;
+    background: #fff;
+    padding: 5px 5px 2px;
+    margin: 0 10px 0 5px;
+    width: 200px;
+    height: 16px;
+    display: inline;
+    position: relative;
+
+    .top:
+
+    4px;
+}
+
+li.shady, iframe#neoCMSFormFrame {
+    display: none;
+    position: absolute;
+    left: -5000px;
+}
+
+/* DASHBOARD ACCOUNT STYLES ---------------------------------------------------- */
+
+form.neoCMSAcctForm {
+    display: block;
+}
+
+.neoCMSAcctForm label, .neoCMSDashElement ul label {
+    width: 102px;
+    display: inline-block;
+    padding: 0 10px 0 0;
+    text-align: right;
+    font-size: 11px;
+}
+
+.neoCMSDashElement ul label a {
+    margin-left: 10px;
+}
+
+input.neoCMSLocked {
+    padding: 2px;
+    font-size: 12px;
+    height: 18px;
+    width: 260px;
+    border: 1px solid #ccc;
+    background: #ccc !important;
+}
+
+.neoCMSAcctPassLi input.neoCMSLocked {
+    color: #999;
+}
+
+span a.neoCMSAcctModify {
+    margin: 0 10px 0 0;
+}
+
+#neoCMSAcctFormSuperAdmin a.neoCMSAcctModify {
+    margin: 0;
+}
+
+span a.neoCMSAcctDelete {
+    margin: 0 0 0 10px;
+}
+
+input.neoCMSUnlocked {
+    padding: 2px;
+    font-size: 12px;
+    height: 18px;
+    width: 260px;
+    border: 1px solid #ccc;
+    background: #fff !important;
+}
+
+li.neoCMSFormSave {
+    position: relative;
+    margin-top: 0;
+    padding: 0;
+}
+
+li.neoCMSFilePath {
+    border-top: 1px solid #ccc;
+    margin-top: 10px;
+}
+
+li.neoCMSFilePath p {
+    margin-bottom: 10px;
+    padding: 0;
+}
+
+li.neoCMSFormSave span {
+    position: absolute;
+    top: 4px;
+    left: 178px;
+}
+
+li.neoCMSFormSave span a:link, li.neoCMSFormSave span a:visited {
+    margin: 0 0 0 5px;
+    width: 80px;
+    background-image: none;
+    color: #000;
+    text-decoration: none;
+    text-indent: 0;
+    display: inline;
+}
+
+li.neoCMSFormSave span a:hover {
+    background-image: none;
+    color: #999;
+    text-decoration: underline;
+}
+
+li.neoCMSAcctPassInfo {
+    padding: 0 0 5px 102px;
+}
+
+li#pwStrength, li#pwStrengthNew {
+    clear: both;
+    display: block;
+    width: 125px;
+    padding: 4px 0;
+    color: #999;
+    line-height: 20px;
+    font-size: 13px;
+    color: #ccc;
+    background: #efefef;
+    text-transform: uppercase;
+    font-weight: bold;
+    text-align: center;
+    position: relative;
+    margin: 10px 0 0 113px;
+}
+
+li#pwStrength.weak, li#pwStrengthNew.weak {
+    color: #fc0 !important;
+    background: #ff9 !important;
+}
+
+li#pwStrength.medium, li#pwStrengthNew.medium {
+    color: #e5eed4 !important;
+    background: #690 !important;
+}
+
+li#pwStrength.strong, li#pwStrengthNew.strong {
+    color: #e5eed4 !important;
+    background: #690 !important;
+}
+
+li#pwStrength span, li#pwStrengthNew span {
+    display: inline !important;
+    width: 280px;
+    text-align: left;
+    line-height: 13px;
+    color: #666;
+    font-size: 11px;
+    position: absolute;
+    top: 0;
+    left: 125px;
+    overflow: visible;
+    text-transform: none;
+    font-weight: normal;
+    font-style: normal;
+}
+
+li#pwStrength.strong span, li#pwStrengthNew.strong span, li#pwStrength.medium span, li#pwStrengthNew.medium span {
+    top: 8px;
+}
+
+span.neoCMSInstructions {
+    font-style: italic;
+    color: #999;
+}
+
+form.neoCMSAcctEditing li span, form.neoCMSNewAcctEditing li span {
+    color: #999;
+    margin: 0 0 0 7px;
+    font-style: italic;
+    display: none;
+}
+
+form.neoCMSAcctEditing li.error span, form.neoCMSNewAcctEditing li.error span {
+    display: inline;
+}
+
+form.neoCMSAcctEditing span.neoCMSCancel, form.neoCMSNewAcctEditing span.neoCMSCancel {
+    display: inline;
+    margin: 0;
+    font-style: normal;
+}
+
+/* DASHBOARD FOOTER STYLES ---------------------------------------------------- */
+
+.neoCMSDashFooter {
+    clear: both;
+    width: 960px;
+    margin: 20px 0;
+    padding: 26px 0;
+    background: #e1e1e1;
+}
+
+.neoCMSDashFooter p {
+    font-size: 12px;
+    line-height: 1.8em;
+    padding: 0 20px;
+}
+
+.neoCMSDashFooter p a:link, .neoCMSDashFooter p a:visited {
+    color: #666;
+    text-decoration: none;
+    border-bottom: 1px dotted #82ac3f;
+}
+
+.neoCMSDashFooter p a:hover {
+    color: #000;
+    text-decoration: underline;
+    border: none;
+}
+
+.neoCMSDashFooter p span {
+    padding: 0 20px;
+}
+
+#neoCMSFrameShim {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    filter: alpha(opacity=0);
+    -moz-opacity: 0;
+    opacity: 0;
+    z-index: 10000;
+}
+
+.CodeMirror-wrapping {
+    background: #fff;
+    padding: 10px;
+    border: #ccc;
+    width: 740px;
+}
+
+/*
+* jQuery UI CSS Framework
+* Copyright (c) 2009 AUTHORS.txt (http://jqueryui.com/about)
+* Dual licensed under the MIT (MIT-LICENSE.txt) and GPL (GPL-LICENSE.txt) licenses.
+*/
+
+/* Layout helpers
+----------------------------------*/
+.ui-helper-hidden {
+    display: none;
+}
+
+.ui-helper-hidden-accessible {
+    position: absolute;
+    left: -99999999px;
+}
+
+.ui-helper-reset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    line-height: 1.3;
+    text-decoration: none;
+    font-size: 100%;
+    list-style: none;
+}
+
+.ui-helper-clearfix:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+}
+
+.ui-helper-clearfix {
+    display: inline-block;
+}
+
+/* required comment for clearfix to work in Opera \*/
+* html .ui-helper-clearfix {
+    height: 1%;
+}
+
+.ui-helper-clearfix {
+    display: block;
+}
+
+/* end clearfix */
+.ui-helper-zfix {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    position: absolute;
+    opacity: 0;
+    filter: Alpha(Opacity=0);
+}
+
+
+/* Interaction Cues
+----------------------------------*/
+.ui-state-disabled {
+    cursor: default !important;
+}
+
+
+/* Icons
+----------------------------------*/
+
+/* states and images */
+.ui-icon {
+    display: block;
+    text-indent: -99999px;
+    overflow: hidden;
+    background-repeat: no-repeat;
+}
+
+
+/* Misc visuals
+----------------------------------*/
+
+/* Overlays */
+.ui-widget-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/*
+* jQuery UI CSS Framework
+* Copyright (c) 2009 AUTHORS.txt (http://jqueryui.com/about)
+* Dual licensed under the MIT (MIT-LICENSE.txt) and GPL (GPL-LICENSE.txt) licenses.
+* To view and modify this theme, visit http://jqueryui.com/themeroller/?ffDefault=Verdana,Arial,sans-serif&fwDefault=normal&fsDefault=1.1em&cornerRadius=4px&bgColorHeader=cccccc&bgTextureHeader=03_highlight_soft.png&bgImgOpacityHeader=75&borderColorHeader=aaaaaa&fcHeader=222222&iconColorHeader=222222&bgColorContent=ffffff&bgTextureContent=01_flat.png&bgImgOpacityContent=75&borderColorContent=aaaaaa&fcContent=222222&iconColorContent=222222&bgColorDefault=e6e6e6&bgTextureDefault=02_glass.png&bgImgOpacityDefault=75&borderColorDefault=d3d3d3&fcDefault=555555&iconColorDefault=888888&bgColorHover=dadada&bgTextureHover=02_glass.png&bgImgOpacityHover=75&borderColorHover=999999&fcHover=212121&iconColorHover=454545&bgColorActive=ffffff&bgTextureActive=02_glass.png&bgImgOpacityActive=65&borderColorActive=aaaaaa&fcActive=212121&iconColorActive=454545&bgColorHighlight=fbf9ee&bgTextureHighlight=02_glass.png&bgImgOpacityHighlight=55&borderColorHighlight=fcefa1&fcHighlight=363636&iconColorHighlight=2e83ff&bgColorError=fef1ec&bgTextureError=02_glass.png&bgImgOpacityError=95&borderColorError=cd0a0a&fcError=cd0a0a&iconColorError=cd0a0a&bgColorOverlay=aaaaaa&bgTextureOverlay=01_flat.png&bgImgOpacityOverlay=0&opacityOverlay=30&bgColorShadow=aaaaaa&bgTextureShadow=01_flat.png&bgImgOpacityShadow=0&opacityShadow=30&thicknessShadow=8px&offsetTopShadow=-8px&offsetLeftShadow=-8px&cornerRadiusShadow=8px
+*/
+
+
+/* Component containers
+----------------------------------*/
+.ui-widget {
+    font-family: Verdana, Arial, sans-serif;
+    font-size: 1.1em;
+}
+
+.ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button {
+    font-family: Verdana, Arial, sans-serif;
+    font-size: 1em;
+}
+
+.ui-widget-content {
+    border: 1px solid #aaaaaa;
+    background: #ffffff 50% 50% repeat-x;
+    color: #222222;
+}
+
+.ui-widget-content a {
+    color: #222222;
+}
+
+.ui-widget-header {
+    border: 1px solid #aaaaaa;
+    background: #cccccc 50% 50% repeat-x;
+    color: #222222;
+    font-weight: bold;
+}
+
+.ui-widget-header a {
+    color: #222222;
+}
+
+/* Interaction states
+----------------------------------*/
+.ui-state-default, .ui-widget-content .ui-state-default {
+    border: 1px solid #d3d3d3;
+    background: #e6e6e6 50% 50% repeat-x;
+    font-weight: normal;
+    color: #555555;
+    outline: none;
+}
+
+.ui-state-default a, .ui-state-default a:link, .ui-state-default a:visited {
+    color: #555555;
+    text-decoration: none;
+    outline: none;
+}
+
+.ui-state-hover, .ui-widget-content .ui-state-hover, .ui-state-focus, .ui-widget-content .ui-state-focus {
+    border: 1px solid #999999;
+    background: #dadada 50% 50% repeat-x;
+    font-weight: normal;
+    color: #212121;
+    outline: none;
+}
+
+.ui-state-hover a, .ui-state-hover a:hover {
+    color: #212121;
+    text-decoration: none;
+    outline: none;
+}
+
+.ui-state-active, .ui-widget-content .ui-state-active {
+    border: 1px solid #aaaaaa;
+    background: #ffffff 50% 50% repeat-x;
+    font-weight: normal;
+    color: #212121;
+    outline: none;
+}
+
+.ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited {
+    color: #212121;
+    outline: none;
+    text-decoration: none;
+}
+
+/* Interaction Cues
+----------------------------------*/
+.ui-state-highlight, .ui-widget-content .ui-state-highlight {
+    border: 1px solid #fcefa1;
+    background: #fbf9ee 50% 50% repeat-x;
+    color: #363636;
+}
+
+.ui-state-highlight a, .ui-widget-content .ui-state-highlight a {
+    color: #363636;
+}
+
+.ui-state-error, .ui-widget-content .ui-state-error {
+    border: 1px solid #cd0a0a;
+    background: #fef1ec 50% 50% repeat-x;
+    color: #cd0a0a;
+}
+
+.ui-state-error a, .ui-widget-content .ui-state-error a {
+    color: #cd0a0a;
+}
+
+.ui-state-error-text, .ui-widget-content .ui-state-error-text {
+    color: #cd0a0a;
+}
+
+.ui-state-disabled, .ui-widget-content .ui-state-disabled {
+    opacity: .35;
+    filter: Alpha(Opacity=35);
+    background-image: none;
+}
+
+.ui-priority-primary, .ui-widget-content .ui-priority-primary {
+    font-weight: bold;
+}
+
+.ui-priority-secondary, .ui-widget-content .ui-priority-secondary {
+    opacity: .7;
+    filter: Alpha(Opacity=70);
+    font-weight: normal;
+}
+
+/* Icons
+----------------------------------*/
+
+/* states and images */
+.ui-icon {
+    width: 16px;
+    height: 16px;
+}
+
+
+/* Misc visuals
+----------------------------------*/
+
+/* Corner radius */
+.ui-corner-tl {
+    -moz-border-radius-topleft: 4px;
+    -webkit-border-top-left-radius: 4px;
+}
+
+.ui-corner-tr {
+    -moz-border-radius-topright: 4px;
+    -webkit-border-top-right-radius: 4px;
+}
+
+.ui-corner-bl {
+    -moz-border-radius-bottomleft: 4px;
+    -webkit-border-bottom-left-radius: 4px;
+}
+
+.ui-corner-br {
+    -moz-border-radius-bottomright: 4px;
+    -webkit-border-bottom-right-radius: 4px;
+}
+
+.ui-corner-top {
+    -moz-border-radius-topleft: 4px;
+    -webkit-border-top-left-radius: 4px;
+    -moz-border-radius-topright: 4px;
+    -webkit-border-top-right-radius: 4px;
+}
+
+.ui-corner-bottom {
+    -moz-border-radius-bottomleft: 4px;
+    -webkit-border-bottom-left-radius: 4px;
+    -moz-border-radius-bottomright: 4px;
+    -webkit-border-bottom-right-radius: 4px;
+}
+
+.ui-corner-right {
+    -moz-border-radius-topright: 4px;
+    -webkit-border-top-right-radius: 4px;
+    -moz-border-radius-bottomright: 4px;
+    -webkit-border-bottom-right-radius: 4px;
+}
+
+.ui-corner-left {
+    -moz-border-radius-topleft: 4px;
+    -webkit-border-top-left-radius: 4px;
+    -moz-border-radius-bottomleft: 4px;
+    -webkit-border-bottom-left-radius: 4px;
+}
+
+.ui-corner-all {
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+}
+
+/* Overlays */
+.ui-widget-overlay {
+    background: #aaaaaa 50% 50% repeat-x;
+    opacity: .30;
+    filter: Alpha(Opacity=30);
+}
+
+.ui-widget-shadow {
+    margin: -8px 0 0 -8px;
+    padding: 8px;
+    background: #aaaaa 50% 50% repeat-x;
+    opacity: .30;
+    filter: Alpha(Opacity=30);
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+}
+
+/* Accordion
+----------------------------------*/
+.ui-accordion .ui-accordion-header {
+    cursor: pointer;
+    position: relative;
+    margin-top: 1px;
+    zoom: 1;
+}
+
+.ui-accordion .ui-accordion-li-fix {
+    display: inline;
+}
+
+.ui-accordion .ui-accordion-header-active {
+    border-bottom: 0 !important;
+}
+
+.ui-accordion .ui-accordion-header a {
+    display: block;
+    font-size: 1em;
+    padding: .5em .5em .5em 2.2em;
+}
+
+.ui-accordion .ui-accordion-header .ui-icon {
+    position: absolute;
+    left: .5em;
+    top: 50%;
+    margin-top: -8px;
+}
+
+.ui-accordion .ui-accordion-content {
+    padding: 1em 2.2em;
+    border-top: 0;
+    margin-top: -2px;
+    position: relative;
+    top: 1px;
+    margin-bottom: 2px;
+    overflow: auto;
+    display: none;
+}
+
+.ui-accordion .ui-accordion-content-active {
+    display: block;
+}
+
+/* Datepicker
+----------------------------------*/
+.ui-datepicker {
+    width: 17em;
+    padding: .2em .2em 0;
+}
+
+.ui-datepicker .ui-datepicker-header {
+    position: relative;
+    padding: .2em 0;
+}
+
+.ui-datepicker .ui-datepicker-prev, .ui-datepicker .ui-datepicker-next {
+    position: absolute;
+    top: 2px;
+    width: 1.8em;
+    height: 1.8em;
+}
+
+.ui-datepicker .ui-datepicker-prev-hover, .ui-datepicker .ui-datepicker-next-hover {
+    top: 1px;
+}
+
+.ui-datepicker .ui-datepicker-prev {
+    left: 2px;
+}
+
+.ui-datepicker .ui-datepicker-next {
+    right: 2px;
+}
+
+.ui-datepicker .ui-datepicker-prev-hover {
+    left: 1px;
+}
+
+.ui-datepicker .ui-datepicker-next-hover {
+    right: 1px;
+}
+
+.ui-datepicker .ui-datepicker-prev span, .ui-datepicker .ui-datepicker-next span {
+    display: block;
+    position: absolute;
+    left: 50%;
+    margin-left: -8px;
+    top: 50%;
+    margin-top: -8px;
+}
+
+.ui-datepicker .ui-datepicker-title {
+    margin: 0 2.3em;
+    line-height: 1.8em;
+    text-align: center;
+}
+
+.ui-datepicker .ui-datepicker-title select {
+    float: left;
+    font-size: 1em;
+    margin: 1px 0;
+}
+
+.ui-datepicker select.ui-datepicker-month-year {
+    width: 100%;
+}
+
+.ui-datepicker select.ui-datepicker-month,
+.ui-datepicker select.ui-datepicker-year {
+    width: 49%;
+}
+
+.ui-datepicker .ui-datepicker-title select.ui-datepicker-year {
+    float: right;
+}
+
+.ui-datepicker table {
+    width: 100%;
+    font-size: .9em;
+    border-collapse: collapse;
+    margin: 0 0 .4em;
+}
+
+.ui-datepicker th {
+    padding: .7em .3em;
+    text-align: center;
+    font-weight: bold;
+    border: 0;
+}
+
+.ui-datepicker td {
+    border: 0;
+    padding: 1px;
+}
+
+.ui-datepicker td span, .ui-datepicker td a {
+    display: block;
+    padding: .2em;
+    text-align: right;
+    text-decoration: none;
+}
+
+.ui-datepicker .ui-datepicker-buttonpane {
+    margin: .7em 0 0 0;
+    padding: 0 .2em;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+}
+
+.ui-datepicker .ui-datepicker-buttonpane button {
+    float: right;
+    margin: .5em .2em .4em;
+    cursor: pointer;
+    padding: .2em .6em .3em .6em;
+    width: auto;
+    overflow: visible;
+}
+
+.ui-datepicker .ui-datepicker-buttonpane button.ui-datepicker-current {
+    float: left;
+}
+
+/* with multiple calendars */
+.ui-datepicker.ui-datepicker-multi {
+    width: auto;
+}
+
+.ui-datepicker-multi .ui-datepicker-group {
+    float: left;
+}
+
+.ui-datepicker-multi .ui-datepicker-group table {
+    width: 95%;
+    margin: 0 auto .4em;
+}
+
+.ui-datepicker-multi-2 .ui-datepicker-group {
+    width: 50%;
+}
+
+.ui-datepicker-multi-3 .ui-datepicker-group {
+    width: 33.3%;
+}
+
+.ui-datepicker-multi-4 .ui-datepicker-group {
+    width: 25%;
+}
+
+.ui-datepicker-multi .ui-datepicker-group-last .ui-datepicker-header {
+    border-left-width: 0;
+}
+
+.ui-datepicker-multi .ui-datepicker-group-middle .ui-datepicker-header {
+    border-left-width: 0;
+}
+
+.ui-datepicker-multi .ui-datepicker-buttonpane {
+    clear: left;
+}
+
+.ui-datepicker-row-break {
+    clear: both;
+    width: 100%;
+}
+
+/* RTL support */
+.ui-datepicker-rtl {
+    direction: rtl;
+}
+
+.ui-datepicker-rtl .ui-datepicker-prev {
+    right: 2px;
+    left: auto;
+}
+
+.ui-datepicker-rtl .ui-datepicker-next {
+    left: 2px;
+    right: auto;
+}
+
+.ui-datepicker-rtl .ui-datepicker-prev:hover {
+    right: 1px;
+    left: auto;
+}
+
+.ui-datepicker-rtl .ui-datepicker-next:hover {
+    left: 1px;
+    right: auto;
+}
+
+.ui-datepicker-rtl .ui-datepicker-buttonpane {
+    clear: right;
+}
+
+.ui-datepicker-rtl .ui-datepicker-buttonpane button {
+    float: left;
+}
+
+.ui-datepicker-rtl .ui-datepicker-buttonpane button.ui-datepicker-current {
+    float: right;
+}
+
+.ui-datepicker-rtl .ui-datepicker-group {
+    float: right;
+}
+
+.ui-datepicker-rtl .ui-datepicker-group-last .ui-datepicker-header {
+    border-right-width: 0;
+    border-left-width: 1px;
+}
+
+.ui-datepicker-rtl .ui-datepicker-group-middle .ui-datepicker-header {
+    border-right-width: 0;
+    border-left-width: 1px;
+}
+
+/* IE6 IFRAME FIX (taken from datepicker 1.5.3 */
+.ui-datepicker-cover {
+    display: none; /*sorry for IE5*/
+    display /**/: block; /*sorry for IE5*/
+    position: absolute; /*must have*/
+    z-index: -1; /*must have*/
+    filter: mask(); /*must have*/
+    top: -4px; /*must have*/
+    left: -4px; /*must have*/
+    width: 200px; /*must have*/
+    height: 200px; /*must have*/
+}
+
+/* Dialog
+----------------------------------*/
+.ui-dialog {
+    position: relative;
+    padding: .2em;
+    width: 300px;
+}
+
+.ui-dialog .ui-dialog-titlebar {
+    padding: .5em .3em .3em 1em;
+    position: relative;
+}
+
+.ui-dialog .ui-dialog-title {
+    float: left;
+    margin: .1em 0 .2em;
+}
+
+.ui-dialog .ui-dialog-titlebar-close {
+    position: absolute;
+    right: .3em;
+    top: 50%;
+    width: 19px;
+    margin: -10px 0 0 0;
+    padding: 1px;
+    height: 18px;
+}
+
+.ui-dialog .ui-dialog-titlebar-close span {
+    display: block;
+    margin: 1px;
+}
+
+.ui-dialog .ui-dialog-titlebar-close:hover, .ui-dialog .ui-dialog-titlebar-close:focus {
+    padding: 0;
+}
+
+.ui-dialog .ui-dialog-content {
+    border: 0;
+    padding: .5em 1em;
+    background: none;
+    overflow: auto;
+    zoom: 1;
+}
+
+.ui-dialog .ui-dialog-buttonpane {
+    text-align: left;
+    border-width: 1px 0 0 0;
+    background-image: none;
+    margin: .5em 0 0 0;
+    padding: .3em 1em .5em .4em;
+}
+
+.ui-dialog .ui-dialog-buttonpane button {
+    float: right;
+    margin: .5em .4em .5em 0;
+    cursor: pointer;
+    padding: .2em .6em .3em .6em;
+    line-height: 1.4em;
+    width: auto;
+    overflow: visible;
+}
+
+.ui-dialog .ui-resizable-se {
+    width: 14px;
+    height: 14px;
+    right: 3px;
+    bottom: 3px;
+}
+
+.ui-draggable .ui-dialog-titlebar {
+    cursor: move;
+}
+
+/* Progressbar
+----------------------------------*/
+.ui-progressbar {
+    height: 2em;
+    text-align: left;
+}
+
+.ui-progressbar .ui-progressbar-value {
+    margin: -1px;
+    height: 100%;
+}
+
+/* Resizable
+----------------------------------*/
+.ui-resizable {
+    position: relative;
+}
+
+.ui-resizable-handle {
+    position: absolute;
+    font-size: 0.1px;
+    z-index: 99999;
+    display: block;
+}
+
+.ui-resizable-disabled .ui-resizable-handle, .ui-resizable-autohide .ui-resizable-handle {
+    display: none;
+}
+
+.ui-resizable-n {
+    cursor: n-resize;
+    height: 15px;
+    width: 100%;
+    top: -13px;
+    left: 0px;
+}
+
+.ui-resizable-s {
+    cursor: s-resize;
+    height: 15px;
+    width: 100%;
+    bottom: -13px;
+    left: 0px;
+}
+
+.ui-resizable-e {
+    cursor: e-resize;
+    width: 15px;
+    right: -13px;
+    top: 0px;
+    height: 100%;
+}
+
+.ui-resizable-w {
+    cursor: w-resize;
+    width: 15px;
+    left: -13px;
+    top: 0px;
+    height: 100%;
+}
+
+.ui-resizable-se {
+    cursor: se-resize;
+    width: 25px;
+    height: 25px;
+    right: -10px;
+    bottom: -10px;
+}
+
+.ui-resizable-sw {
+    cursor: sw-resize;
+    width: 25px;
+    height: 25px;
+    left: -15px;
+    bottom: -15px;
+}
+
+.ui-resizable-nw {
+    cursor: nw-resize;
+    width: 15px;
+    height: 15px;
+    left: -5px;
+    top: -5px;
+}
+
+.ui-resizable-ne {
+    cursor: ne-resize;
+    width: 15px;
+    height: 15px;
+    right: -5px;
+    top: -5px;
+}
+
+/* Slider
+----------------------------------*/
+.ui-slider {
+    position: relative;
+    text-align: left;
+}
+
+.ui-slider .ui-slider-handle {
+    position: absolute;
+    z-index: 2;
+    width: 1.2em;
+    height: 1.2em;
+    cursor: default;
+}
+
+.ui-slider .ui-slider-range {
+    position: absolute;
+    z-index: 1;
+    font-size: .7em;
+    display: block;
+    border: 0;
+}
+
+.ui-slider-horizontal {
+    height: .8em;
+}
+
+.ui-slider-horizontal .ui-slider-handle {
+    top: -.3em;
+    margin-left: -.6em;
+}
+
+.ui-slider-horizontal .ui-slider-range {
+    top: 0;
+    height: 100%;
+}
+
+.ui-slider-horizontal .ui-slider-range-min {
+    left: 0;
+}
+
+.ui-slider-horizontal .ui-slider-range-max {
+    right: 0;
+}
+
+.ui-slider-vertical {
+    width: .8em;
+    height: 100px;
+}
+
+.ui-slider-vertical .ui-slider-handle {
+    left: -.3em;
+    margin-left: 0;
+    margin-bottom: -.6em;
+}
+
+.ui-slider-vertical .ui-slider-range {
+    left: 0;
+    width: 100%;
+}
+
+.ui-slider-vertical .ui-slider-range-min {
+    bottom: 0;
+}
+
+.ui-slider-vertical .ui-slider-range-max {
+    top: 0;
+}
+
+/* Tabs
+----------------------------------*/
+.ui-tabs {
+    padding: .2em;
+    zoom: 1;
+}
+
+.ui-tabs .ui-tabs-nav {
+    list-style: none;
+    position: relative;
+    padding: .2em .2em 0;
+}
+
+.ui-tabs .ui-tabs-nav li {
+    position: relative;
+    float: left;
+    border-bottom-width: 0 !important;
+    margin: 0 .2em -1px 0;
+    padding: 0;
+}
+
+.ui-tabs .ui-tabs-nav li a {
+    float: left;
+    text-decoration: none;
+    padding: .5em 1em;
+}
+
+.ui-tabs .ui-tabs-nav li.ui-tabs-selected {
+    padding-bottom: 1px;
+    border-bottom-width: 0;
+}
+
+.ui-tabs .ui-tabs-nav li.ui-tabs-selected a, .ui-tabs .ui-tabs-nav li.ui-state-disabled a, .ui-tabs .ui-tabs-nav li.ui-state-processing a {
+    cursor: text;
+}
+
+.ui-tabs .ui-tabs-nav li a, .ui-tabs.ui-tabs-collapsible .ui-tabs-nav li.ui-tabs-selected a {
+    cursor: pointer;
+}
+
+/* first selector in group seems obsolete, but required to overcome bug in Opera applying cursor: text overall if defined elsewhere... */
+.ui-tabs .ui-tabs-panel {
+    padding: 1em 1.4em;
+    display: block;
+    border-width: 0;
+    background: none;
+}
+
+.ui-tabs .ui-tabs-hide {
+    display: none !important;
+}
+
