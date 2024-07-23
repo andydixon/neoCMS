@@ -6,7 +6,6 @@
 if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSsession')) {
 
     include_once('urldissect.php');
-    include_once('ftpstart.php');
     include_once('createsession.php');
 
     if (!empty($_POST) && isset($_SESSION['neoCMSUserid'])) {
@@ -30,16 +29,6 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
 
                     if (move_uploaded_file($file['tmp_name'], $uploadfile)) {
                         $alert = "Your file was successfully uploaded.";
-                    } elseif ($ftpconn) {
-
-                        $path = urldissect($_SERVER['SCRIPT_NAME'], false, 3);
-                        $uploadfile = str_ireplace('../../', '', $uploadfile);
-
-                        $remotefile = $ftpwd . $path . $uploadfile;
-                        $tempfile = fopen($file['tmp_name'], 'r');
-
-                        if (ftp_fput($ftpconn, $remotefile, $tempfile, FTP_BINARY)) $alert = "Your file was successfully uploaded.";
-
                     }
 
                 } else {
@@ -73,22 +62,7 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
 
                 if (!preg_match('/(\.html|\.php|\.js|\.css|\.htm|\.shtml|\.asp|\.cfm|\.phtml)$/i', $fileName) && $fileSize < 100000000) {
 
-                    if ($ftpconn) {
-
-                        $path = urldissect($_SERVER['SCRIPT_NAME'], false, 3);
-                        $uploadfile = str_ireplace('../../', '', $uploadfile);
-
-                        $remotefile = $ftpwd . $path . $uploadfile;
-                        $tempfile = fopen($file['tmp_name'], 'r');
-
-                        if (ftp_fput($ftpconn, $remotefile, $tempfile, FTP_BINARY)) $alert = "Your file was successfully uploaded.";
-                        else {
-                            $alert = "<strong>Error:</strong> You do not have permission to upload files to this folder.";
-                            $script = '<script language="javascript" type="text/javascript">window.top.window.fileInfo("", "' . $alert . '", "", "" );</script>';
-                            echo $script;
-                        }
-
-                    } elseif (move_uploaded_file($file['tmp_name'], $uploadfile)) {
+                    if (move_uploaded_file($file['tmp_name'], $uploadfile)) {
                         $alert = "Your file was successfully uploaded.";
                     } else {
                         $alert = "<strong>Error:</strong> You do not have permission to upload files to this folder.";
@@ -111,10 +85,6 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
 
         }
 
-        if ($ftpconn) ftp_close($ftpconn);
-
     }
 
 }
-
-?>

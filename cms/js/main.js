@@ -10,7 +10,6 @@ $(function () {
     });
     $(window).bind('resize', windowResize);
     $('#neoCMSLoginForm').bind('submit', loginSubmit);
-    $('#forgotPass').bind('click', forgotShow);
     $('#neoCMSUsername input').focus();
     $('#neoCMSHome').bind('click', function () {
         checkURL(fpath())
@@ -18,14 +17,14 @@ $(function () {
     fBrowseBind()
 });
 tempCache = function () {
-    $.ajax({url: "neocms-temps/editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/image-editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/video-editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/html-editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/link-editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/table-editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/prompt.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/upload.html", cache: true, dataType: "html"})
+    $.ajax({url: "templates/editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/image-editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/video-editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/html-editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/link-editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/table-editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/prompt.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/upload.html", cache: true, dataType: "html"})
 };
 fBrowseBind = function () {
     $('.neoCMSFBrowse').unbind('click').bind('click', function () {
@@ -68,29 +67,6 @@ loginValid = function () {
 };
 loginIncorr = function (message) {
     $('#neoCMSEnter p.error').html(message).css('display', 'block');
-    $('#neoCMSLoginIframe').remove()
-};
-forgotShow = function () {
-    $('#neoCMSLoginForm').attr({action: 'core/forgotpassword.php'}).find('p.error').css('display', 'none');
-    $('#forgot').css({opacity: '0', display: 'block'}).fadeTo(300, 1.0, function () {
-        $('#forgotCancel').unbind('click').bind('click', forgotHide);
-        $('#neoCMSPassword').remove()
-    })
-};
-forgotHide = function () {
-    $('#neoCMSLoginForm').attr({action: 'core/forgotpassword.php'}).find('p.error').css('display', 'none');
-    $('<li/>').attr('id', 'neoCMSPassword').html('<br/>').prepend($('<label/>').html('Password')).append($('<input/>').addClass("neoCMSInput").attr({
-        name: "neoCMSPassword",
-        type: "password",
-        tabindex: "2"
-    })).append($('<p/>').addClass('error').html('Required')).insertAfter('#neoCMSUsername');
-    $('#forgot').css('display', 'none');
-    $('#neoCMSLoginForm').attr({action: 'core/login.php'});
-    $('#forgot p.message').html('').css({display: 'none'})
-};
-forgotReset = function (message) {
-    var c = (message.match(/domain/gi)) ? '#666' : '#fff';
-    $('#forgot p.message').html(message).css({color: c, display: 'block'});
     $('#neoCMSLoginIframe').remove()
 };
 windowResize = function () {
