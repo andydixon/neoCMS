@@ -1,4 +1,5 @@
-var undoC, neoCMSGlobalPath, neoCMSPath, neoCMSFiles, neoCMSHTMLEdit, neoCMSFilePath, neoCMSImagePath, fileTarget, origImg,
+var undoC, neoCMSGlobalPath, neoCMSPath, neoCMSFiles, neoCMSHTMLEdit, neoCMSFilePath, neoCMSImagePath, fileTarget,
+    origImg,
     bm;
 $(function () {
     $(window).bind('load', neocmsStart);
@@ -1165,7 +1166,8 @@ imageConstrain = function (ele) {
     }
 };
 changeSize = function (f, ele) {
-    var ele = (ele) ? ele : $('.neoCMSEle', ifrDoc)[0], fval = $('#' + f).val(), fWidth = $('#neoCMSImgStatsWidth').val(),
+    var ele = (ele) ? ele : $('.neoCMSEle', ifrDoc)[0], fval = $('#' + f).val(),
+        fWidth = $('#neoCMSImgStatsWidth').val(),
         fHeight = $('#neoCMSImgStatsHeight').val();
     if ($('#neoCMSUploadImgClone', ifrDoc).length) ele = $('#neoCMSUploadImgClone', ifrDoc);
     var eleWidth = $(ele, ifrDoc).width();
@@ -1518,7 +1520,8 @@ vidBind = function () {
     })
 };
 vidDone = function (ele) {
-    var eleEditNum = $(ele, ifrDoc).attr('neocmsid').replace('neoCMSEditArea', ''), content = $('#neoCMSVidEmbed').val();
+    var eleEditNum = $(ele, ifrDoc).attr('neocmsid').replace('neoCMSEditArea', ''),
+        content = $('#neoCMSVidEmbed').val();
     createUndo(ele);
     content = $(content, ifrDoc).addClass('neocms');
     var constring = eleHTML(content);

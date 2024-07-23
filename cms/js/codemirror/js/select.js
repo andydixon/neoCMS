@@ -302,7 +302,7 @@ var select = {};
             }
         }
 
-        // Used to normalize the effect of the enter key, since browsers
+        // Used to normalise the effect of the enter key, since browsers
         // do widely different things when pressing enter in designMode.
         select.insertNewlineAtCursor = function (window) {
             insertAtCursor(window, "<br>");
@@ -396,7 +396,7 @@ var select = {};
             // We want the nodes right at the cursor, not one of their
             // ancestors with a suitable offset. This goes down the DOM tree
             // until a 'leaf' is reached (or is it *up* the DOM tree?).
-            function normalize(point) {
+            function normalise(point) {
                 while (point.node.nodeType != 3 && !isBR(point.node)) {
                     var newNode = point.node.childNodes[point.offset] || point.node.nextSibling;
                     point.offset = 0;
@@ -410,8 +410,8 @@ var select = {};
                 }
             }
 
-            normalize(currentSelection.start);
-            normalize(currentSelection.end);
+            normalise(currentSelection.start);
+            normalise(currentSelection.end);
         };
 
         select.selectMarked = function () {

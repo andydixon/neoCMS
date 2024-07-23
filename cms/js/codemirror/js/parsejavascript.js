@@ -1,6 +1,6 @@
 /* Parse function for JavaScript. Makes use of the tokenizer from
  * tokenizejavascript.js. Note that your parsers do not have to be
- * this complicated -- if you don't want to recognize local variables,
+ * this complicated -- if you don't want to recognise local variables,
  * in many languages it is enough to just look for braces, semicolons,
  * parentheses, etc, and know when you are inside a string or comment.
  *
@@ -297,7 +297,7 @@ var JSParser = Editor.Parser = (function () {
             if (atomicTypes.hasOwnProperty(type)) cont(expect(":"), expression);
         }
 
-        // Parses a comma-separated list of the things that are recognized
+        // Parses a comma-separated list of the things that are recognised
         // by the 'what' argument.
         function commasep(what, end) {
             function proceed(type) {
