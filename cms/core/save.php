@@ -10,7 +10,6 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
     if (isset($_SESSION['neoCMSUserid'])) {
 
         include_once('urldissect.php');
-        include_once('ftpstart.php');
         include_once('checkpath.php');
 
         $message = 'Your page was successfully published.';
@@ -47,7 +46,7 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
             function loadfile($url, $incpath, $f)
             {
 
-                global $message, $includes, $pagepath, $ftpconn, $ftpwd, $doctype, $encode, $edit;
+                global $message, $includes, $pagepath, $doctype, $encode, $edit;
 
                 $ssi = false;
 
@@ -85,37 +84,13 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
                         $pagename = preg_replace('/(\.php|\.asp|\.html|\.htm|\.phtml|\.shtml|\.cfm)/', '', $pagename);
                         $backup = dirname(__FILE__) . '/../backups/' . $pagename . '_Bak.' . $pageext[1];
 
-                        if ($ftpconn) {
-
-                            $backdoc = tmpfile();
-                            if (!$backdoc) {
-                                $backdocp = tempnam(dirname(__FILE__) . '/../settings/tmp', 'Back');
-                                chmod($backdocp, 0777);
-                                $backdoc = fopen($backdocp, 'w+');
-                            }
-
-                            fwrite($backdoc, $content);
-                            rewind($backdoc);
-
-                            $path = urldissect($_SERVER['SCRIPT_NAME'], false, 2);
-
-                            $remotefile = $ftpwd . $path . 'backups/' . $pagename . '_Bak.' . $pageext[1];
-
-                            echo "Backup File: $remotefile\n\n";
-
-                            if (ftp_fput($ftpconn, $remotefile, $backdoc, FTP_BINARY)) echo "Uploaded Backup: $remotefile!\n\n";
-                            else $message = '<strong>Error:</strong> neocms failed creating backup for: <em>' . $remotefile . '</em>';
-
-                            fclose($backdoc);
-                            if (isset($backdocp)) unlink($backdocp);
-
-                        } elseif (is_writable($url)) {
+                        if (is_writable($url)) {
 
                             $backdoc = fopen($backup, "w+");
                             fwrite($backdoc, $content);
                             fclose($backdoc);
 
-                        } else $message = '<strong>Error:</strong> You do not have permission to edit this page: <em>' . $pagefile . "</em>. Try <a href='settings/ftpinfo.php' title='Enter your FTP info'>saving your FTP info here</a>.";
+                        } else $message = '<strong>Error:</strong> You do not have permission to edit this page: <em>' . $pagefile . "</em>.";
 
                         // clean up content
 
@@ -500,7 +475,7 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
                                     fwrite($doc, $fpost);
                                     fclose($doc);
 
-                                } else $message = "<strong>Error:</strong> You do not have permission to edit this page. Try <a href='settings/ftpinfo.php' title='Enter your FTP info'>saving your FTP info here</a>.";
+                                } else $message = "<strong>Error:</strong> You do not have permission to edit this page.";
 
                             } else $message = '<strong>Error:</strong> neocms is unable find this page.';
 

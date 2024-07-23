@@ -10,7 +10,6 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
     if (isset($_SESSION['neoCMSUserid'])) {
 
         include_once('urldissect.php');
-        include_once('ftpstart.php');
         include_once('checkpath.php');
 
         $message = '<strong>Error:</strong> There was an error restoring your page. Please try again.';
@@ -103,58 +102,15 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
             function editfile($content, $backcontent, $url, $incpath, $inc)
             {
 
-                global $ftpconn, $ftpwd;
 
                 if ($content != $backcontent && ((!stristr($content, '<?php') && !strstr($content, '<%')) || (preg_match('/>[^<]+</', $backcontent) || preg_match('/<html/', $backcontent)) && strstr($backcontent, 'neocms'))) {
 
-                    if ($ftpconn) {
-
-                        $restdoc = tmpfile();
-                        if (!$restdoc) {
-                            $restdocp = tempnam(dirname(__FILE__) . '/../settings/tmp', 'Rest');
-                            chmod($restdocp, 0777);
-                            $restdoc = fopen($restdocp, 'w+');
-                        }
-
-                        fwrite($restdoc, $backcontent);
-                        rewind($restdoc);
-
-                        if (strstr($url, $_SERVER['DOCUMENT_ROOT'])) {
-
-                            $nfkey = explode($_SERVER['DOCUMENT_ROOT'], $url);
-                            $nfkey = $nfkey[1];
-
-                            if ($inc) $remotefile = $ftpwd . $nfkey;
-                            else {
-                                $path = urldissect($_SERVER['SCRIPT_NAME'], false, 3);
-                                $filename = explode('../../', $url);
-                                $filename = "$filename[1]";
-
-                                $remotefile = $ftpwd . $path . $filename;
-                            }
-
-                        } else {
-
-                            $path = urldissect($_SERVER['SCRIPT_NAME'], false, 3);
-                            $filename = explode('../../', $url);
-                            $filename = "$filename[1]";
-
-                            $remotefile = $ftpwd . $path . $filename;
-
-                        }
-
-                        if (ftp_fput($ftpconn, $remotefile, $restdoc, FTP_BINARY)) echo "Uploaded: $remotefile\n\n";
-                        else $message = '<strong>Error:</strong> neocms could not find this page: <em>' . $remotefile . '</em>';
-
-                        fclose($restdoc);
-                        if (isset($restdocp)) unlink($restdocp);
-
-                    } elseif (is_writable($url)) {
+                    if (is_writable($url)) {
                         //restores file
                         $restdoc = fopen($url, "w");
                         fputs($restdoc, $backcontent);
                         fclose($restdoc);
-                    } else $message = "<strong>Error:</strong> You do not have permission to edit this page. Try <a href='settings/ftpinfo.php' title='Enter your FTP info'>saving your FTP info here</a>.";
+                    } else $message = "<strong>Error:</strong> You do not have permission to edit this page.";
 
                 }
 
@@ -172,9 +128,5 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
             echo $script;
         }
 
-        if ($ftpconn) ftp_close($ftpconn);
-
     }
 }
-
-?>

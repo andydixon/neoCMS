@@ -9,9 +9,9 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
 
     if (isset($_SESSION['neoCMSUserid'])) {
 
-        $_SESSION['neoCMSHTML'] = $gethtml = "";
+        $_SESSION['neoCMSHTML'] = $gethtml = "Y";
         $_SESSION['neoCMSPath'] = $getpath = "cms";
-        $_SESSION['neoCMSFiles'] = $getfile = 1;
+        $_SESSION['neoCMSFiles'] = $getfile = "Y";
         $_SESSION['neoCMSFilePath'] = $getfilepath = "files";
         $_SESSION['neoCMSImagePath'] = $getimagepath = "images";
         $_SESSION['neoCMSExFolders'] = $getexfolders = "ext";
