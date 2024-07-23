@@ -563,7 +563,6 @@ div.neoCMSFiles h2 {
 
 div.disabled {
     opacity: 0.3 !important;
-    *filter: alpha(opacity=30) !important;
 }
 
 

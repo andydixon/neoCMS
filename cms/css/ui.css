@@ -460,16 +460,12 @@ a#neoCMSEditContent_deflist:link, a#neoCMSEditContent_deflist:visited {
     display: block;
     margin: 0;
     padding: 4px;
-
-    .padding:
-
-    5px;
     border-right: 3px solid #000;
     border-bottom: 3px solid #000;
     border-left: 3px solid #000;
     background: #fff;
     height: auto !important;
-    overflow-x: none;
+    overflow-x: hidden;
     overflow-y: auto;
 }
 
@@ -593,7 +589,7 @@ a.neoCMSAddDef, a.neoCMSDeleteDef {
     height: 18px;
     display: block;
     position: absolute;
-    top: 10;
+    top: 10px;
     left: 0;
     overflow: hidden;
     text-indent: -5000px;
@@ -638,7 +634,7 @@ p.neoCMSAddTerm a:hover {
     width: 353px;
     height: 135px;
     display: block;
-    background: transparent url(../images/areyousure_bg.png) no-repeat top center;
+    /** background: transparent url(../images/areyousure_bg.png) no-repeat top center; **/
     font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -1007,10 +1003,6 @@ div.neoCMSFileInfo label span {
 form.neoCMSLinkProperties, form.neoCMSDlGenerator {
     margin: 10px 0 0 0;
     padding: 15px 0 0;
-
-    .padding:
-
-    5px;
     border-top: 1px solid #444;
     clear: both;
 }
@@ -1573,13 +1565,8 @@ span.neoCMSPathDeclar {
     padding: 7px 5px 4px;
     margin: 0 10px 0 5px;
     font-weight: normal;
-
-    .position: relative
-;
-
-    .top:
-
-    4px;
+    position: relative;
+    top:4px;
 }
 
 .neoCMSDashSidebar {
@@ -1656,10 +1643,7 @@ input.filepath {
     height: 16px;
     display: inline;
     position: relative;
-
-    .top:
-
-    4px;
+    top: 4px;
 }
 
 li.shady, iframe#neoCMSFormFrame {
@@ -2182,7 +2166,7 @@ form.neoCMSAcctEditing span.neoCMSCancel, form.neoCMSNewAcctEditing span.neoCMSC
 .ui-widget-shadow {
     margin: -8px 0 0 -8px;
     padding: 8px;
-    background: #aaaaa 50% 50% repeat-x;
+    background-color: #aaaaaa;
     opacity: .30;
     filter: Alpha(Opacity=30);
     -moz-border-radius: 8px;
