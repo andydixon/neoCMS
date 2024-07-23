@@ -500,7 +500,7 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
                                     fwrite($doc, $fpost);
                                     fclose($doc);
 
-                                } else $message = "<strong>Error:</strong> You do not have permission to edit this page. Try <a href='settings/ftpinfo.php' title='Enter your FTP info'>saving your FTP info here</a>.";
+                                } else $message = "<strong>Error:</strong> You do not have permission to edit this page.";
 
                             } else $message = '<strong>Error:</strong> neocms is unable find this page.';
 

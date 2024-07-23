@@ -154,7 +154,7 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
                         $restdoc = fopen($url, "w");
                         fputs($restdoc, $backcontent);
                         fclose($restdoc);
-                    } else $message = "<strong>Error:</strong> You do not have permission to edit this page. Try <a href='settings/ftpinfo.php' title='Enter your FTP info'>saving your FTP info here</a>.";
+                    } else $message = "<strong>Error:</strong> You do not have permission to edit this page.";
 
                 }
 
