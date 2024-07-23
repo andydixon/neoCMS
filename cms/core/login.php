@@ -1,6 +1,6 @@
 <?php
 
-$_users=[];
+$_users = [];
 error_reporting(E_ALL & ~E_NOTICE);
 @session_start();
 
@@ -28,10 +28,10 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
             $script = '<script type="text/javascript">window.top.window.location="../";</script>';
             echo $script;
         } else {
-        $script = '<script type="text/javascript">window.top.window.loginIncorr("Incorrect Username or Password.");</script>';
-        echo $script;
+            $script = '<script type="text/javascript">window.top.window.loginIncorr("Incorrect Username or Password.");</script>';
+            echo $script;
+        }
     }
-}
 
 } else {
 

@@ -104,7 +104,7 @@ var Editor = (function () {
     // Creates a MochiKit-style iterator that goes over a series of DOM
     // nodes. The values it yields are strings, the textual content of
     // the nodes. It makes sure that all nodes up to and including the
-    // one whose text is being yielded have been 'normalized' to be just
+    // one whose text is being yielded have been 'normalised' to be just
     // <span> and <br> elements.
     // See the story.html file for some short remarks about the use of
     // continuation-passing style in this iterator.
@@ -145,7 +145,7 @@ var Editor = (function () {
         // confused when the cursor is between two BRs.
         var afterBR = true;
 
-        // Insert a normalized node at the current point. If it is a text
+        // Insert a normalised node at the current point. If it is a text
         // node, wrap it in a <span>, and give that span a currentText
         // property -- this is used to cache the nodeValue, because
         // directly accessing nodeValue is horribly slow on some browsers.
@@ -171,7 +171,7 @@ var Editor = (function () {
 
         // Extract the text and newlines from a DOM node, insert them into
         // the document, and yield the textual content. Used to replace
-        // non-normalized nodes.
+        // non-normalised nodes.
         function writeNode(node, c, end) {
             var toYield = [];
             forEach(simplifyDOM(node, end), function (part) {
@@ -180,7 +180,7 @@ var Editor = (function () {
             return yield(toYield.join(""), c);
         }
 
-        // Check whether a node is a normalized <span> element.
+        // Check whether a node is a normalised <span> element.
         function partNode(node) {
             if (node.isPart && node.childNodes.length == 1 && node.firstChild.nodeType == 3) {
                 node.currentText = node.firstChild.nodeValue;
@@ -190,8 +190,8 @@ var Editor = (function () {
         }
 
         // Handle a node. Add its successor to the continuation if there
-        // is one, find out whether the node is normalized. If it is,
-        // yield its content, otherwise, normalize it (writeNode will take
+        // is one, find out whether the node is normalised. If it is,
+        // yield its content, otherwise, normalise it (writeNode will take
         // care of yielding).
         function scanNode(node, c) {
             if (node.nextSibling)
@@ -1188,7 +1188,7 @@ var Editor = (function () {
         },
 
         // The function that does the actual highlighting/colouring (with
-        // help from the parser and the DOM normalizer). Its interface is
+        // help from the parser and the DOM normaliser). Its interface is
         // rather overcomplicated, because it is used in different
         // situations: ensuring that a certain line is highlighted, or
         // highlighting up to X milliseconds starting from a certain

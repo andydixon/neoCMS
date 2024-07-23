@@ -1,6 +1,7 @@
 <?php
 
 @session_start();
+include_once("config.php");
 
 if (session_id() != "") {
     if (isset($_SESSION['neoCMSSess']) && isset($_SESSION['neoCMSUserid'])) {
@@ -36,43 +37,43 @@ if (session_id() != "") {
 
     <div id="neoCMSLoginWrap" class="neoCMSLoginWrap">
 
-        <h1 class="logo">neocms</h1>
-            <div id="neoCMSAppInfo" class="neoCMSAppInfo">
-                <p>1.01<br/>
-        Copyright <?php echo @date('Y'); ?> **NAME HERE**<br/></p>
-        <p class="neoCMSTopBorder">neoCMS is developed by **NAME HERE**.</p>
-    </div>
-    <div id="neoCMSLoginCont" class="neoCMSLoginCont">
-        <form id="neoCMSLoginForm" method="post" action="core/login.php" target="neoCMSLoginIframe">
+        <h1 class="logo">neoCMS</h1>
+        <div id="neoCMSAppInfo" class="neoCMSAppInfo">
+            <p><?php echo $versionInfo; ?>><br/>
+                Copyright <?php echo @date('Y'); ?> <?php echo $companyName; ?>><br/></p>
+            <p class="neoCMSTopBorder">neoCMS is developed by Neogate Technologies.</p>
+        </div>
+        <div id="neoCMSLoginCont" class="neoCMSLoginCont">
+            <form id="neoCMSLoginForm" method="post" action="core/login.php" target="neoCMSLoginIframe">
 
-            <fieldset>
-                <legend>Login</legend>
-                <ol>
-                    <li id="neoCMSUsername"><label>Username</label><br/>
-                        <input class="neoCMSInput" name="neoCMSUsername" type="text" tabindex="1"/>
-                        <p class="error">Required</p></li>
-                    <li id="neoCMSPassword"><label>Password</label><br/>
-                        <input class="neoCMSInput" name="neoCMSPassword" type="password" tabindex="2"/>
-                        <p class="error">Required</p></li>
-                    <li id="neoCMSEnter" class="clearfix">
-                        <button id="neoCMSLoginBtn" type="submit" class="neoCMSLoginBtn" tabindex="3">login
+                <fieldset>
+                    <legend>Login</legend>
+                    <ol>
+                        <li id="neoCMSUsername"><label>Username</label><br/>
+                            <input class="neoCMSInput" name="neoCMSUsername" type="text" tabindex="1"/>
+                            <p class="error">Required</p></li>
+                        <li id="neoCMSPassword"><label>Password</label><br/>
+                            <input class="neoCMSInput" name="neoCMSPassword" type="password" tabindex="2"/>
+                            <p class="error">Required</p></li>
+                        <li id="neoCMSEnter" class="clearfix">
+                            <button id="neoCMSLoginBtn" type="submit" class="neoCMSLoginBtn" tabindex="3">login
+                            </button>
+                            <p><a id="forgotPass" href="javascript:">Forgot your password?</a></p>
+                            <p class="error invalid"></p></li>
+                    </ol>
+                    <div id="forgot" class="forgotLogin clearfix">
+                        <p>Submit your username to receive an<br/>email with your new password.</p>
+                        <button id="neoCMSSubmitBtn" type="submit" class="neoCMSSubmitBtn" tabindex="3">submit
                         </button>
-                        <p><a id="forgotPass" href="javascript:">Forgot your password?</a></p>
-                        <p class="error invalid"></p></li>
-                </ol>
-                <div id="forgot" class="forgotLogin clearfix">
-                    <p>Submit your username to receive an<br/>email with your new password.</p>
-                    <button id="neoCMSSubmitBtn" type="submit" class="neoCMSSubmitBtn" tabindex="3">submit
-                    </button>
-                    <p class="clearfix"><a id="forgotCancel" href="javascript:">Back to login</a></p>
-                    <p class="message"></p>
-                </div>
-            </fieldset>
+                        <p class="clearfix"><a id="forgotCancel" href="javascript:">Back to login</a></p>
+                        <p class="message"></p>
+                    </div>
+                </fieldset>
 
-        </form>
+            </form>
+        </div>
+
     </div>
-
-</div>
 
 </div>
 

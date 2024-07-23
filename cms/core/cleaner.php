@@ -51,12 +51,15 @@ function thecleaner($stuff)
     preg_match_all($codereg, $stuff, $code['CODE']);
     $stuff = preg_replace($codereg, '----||CODEGO3SHERE||----', $stuff);
 
-    function lower($matches) {
+    function lower($matches)
+    {
 
     }
 
     //fix uppercase tags
-    $stuff = preg_replace_callback('/<(\/|)[A-Z]+[A-Z0-9]*\b/', function($matches){return strtolower($matches[0]);}, $stuff);
+    $stuff = preg_replace_callback('/<(\/|)[A-Z]+[A-Z0-9]*\b/', function ($matches) {
+        return strtolower($matches[0]);
+    }, $stuff);
 
     //fix attribute quotes
     $stuff = preg_replace('/(<(?!meta)[^>]*\s[A-Za-z]+=)([^>\'\"\s]+)(\s*[^>]*)/', '$1"$2"$3', $stuff);
@@ -104,6 +107,6 @@ function thecleaner($stuff)
     $stuff = preg_replace("/\r\n/", "\n", $stuff);
 
     if ($stuff != '' || $stufflen == 0) return $stuff;
-    else $message = '<strong>Error:</strong> Some characters couldn&rsquo;t be recognized. Try switching to UTF-8 encoding and be sure all special characters are properly encoded.';
+    else $message = '<strong>Error:</strong> Some characters couldn&rsquo;t be recognised. Try switching to UTF-8 encoding and be sure all special characters are properly encoded.';
 
 }

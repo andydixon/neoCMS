@@ -91,7 +91,7 @@ var matching = {
 };
 
 // Standardize a few unportable event properties.
-function normalizeEvent(event) {
+function normaliseEvent(event) {
     if (!event.stopPropagation) {
         event.stopPropagation = function () {
             this.cancelBubble = true;
@@ -117,7 +117,7 @@ function normalizeEvent(event) {
 // Portably register event handlers.
 function addEventHandler(node, type, handler, removeFunc) {
     function wrapHandler(event) {
-        handler(normalizeEvent(event || window.event));
+        handler(normaliseEvent(event || window.event));
     }
 
     if (typeof node.addEventListener == "function") {

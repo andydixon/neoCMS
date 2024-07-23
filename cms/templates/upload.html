@@ -1,23 +1,23 @@
-<div id="neoCMSPrompt" class="neoCMSUploadContent neoCMSPrompt clearfix">
-    <h4 id="neoCMSPromptTitle" class="neoCMSPromptTitle">Upload A File</h4>
+<div class="neoCMSUploadContent neoCMSPrompt clearfix" id="neoCMSPrompt">
+    <h4 class="neoCMSPromptTitle" id="neoCMSPromptTitle">Upload A File</h4>
     <p id="neoCMSUploadTxt">To upload a file, first select the folder you want to upload to:</p>
-    <form target="neoCMSUploadIframe" action="functions/upload.php" method="POST" name="neoCMSUploadForm"
-          id="neoCMSUploadForm" class="neoCMSUploadForm neoCMSImgChooseInline" enctype="multipart/form-data">
+    <form action="functions/upload.php" class="neoCMSUploadForm neoCMSImgChooseInline" enctype="multipart/form-data" id="neoCMSUploadForm"
+          method="POST" name="neoCMSUploadForm" target="neoCMSUploadIframe">
         <ul>
             <li>
                 <select id="neoCMSFolder" name="neoCMSFolder">
-                    <option id="neoCMSFolderDefault" selected="selected" class="defaultFolder" value="">
+                    <option class="defaultFolder" id="neoCMSFolderDefault" selected="selected" value="">
                         Loading&hellip;
                     </option>
                 </select>
             </li>
             <li>
                 <p>Then, select the file from your computer:</p>
-                <input id="neoCMSUpload" name="neoCMSUpload" class="neoCMSUpload" type="file"/>
+                <input class="neoCMSUpload" id="neoCMSUpload" name="neoCMSUpload" type="file"/>
             </li>
             <li class="neoCMSPromptInsert">
-                <a title="Finish Uploading" href="javascript:" id="neoCMSPromptBtn">done</a>
-                <a title="cancel" href="javascript:" id="neoCMSCancelBtn">cancel</a>
+                <a href="javascript:" id="neoCMSPromptBtn" title="Finish Uploading">done</a>
+                <a href="javascript:" id="neoCMSCancelBtn" title="cancel">cancel</a>
             </li>
         </ul>
     </form>

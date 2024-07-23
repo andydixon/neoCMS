@@ -19,23 +19,23 @@ function thecleaner($stuff)
 
         //grab php
         preg_match_all($phpreg, $stuff, $code['PHP']);
-        $stuff = preg_replace($phpreg, '----||PHPGO3SHERE||----', $stuff);
+        $stuff = preg_replace($phpreg, '----||PHPTagGoesH3r3||----', $stuff);
 
         //grab asp
         preg_match_all($aspreg, $stuff, $code['ASP']);
-        $stuff = preg_replace($aspreg, '----||ASPGO3SHERE||----', $stuff);
+        $stuff = preg_replace($aspreg, '----||ASPTagGoesH3r3||----', $stuff);
 
         //grab on-page js
         preg_match_all($jsreg, $stuff, $code['JS']);
-        $stuff = preg_replace($jsreg, '----||JSGO3SHERE||----', $stuff);
+        $stuff = preg_replace($jsreg, '----||JSTagGoesH3r3||----', $stuff);
 
         //grab on-page CSS
         preg_match_all($cssreg, $stuff, $code['CSS']);
-        $stuff = preg_replace($cssreg, '----||CSSGO3SHERE||----', $stuff);
+        $stuff = preg_replace($cssreg, '----||CSSTagGoesH3r3||----', $stuff);
 
     } catch (Exception $e) {
 
-        $message = '<strong>Error:</strong> There may be too much on page Javascript or CSS. Please try moving them to external files and/or validating your HTML.';
+        $message = '<strong>Error:</strong> There may be too much on-page Javascript or CSS. Please try moving them to external files and/or validating your HTML.';
         output();
 
     }
@@ -45,18 +45,16 @@ function thecleaner($stuff)
 
     //grab pre
     preg_match_all($prereg, $stuff, $code['PRE']);
-    $stuff = preg_replace($prereg, '----||PREGO3SHERE||----', $stuff);
+    $stuff = preg_replace($prereg, '----||PreTagGoesH3r3||----', $stuff);
 
     //grab code
     preg_match_all($codereg, $stuff, $code['CODE']);
-    $stuff = preg_replace($codereg, '----||CODEGO3SHERE||----', $stuff);
-
-    function lower($matches) {
-
-    }
+    $stuff = preg_replace($codereg, '----||CodeTagGoesH3r3||----', $stuff);
 
     //fix uppercase tags
-    $stuff = preg_replace_callback('/<(\/|)[A-Z]+[A-Z0-9]*\b/', function($matches){return strtolower($matches[0]);}, $stuff);
+    $stuff = preg_replace_callback('/<(\/|)[A-Z]+[A-Z0-9]*\b/', function ($matches) {
+        return strtolower($matches[0]);
+    }, $stuff);
 
     //fix attribute quotes
     $stuff = preg_replace('/(<(?!meta)[^>]*\s[A-Za-z]+=)([^>\'\"\s]+)(\s*[^>]*)/', '$1"$2"$3', $stuff);
@@ -88,7 +86,7 @@ function thecleaner($stuff)
     $replace = array('CODE', 'PRE', 'CSS', 'JS', 'ASP', 'PHP');
 
     foreach ($replace as $r) {
-        $rreg = '/\-\-\-\-\|\|' . $r . 'GO3SHERE\|\|\-\-\-\-/';
+        $rreg = '/\-\-\-\-\|\|' . $r . 'TagGoesH3r3\|\|\-\-\-\-/';
         $c = 0;
 
         preg_match_all($rreg, $stuff, $newcode);
@@ -104,7 +102,7 @@ function thecleaner($stuff)
     $stuff = preg_replace("/\r\n/", "\n", $stuff);
 
     if ($stuff != '' || $stufflen == 0) return $stuff;
-    else $message = '<strong>Error:</strong> Some characters couldn&rsquo;t be recognized. Try switching to UTF-8 encoding and be sure all special characters are properly encoded.';
+    else $message = '<strong>Error:</strong> Some characters couldn&rsquo;t be recognised. Try switching to UTF-8 encoding and be sure all special characters are properly encoded.';
 
 }
 
