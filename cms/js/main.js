@@ -150,25 +150,28 @@ linkBind = function () {
 checkURL = function (linky) {
     var linkHref = (linky.match('://')) ? linky.split('://') : linky;
     $('#neoCMSFilesWrap').remove();
-    if (linkHref[0] == 'http' && linkHref[1]) {
+    if ((linkHref[0] == 'http' || linkHref[0] == 'https') && linkHref[1]) {
         if (linkHref[1].match('/')) linkHref = linkHref[1].split('/');
+        linkHref = linkHref[0].split(':');
         linkHref = linkHref[0];
         var neoCMSLoc = window.location.href.split('//');
         neoCMSLoc = neoCMSLoc[1].split('/');
         neoCMSLoc = neoCMSLoc[0];
         if (linkHref == neoCMSLoc || linkHref == 'www.' + neoCMSLoc) {
             if ($('#neoCMSPageEdits .edit', ifrDoc).length) {
+                console.log(linkHref);
                 navAwayPrompt(linky, 'loc')
             } else {
+                console.log($('#neoCMSPageSrc').length);
                 if ($('#neoCMSPageSrc').length) {
                     $.ajax({
-                        type: "POST", url: "functions/getpage.php", data: "page=" + linky, success: function () {
+                        type: "POST", url: "core/getpage.php", data: "page=" + linky, success: function () {
                             if (frames['neoCMSPageSrc'].contentWindow) frames['neoCMSPageSrc'].contentWindow.location.href = linky; else frames['neoCMSPageSrc'].location.href = linky
                         }
                     })
                 } else {
                     $.ajax({
-                        type: "POST", url: "../functions/getpage.php", data: "page=" + linky, success: function () {
+                        type: "POST", url: "../core/getpage.php", data: "page=" + linky, success: function () {
                             window.location = '../'
                         }
                     })
