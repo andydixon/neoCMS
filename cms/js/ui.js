@@ -51,9 +51,7 @@ getGlobals = function (path, html, files, filePath, exFolders, imagePath) {
     neoCMSFilePath = filePath;
     neoCMSImagePath = imagePath;
     neoCMSExFolders = exFolders;
-    $('#neoCMSPrefsFrame').load('core/getpath.php', function () {
-        $('#neoCMSPrefsFrame').remove()
-    });
+    $('#neoCMSPrefsFrame').remove(); // Is this needed?
     initPage();
     setTimeout(function () {
         $('#neoCMSPageSrc').bind('load', initPage)

@@ -10,10 +10,6 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
 
     if ($_POST) {
 
-        include_once('getpath.php');
-
-        $logingets = 'neoCMSUsername=' . urlencode($_POST['neoCMSUsername']) . '&neoCMSPassword=' . urlencode($_POST['neoCMSPassword']) . '&neoCMSSess=' . urlencode($_SESSION['neoCMSSess']) . '&neoCMSPath=' . urlencode($path);
-
         include_once('../config.php');
 
         if (@$_users[$_POST['neoCMSUsername']]["password"] == $_POST['neoCMSPassword']) {
