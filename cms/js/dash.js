@@ -90,7 +90,7 @@ changePrefs = function () {
 };
 logout = function () {
     $.ajax({
-        type: "POST", url: "../functions/logout.php", success: function () {
+        type: "POST", url: "../core/logout.php", success: function () {
             window.location = '../../'
         }
     })

@@ -39,7 +39,7 @@
                 <h3>Exclude Folders</h3>
                 <p>Enter a comma separated list of folder names or paths you do not want listed in the neocms file
                     browser. Do not use a &ldquo;/&rdquo; at the end fo the path. <em>Ex: &ldquo;wordpress, .svn,
-                        functions/important&rdquo;</em></p>
+                        core/important&rdquo;</em></p>
                 <ul>
                     <li><label>Folders </label><input id="neoCMSExFolders" class="neoCMSUnlocked" name="exFolders"
                                                       type="text" value=""/></li>

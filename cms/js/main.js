@@ -18,14 +18,14 @@ $(function () {
     fBrowseBind()
 });
 tempCache = function () {
-    $.ajax({url: "neocms-temps/editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/image-editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/video-editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/html-editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/link-editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/table-editor.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/prompt.html", cache: true, dataType: "html"});
-    $.ajax({url: "neocms-temps/upload.html", cache: true, dataType: "html"})
+    $.ajax({url: "templates/editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/image-editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/video-editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/html-editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/link-editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/table-editor.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/prompt.html", cache: true, dataType: "html"});
+    $.ajax({url: "templates/upload.html", cache: true, dataType: "html"})
 };
 fBrowseBind = function () {
     $('.neoCMSFBrowse').unbind('click').bind('click', function () {
@@ -174,25 +174,28 @@ linkBind = function () {
 checkURL = function (linky) {
     var linkHref = (linky.match('://')) ? linky.split('://') : linky;
     $('#neoCMSFilesWrap').remove();
-    if (linkHref[0] == 'http' && linkHref[1]) {
+    if ((linkHref[0] == 'http' || linkHref[0] == 'https') && linkHref[1]) {
         if (linkHref[1].match('/')) linkHref = linkHref[1].split('/');
+        linkHref = linkHref[0].split(':');
         linkHref = linkHref[0];
         var neoCMSLoc = window.location.href.split('//');
         neoCMSLoc = neoCMSLoc[1].split('/');
         neoCMSLoc = neoCMSLoc[0];
         if (linkHref == neoCMSLoc || linkHref == 'www.' + neoCMSLoc) {
             if ($('#neoCMSPageEdits .edit', ifrDoc).length) {
+                console.log(linkHref);
                 navAwayPrompt(linky, 'loc')
             } else {
+                console.log($('#neoCMSPageSrc').length);
                 if ($('#neoCMSPageSrc').length) {
                     $.ajax({
-                        type: "POST", url: "functions/getpage.php", data: "page=" + linky, success: function () {
+                        type: "POST", url: "core/getpage.php", data: "page=" + linky, success: function () {
                             if (frames['neoCMSPageSrc'].contentWindow) frames['neoCMSPageSrc'].contentWindow.location.href = linky; else frames['neoCMSPageSrc'].location.href = linky
                         }
                     })
                 } else {
                     $.ajax({
-                        type: "POST", url: "../functions/getpage.php", data: "page=" + linky, success: function () {
+                        type: "POST", url: "../core/getpage.php", data: "page=" + linky, success: function () {
                             window.location = '../'
                         }
                     })

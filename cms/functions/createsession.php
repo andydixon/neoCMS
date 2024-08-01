@@ -26,8 +26,8 @@ if (!isset($_SESSION['neoCMSSess'])) {
 
 } else $sessname = $_SESSION['neoCMSSess'];
 
-session_name($sessname);
-session_cache_expire(240); // 4 hours
+@session_name($sessname);
+@session_cache_expire(240); // 4 hours
 @session_start();
 
 $ver = 'NeoCMS 0.1';
