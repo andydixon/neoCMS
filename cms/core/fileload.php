@@ -12,7 +12,6 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
         $pageurl = $_SERVER['HTTP_REFERER']; //incoming page url
 
         if (stristr($pageurl, $_SERVER['HTTP_HOST'])) {
-
             $type = $_GET['type'];
 
             if ($type == 'img') $files = 'bmp,gif,jpeg,jpg,png,svg,svgx,webp';
@@ -34,91 +33,10 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
 
             $pattern = trim($pattern, '|') . ')/i';
 
-            function findfiles($path, $pattern)
-            {
 
-                global $matches, $pathdefault, $type;
 
-                $path = rtrim(str_replace("\\", "/", $path), '/') . '/';
-
-                $entries = array();
-                $dir = dir($path);
-                $neocmspath = "/\/" . $_SESSION['neoCMSPath'] . "\//";
-
-                while (false !== ($entry = $dir->read())) {
-
-                    if (!preg_match($neocmspath, $path)) $entries[] = $entry;
-
-                }
-
-                $dir->close();
-
-                foreach ($entries as $entry) {
-
-                    $fullname = $path . $entry;
-                    $pathname = str_replace('../..', '', $path);
-
-                    $exFolders = preg_replace('/,\s*/', '/|', $_SESSION['neoCMSExFolders']);
-                    $exFolders = str_replace('-', '\-', $exFolders);
-                    $exFolders = str_replace('.', '\.', $exFolders);
-                    $exFolders = '/' . str_replace('/', '\/', $exFolders) . '\//';
-
-                    if ($entry != '.' && $entry != '..' && is_dir($fullname) && is_readable($fullname) && (!preg_match($exFolders, $fullname) || $_SESSION['neoCMSExFolders'] == '')) findfiles($fullname, $pattern);
-                    elseif ($entry != '.' && $entry != '..' && is_file($fullname) && preg_match($pattern, $entry)) {
-
-                        if (!in_array($pathname, $matches)) {
-
-                            if (preg_match('/\.html|\.htm|\.php|\.cfm|\.phtml|\.shtml|\.asp/', $fullname)) {
-
-                                $content = file_get_contents($fullname);
-
-                                if (checkContent($content)) $matches[] = $fullname;
-
-                            } else $matches[] = $fullname;
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-            function checkContent($content)
-            {
-
-                global $type;
-
-                if (stristr($content, '<?php') || stristr($content, '<%')) {
-
-                    if (((!stristr($content, '<?php') && !strstr($content, '<%')) || (preg_match('/>[^<]+</', $content) || (preg_match('/<html/', $content))) || $type == 'pages')) {
-                        if (strstr($content, 'neocms')) return true;
-                        else return false;
-                    } else return false;
-
-                } elseif (preg_match('/<html/', $content) || $type == 'pages') {
-                    if (strstr($content, 'neocms')) return true;
-                }
-
-            }
-
-            function siteURL()
-            {
-                $purl = 'http';
-                $req = explode('/' . $_SESSION['neoCMSPath'] . '/', $_SERVER["REQUEST_URI"]);
-                $req = $req[0];
-
-                if ($_SERVER["HTTPS"] == "on") $purl .= "s";
-
-                $purl .= "://";
-
-                if ($_SERVER["SERVER_PORT"] != "80") $purl .= $_SERVER["SERVER_NAME"] . ":" . $_SERVER["SERVER_PORT"] . "$req/";
-                else $purl .= $_SERVER["SERVER_NAME"] . "$req/";
-
-                return strtolower($purl);
-            }
-
-            findfiles('../../', $pattern);
+            $matches = findfiles('../../', $pattern);
+            print_r($matches);
             sort($matches);
 
             $includes = array_unique($includes);
@@ -176,4 +94,85 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
 
     }
 
+}
+
+
+
+
+function findfiles($path, $pattern)
+{
+    $matches = [];
+    $path = rtrim(str_replace("\\", "/", $path), '/') . '/';
+
+    $entries = array();
+    $dir = dir($path);
+    $neocmspath = "/\/" . $_SESSION['neoCMSPath'] . "\//";
+    while (false !== ($entry = $dir->read())) {
+
+        if (!preg_match($neocmspath, $path)) $entries[] = $entry;
+
+    }
+
+    $dir->close();
+
+    foreach ($entries as $entry) {
+        $fullname = $path . $entry;
+        $pathname = str_replace('../..', '', $path);
+
+        $exFolders = preg_replace('/,\s*/', '/|', $_SESSION['neoCMSExFolders']);
+        $exFolders = str_replace('-', '\-', $exFolders);
+        $exFolders = str_replace('.', '\.', $exFolders);
+        $exFolders = '/' . str_replace('/', '\/', $exFolders) . '\//';
+
+        if ($entry != '.' && $entry != '..' && is_dir($fullname) && is_readable($fullname) && (!preg_match($exFolders, $fullname) || $_SESSION['neoCMSExFolders'] == '')) findfiles($fullname, $pattern);
+        elseif ($entry != '.' && $entry != '..' && is_file($fullname) && preg_match($pattern, $entry)) {
+
+            if (!in_array($pathname, $matches)) {
+                if (preg_match('/\.html|\.htm|\.php|\.cfm|\.phtml|\.shtml|\.asp/', $fullname)) {
+
+                    $content = file_get_contents($fullname);
+                    if (checkContent($content)) {
+                        $matches[] = $fullname;
+                    }
+
+                } else $matches[] = $fullname;
+            }
+
+        }
+    }
+return $matches;
+}
+
+function checkContent($content)
+{
+
+    global $type;
+
+    if (stristr($content, '<?php') || stristr($content, '<%')) {
+
+        if (((!stristr($content, '<?php') && !strstr($content, '<%')) || (preg_match('/>[^<]+</', $content) || (preg_match('/<html/', $content))) || $type == 'pages')) {
+            if (strstr($content, 'neocms')) return true;
+            else return false;
+        } else return false;
+
+    } elseif (preg_match('/<html/', $content) || $type == 'pages') {
+        if (strstr($content, 'neocms')) return true;
+    }
+
+}
+
+function siteURL()
+{
+    $purl = 'http';
+    $req = explode('/' . $_SESSION['neoCMSPath'] . '/', $_SERVER["REQUEST_URI"]);
+    $req = $req[0];
+
+    if ($_SERVER["HTTPS"] == "on") $purl .= "s";
+
+    $purl .= "://";
+
+    if ($_SERVER["SERVER_PORT"] != "80") $purl .= $_SERVER["SERVER_NAME"] . ":" . $_SERVER["SERVER_PORT"] . "$req/";
+    else $purl .= $_SERVER["SERVER_NAME"] . "$req/";
+
+    return strtolower($purl);
 }
