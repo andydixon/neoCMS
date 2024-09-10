@@ -426,50 +426,7 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
 
                             if (@file_exists($fkey)) {
 
-                                if ($ftpconn) {
-
-                                    $doc = tmpfile();
-                                    if (!$doc) {
-                                        $docp = tempnam(dirname(__FILE__) . '/../settings/tmp', 'Doc');
-                                        chmod($docp, 0777);
-                                        $doc = fopen($docp, 'w+');
-                                    }
-                                    $remotefile = '';
-
-                                    fwrite($doc, $fpost);
-                                    rewind($doc);
-
-                                    $incs = flatten($includes);
-
-                                    if (strstr($fkey, $_SERVER['DOCUMENT_ROOT'])) {
-
-                                        $nfkey = explode($_SERVER['DOCUMENT_ROOT'], $fkey);
-                                        $nfkey = $nfkey[1];
-
-                                        if (in_array($nfkey, $incs)) $remotefile = $ftpwd . $nfkey;
-                                        else {
-                                            $path = urldissect($_SERVER['SCRIPT_NAME'], false, 3);
-                                            $fkey = explode('../../', $fkey, 2);
-
-                                            $remotefile = $ftpwd . $path . $fkey[1];
-                                        }
-
-                                    } else {
-
-                                        $path = urldissect($_SERVER['SCRIPT_NAME'], false, 3);
-                                        $fkey = explode('../../', $fkey, 2);
-
-                                        $remotefile = $ftpwd . $path . $fkey[1];
-
-                                    }
-
-                                    if (ftp_fput($ftpconn, $remotefile, $doc, FTP_BINARY)) echo "Uploaded: $remotefile!\n\n";
-                                    else $message = '<strong>Error:</strong> neocms publish this page: <em>' . $remotefile . '</em>';
-
-                                    fclose($doc);
-                                    if (isset($docp)) unlink($docp);
-
-                                } elseif (is_writable($fkey)) {
+                                if (is_writable($fkey)) {
 
                                     $doc = fopen($fkey, "w");
                                     fwrite($doc, $fpost);
@@ -489,8 +446,6 @@ if (isset($_SESSION['neoCMSSess']) && strstr($_SESSION['neoCMSSess'], 'neoCMSses
             output();
 
         } else output();
-
-        if ($ftpconn) ftp_close($ftpconn);
     }
 } else {
     $message = '<strong>Error:</strong> neocms is unable find your session.';
