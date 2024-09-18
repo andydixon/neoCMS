@@ -1,77 +1,64 @@
 <?php
-@session_start();
-
-if (isset($_SESSION['neoCMSSess'])) {
-
-    @session_name($_SESSION['neoCMSSess']);
-    @session_start();
-
-    if (isset($_SESSION['neoCMSUserid'])) {
-
-        $user = &$_SESSION['neoCMSUserid'];
-        $admin = &$_SESSION['neoCMSIsadmin'];
-        $sess = &$_SESSION['neoCMSSess'];
-
-    } else header("Location:./login.php");
-} else header("Location:./login.php");
-
-$page = (isset($_SESSION['neoCMSCurpage'])) ? $_SESSION['neoCMSCurpage'] : "../";
-
+require_once "neoCMSCore.php";
+require_once "init.php";
 ?>
-
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN""http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <meta name="robots" content="noindex"/>
-    <link rel="shortcut icon" href="images/icon.png"/>
-    <link rel="apple-touch-icon-precomposed" href="images/apple-touch-icon-precomposed.png"/>
-    <title>neoCMS</title>
+    <title>NeoCMS</title>
+    <!-- Include jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Include TinyMCE -->
+    <script src="/cms/tinymce/tinymce.min.js"></script>
+    <!-- Include Bootstrap for modal -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
 
-    <script type="text/javascript" src="js/lib/jquery.js"></script>
-    <script type="text/javascript" src="js/lib/jquery-ui.js"></script>
-    <script type="text/javascript" src="js/tiny_mce/tiny_mce.js"></script>
+    <!-- Include editor styles -->
+    <link rel="stylesheet" href="/cms/css/editor.css">
 
-    <script type="text/javascript" src="js/codemirror/js/codemirror.js"></script>
-
-    <script type="text/javascript" src="js/main.js"></script>
-    <script type="text/javascript" src="js/ui.js"></script>
-
-    <link href="css/main.css" rel="stylesheet" type="text/css"/>
-    <link href="css/ui.css" rel="stylesheet" type="text/css"/>
-
+    <!-- Include Bootstrap JS -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
 <body>
 
-<div id="neoCMSFrameShim"></div>
+<div class="pageContainer">
+    <div class="controls">
+        <div class="logo"></div>
+        <div class="buttonContainer">
+            <ul>
+                <li><a href="#" id="selectPage" class="blueButton">Select Page</a></li>
+                <li><a href="#" id="newPage" class="blueButton">New Page</a></li>
+                <li><a href="#" id="savePage" class="greenButton">Save Changes</a></li>
+            </ul>
+        </div>
+        <div class="loggedInDetails">
+            Logged in as: <?php echo $_SESSION["core"]->getLoggedinUser(); ?>
+        </div>
+    </div>
+    <iframe id="frameContainer" src="welcome.html" class="frame"></iframe>
+</div>
+<!-- Modal -->
+<div id="editModal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-lg">
 
-<div id="neoCMSTopBanner" class="neoCMSTopBanner">
-    <div class="neoCMSHeader">
-        <ul class="neoCMSTopNav">
-            <li id="neoCMSUndo"><a title="Cannot Undo at this time" href="javascript:">Undo</a></li>
-            <li id="neoCMSRedo"><a title="Cannot Redo at this time" href="javascript:">Redo</a></li>
-            <li id="neoCMSCxl"><a title="Cannot Cancel All at this time" href="javascript:">Cancel All</a></li>
-            <li id="neoCMSRestore"><a title="Restore to the last published version" href="javascript:">Restore</a>&middot;
-            </li>
-            <li id="neoCMSPublish"><a title="You must make edits before publishing" href="javascript:">Publish</a></li>
-        </ul>
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Edit Content</h4>
+            </div>
+            <div class="modal-body">
+                <textarea id="editor"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="saveBtn" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
 
-        <h1><a id="neoCMSHome" href="javascript:" title="Go to your homepage">neocms</a></h1>
-
-        <ul class="neoCMSInfo">
-            <li id="neoCMSLogout"><a title="Logout of neocms" href="javascript:">logout</a>&middot;</li>
-            <?php if ($admin == 'Y') : ?>
-                <li id="neoCMSDashboard"><a title="Change your preferences, edit users, or enter your FTP info"
-                                            href="javascript:">settings</a>&middot;
-                </li><?php endif; ?>
-            <li><a class="neoCMSFBrowse" rel="#neoCMSPages" title="Choose a page to edit" href="javascript:">pages</a>
-            </li>
-        </ul>
     </div>
 </div>
 
-<iframe id="neoCMSPageSrc" name="neoCMSPageSrc" marginheight="0" align="top" frameborder="0" src="<?php echo $page; ?>"
-        application="yes"></iframe>
+<script src="/cms/js/cms.js"></script>
 
 </body>
 </html>

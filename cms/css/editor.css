@@ -1,0 +1,102 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+.pageContainer {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+}
+
+.pageContainer .controls {
+    flex: 0 1 auto;
+    height: 70px;
+    background-color: #666666;
+    border-bottom: 1px solid #1a1a1a;
+    -webkit-box-shadow: 0px 10px 13px -7px #000000, -1px -1px 15px 5px rgba(0, 0, 0, 0);
+    box-shadow: 0px 10px 13px -7px #000000, -1px -1px 15px 5px rgba(0, 0, 0, 0);
+}
+
+.pageContainer .frame {
+    flex: 1 1 auto;
+    border: 0;
+}
+
+.controls .logo {
+    background-image: url("/cms/img/logo.png");
+    width: 128px;
+    height: 70px;
+    display: block;
+    position: absolute;
+}
+
+.controls .buttonContainer {
+    width: 400px;
+    margin: 18px auto;
+}
+
+.controls .loggedInDetails {
+    position: absolute;
+    top: 25px;
+    right: 10px;
+}
+
+.controls .buttonContainer ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.controls .buttonContainer li {
+    display: inline;
+    margin-right: 10px;
+}
+
+.blueButton {
+    box-shadow: inset 0px 0px 15px 3px #23395e;
+    background: linear-gradient(to bottom, #2e466e 5%, #415989 100%);
+    background-color: #2e466e;
+    border-radius: 17px;
+    border: 1px solid #1f2f47;
+    display: inline-block;
+    cursor: pointer;
+    color: #ffffff;
+    font-family: Arial;
+    font-size: 15px;
+    padding: 6px 13px;
+    text-decoration: none;
+    text-shadow: 0px 1px 0px #263666;
+}
+
+.blueButton:hover {
+    background: linear-gradient(to bottom, #415989 5%, #2e466e 100%);
+    background-color: #415989;
+}
+
+.greenButton {
+    box-shadow: inset 0px 0px 15px 3px #3e7327;
+    background: linear-gradient(to bottom, #77b55a 5%, #72b352 100%);
+    background-color: #77b55a;
+    border-radius: 17px;
+    border: 1px solid #4b8f29;
+    display: inline-block;
+    cursor: pointer;
+    color: #ffffff;
+    font-family: Arial;
+    font-size: 15px;
+    padding: 6px 13px;
+    text-decoration: none;
+    text-shadow: 0px 1px 0px #5b8a3c;
+}
+
+.greenButton:hover {
+    background: linear-gradient(to bottom, #72b352 5%, #77b55a 100%);
+    background-color: #72b352;
+}
+
+.greenButton:active {
+    position: relative;
+    top: 1px;
+}
