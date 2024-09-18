@@ -37,26 +37,26 @@ require_once "init.php";
     </div>
     <iframe id="frameContainer" src="welcome.html" class="frame"></iframe>
 </div>
-    <!-- Modal -->
-    <div id="editModal" class="modal fade" role="dialog">
-      <div class="modal-dialog modal-lg">
+<!-- Modal -->
+<div id="editModal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-lg">
 
         <!-- Modal content-->
         <div class="modal-content">
-          <div class="modal-header">
-            <h4 class="modal-title">Edit Content</h4>
-          </div>
-          <div class="modal-body">
-            <textarea id="editor"></textarea>
-          </div>
-          <div class="modal-footer">
-            <button id="saveBtn" class="btn btn-primary">Save</button>
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          </div>
+            <div class="modal-header">
+                <h4 class="modal-title">Edit Content</h4>
+            </div>
+            <div class="modal-body">
+                <textarea id="editor"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="saveBtn" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
         </div>
 
-      </div>
     </div>
+</div>
 
 <script src="/cms/js/cms.js"></script>
 
