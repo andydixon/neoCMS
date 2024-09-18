@@ -1,16 +1,16 @@
-$(document).ready(function(){
+$(document).ready(function () {
 
     var currentDiv;
     var iframeDoc;
 
-    $('#frameContainer').on('load', function(){
+    $('#frameContainer').on('load', function () {
 
         // Get the iframe document
         var iframe = document.getElementById('frameContainer');
         iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
         // Set up click handler on divs with class 'editable' in the iframe
-        $(iframeDoc).find('.editable').css('cursor', 'pointer').click(function(event){
+        $(iframeDoc).find('.editable').css('cursor', 'pointer').click(function (event) {
             event.preventDefault();
 
             currentDiv = $(this);
@@ -37,9 +37,9 @@ $(document).ready(function(){
                     automatic_uploads: true,
                     images_reuse_filename: false,
                     images_upload_credentials: true,
-                    force_br_newlines : false,
-                    force_p_newlines : false,
-                    forced_root_block : '',
+                    force_br_newlines: false,
+                    force_p_newlines: false,
+                    forced_root_block: '',
                     setup: function (editor) {
                         editor.on('init', function (e) {
                             editor.setContent(content);
@@ -51,7 +51,7 @@ $(document).ready(function(){
         });
     });
 
-    $('#saveBtn').click(function(){
+    $('#saveBtn').click(function () {
         // Get the data from TinyMCE
         var data = tinymce.get('editor').getContent();
 
@@ -70,6 +70,12 @@ $(document).ready(function(){
     });
 
     $('#savePage').click(() => {
-        $.post("./controller/",{action:"save",uri:$('#frameContainer').contents().get(0).location.pathname,content:new XMLSerializer().serializeToString($('#frameContainer').contents().get(0))},function(data){alert(data)});
+        $.post("./controller/", {
+            action: "save",
+            uri: $('#frameContainer').contents().get(0).location.pathname,
+            content: new XMLSerializer().serializeToString($('#frameContainer').contents().get(0))
+        }, function (data) {
+            alert(data)
+        });
     });
 });
