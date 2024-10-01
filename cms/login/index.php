@@ -4,8 +4,8 @@ require_once "../init.php";
 // Initialize error message variable
 $error = '';
 
-if(isset($_POST['username']) && isset($_POST['password'])){
-    if(!$_SESSION['core']->login($_POST['username'],$_POST['password'])) {
+if (isset($_POST['username']) && isset($_POST['password'])) {
+    if (!$_SESSION['core']->login($_POST['username'], $_POST['password'])) {
         $error = "Invalid username or password";
     } else {
         header("Location:/cms/");
@@ -24,24 +24,28 @@ if(isset($_POST['username']) && isset($_POST['password'])){
             font-family: Arial, sans-serif;
             background-color: #eef1f5;
         }
+
         .login-container {
             width: 350px;
             margin: 100px auto;
             padding: 40px;
             background-color: #ffffff;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .login-container h2 {
             text-align: center;
             margin-bottom: 30px;
             color: #333333;
         }
+
         .login-container label {
             display: block;
             margin-bottom: 8px;
             color: #555555;
         }
+
         .login-container input[type="text"],
         .login-container input[type="password"] {
             width: 100%;
@@ -51,6 +55,7 @@ if(isset($_POST['username']) && isset($_POST['password'])){
             border-radius: 4px;
             box-sizing: border-box;
         }
+
         .login-container button {
             width: 100%;
             padding: 12px;
@@ -61,9 +66,11 @@ if(isset($_POST['username']) && isset($_POST['password'])){
             font-size: 16px;
             cursor: pointer;
         }
+
         .login-container button:hover {
             background-color: #005bb5;
         }
+
         .error-message {
             color: #ff4d4d;
             margin-bottom: 20px;
