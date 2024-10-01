@@ -3,7 +3,7 @@ require_once "neoCMSCore.php";
 require_once "init.php";
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en-gb">
 <head>
     <title>NeoCMS</title>
     <!-- Include jQuery -->
@@ -55,6 +55,21 @@ require_once "init.php";
             </div>
         </div>
 
+    </div>
+</div>
+
+<!--New Page modal -->
+<div id="newPage" title="Create a New Page">
+    <div class="modal-content">
+        <form id="newPageForm">
+            <div id="radioList">
+                <!-- Radio buttons will be populated here -->
+            </div>
+            <label for="filename">New Filename:</label>
+            <input type="text" id="filename" name="filename" placeholder="Enter new filename" required>
+
+            <button type="submit">Submit</button>
+        </form>
     </div>
 </div>
 
