@@ -1,4 +1,5 @@
 # NeoCMS
+
 ## Version 2.0
 
 Version 2.0 is a complete rewrite to ensure we support the latest jQuery and TinyMCE GPL version.
@@ -16,6 +17,7 @@ To install:
 * PHP 8 on Linux. None of that Windows Server crap
 
 ## Known Bugs
+
 * Templating (New Page) not yet implemented
 * File (not images) uploads need to be implemented
 * Not completely tested
