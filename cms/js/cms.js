@@ -51,6 +51,7 @@ $(document).ready(function () {
         });
     });
 
+    // Save changes made to a div, but not save to the file on the server
     $('#saveBtn').click(function () {
         // Get the data from TinyMCE
         var data = tinymce.get('editor').getContent();
@@ -69,13 +70,122 @@ $(document).ready(function () {
         }
     });
 
+    // Handle Saving changes to the page
     $('#savePage').click(() => {
-        $.post("./controller/", {
+        $.post("/cms/controller/", {
             action: "save",
             uri: $('#frameContainer').contents().get(0).location.pathname,
             content: new XMLSerializer().serializeToString($('#frameContainer').contents().get(0))
         }, function (data) {
-            alert(data)
+            // alert(data)
         });
     });
+
+    // Show dialog for page templates
+    $("#newPage").click(function () {
+        loadListOfTemplates(); // Call the function to load items when the modal is opened
+        $("#newPageDialog").dialog({
+            modal: true,
+            width: 500,
+            buttons: {
+                Close: function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
+    });
+
+    // Handle form submission for creating a new page
+    $("#newPageForm").submit(function (event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        let selectedItemId = $('input[name="item"]:checked').val();
+        let filename = $("#filename").val();
+
+        $.ajax({
+            url: "/cms/controller/?action=newPage",
+            method: "POST",
+            data: {
+                template: selectedItemId,
+                filename: filename
+            },
+            success: function (response) {
+                if (typeof response.error != "undefined") {
+                    alert(response.error);
+                } else {
+                    $('#frameContainer').contents().get(0).location.href = response.url;
+                    $("#newPageForm").dialog("close"); // Close the modal on success
+                }
+            },
+            error: function () {
+                alert('Failed to create the new page.');
+            }
+        });
+    });
+
+    // Function to load the items via an AJAX GET request and populate the radio buttons for page templates
+    function loadListOfTemplates() {
+        $.ajax({
+            url: "/cms/controller/?action=getTemplates",
+            method: "GET",
+            dataType: "json",
+            success: function (data) {
+                let radioList = $('#radioList');
+                radioList.empty(); // Clear previous content
+                data.forEach(function (item, index) {
+                    radioList.append(`
+            <label>
+              <input type="radio" name="item" value="${item.id}" ${index === 0 ? 'checked' : ''}>
+              ${item.name}
+            </label>
+          `);
+                });
+            },
+            error: function () {
+                alert('Failed to load templates.');
+            }
+        });
+    }
+
+    // Function to load the list of filenames via AJAX
+    function loadListOfPages() {
+        $.ajax({
+            url: "/cms/controller/?action=getPages", // Replace with your actual API endpoint
+            method: "GET",
+            dataType: "json",
+            success: function (data) {
+                let fileList = $('#fileList');
+                fileList.empty(); // Clear previous list
+
+                data.forEach(function (file) {
+                    fileList.append(`<li data-url="${file.url}">${file.name}</li>`);
+                });
+
+                // Add click event to list items to redirect
+                $("#fileList li").click(function () {
+                    const fileUrl = $(this).data("url");
+                    $('#frameContainer').contents().get(0).location.href = fileUrl; // Redirect to the clicked file's URL
+                    $("#fileListDialog").dialog("close"); // Close the modal
+                });
+            },
+            error: function () {
+                alert('Failed to load file list.');
+            }
+        });
+    }
+
+    // Handle 'Select Page' button
+    $("#selectPage").click(function () {
+        loadListOfPages(); // Call function to load the file list
+        $("#fileList").dialog({
+            modal: true,
+            width: 500,
+            buttons: {
+                Close: function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
+    });
+
 });
