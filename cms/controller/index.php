@@ -4,11 +4,12 @@ require_once "../init.php";
 
 switch ($_REQUEST["action"]) {
     case "save":
+        header('Content-type: application/json');
         if (!empty($_POST['uri']) && !empty($_POST['content'])) {
             $_SESSION['core']->saveContent($_POST['uri'], $_POST['content']);
-            echo 'Page Updated.';
+            echo json_encode(array('message'=>'Page has been saved'));
         } else {
-            echo 'Unable to save page';
+            echo json_encode(array('error'=>'Unable to save page'));
         }
         break;
 

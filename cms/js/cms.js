@@ -39,7 +39,7 @@ $(document).ready(function () {
                     images_upload_credentials: true,
                     force_br_newlines: false,
                     force_p_newlines: false,
-                    forced_root_block: false,
+                    newline_behavior: 'linebreak',
                     setup: function (editor) {
                         editor.on('init', function (e) {
                             editor.setContent(content);
@@ -77,6 +77,11 @@ $(document).ready(function () {
             uri: $('#frameContainer').contents().get(0).location.pathname,
             content: new XMLSerializer().serializeToString($('#frameContainer').contents().get(0))
         }, function (data) {
+            if( typeof data.error == "undefined") {
+                showMessage(data.message,"success");
+            } else {
+                showMessage(data.message,"error");
+            }
             // alert(data)
         });
     });
@@ -189,3 +194,37 @@ $(document).ready(function () {
     });
 
 });
+
+function showMessage(message, type) {
+    var messageBar = $('#message-bar');
+
+    // Set the text message
+    messageBar.text(message);
+
+    // Set the color based on the type
+    if (type === 'error') {
+        messageBar.css('background-color', 'red');
+    } else if (type === 'success') {
+        messageBar.css('background-color', 'green');
+    }
+
+    // Set the full width and position
+    messageBar.css({
+        'width': '100%',
+        'position': 'fixed',
+        'top': '0',
+        'left': '0',
+        'padding': '10px',
+        'color': 'white',
+        'text-align': 'center',
+        'z-index': '9999'
+    });
+
+    // Show the message bar
+    messageBar.slideDown();
+
+    // Hide the bar after 5 seconds
+    setTimeout(function() {
+        messageBar.slideUp();
+    }, 5000);
+}
