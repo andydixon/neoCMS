@@ -8,10 +8,14 @@ require_once "init.php";
     <title>NeoCMS</title>
     <!-- Include jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.min.js" crossorigin="anonymous"></script>
     <!-- Include TinyMCE -->
     <script src="/cms/tinymce/tinymce.min.js"></script>
     <!-- Include Bootstrap for modal -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+    <!-- Include JqueryUI CSS -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.0/themes/base/jquery-ui.css">
 
     <!-- Include editor styles -->
     <link rel="stylesheet" href="/cms/css/editor.css">
@@ -59,8 +63,8 @@ require_once "init.php";
 </div>
 
 <!--New Page modal -->
-<div id="newPage" title="Create a New Page">
-    <div class="modal-content">
+<div id="newPageDialog" title="Create a New Page">
+    <div class="newpage-content">
         <form id="newPageForm">
             <div id="radioList">
                 <!-- Radio buttons will be populated here -->
@@ -70,6 +74,15 @@ require_once "init.php";
 
             <button type="submit">Submit</button>
         </form>
+    </div>
+</div>
+
+<!-- Page list modal -->
+<div id="fileListDialog" title="Select an Existing Page">
+    <div class="filelist-content">
+        <ul id="fileList">
+            <!-- File names will be populated here -->
+        </ul>
     </div>
 </div>
 

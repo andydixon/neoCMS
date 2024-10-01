@@ -100,3 +100,72 @@ body {
     position: relative;
     top: 1px;
 }
+
+
+/**
+New Page Modal
+ */
+
+#newPageDialog {
+    display: none;
+}
+
+.newpage-content {
+    padding: 20px;
+    background-color: #fefefe;
+    border: 1px solid #888;
+    width: 400px;
+    margin: auto;
+}
+
+.newpage-content form {
+    display: flex;
+    flex-direction: column;
+}
+
+.newpage-content label {
+    margin-bottom: 10px;
+}
+
+.newpage-content input[type="text"] {
+    margin-bottom: 20px;
+    padding: 5px;
+}
+
+#newPageForm label {
+    display: block;
+}
+
+/**
+File List Modal
+ */
+
+#fileListDialog {
+    display: none;
+}
+
+.filelist-content {
+    padding: 20px;
+    background-color: #fefefe;
+    border: 1px solid #888;
+    width: 400px;
+    margin: auto;
+}
+
+#fileList {
+    list-style-type: none;
+    padding: 0;
+}
+
+#fileList li {
+    padding: 10px;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    margin-bottom: 5px;
+}
+
+#fileList li:hover {
+    background-color: #e0e0e0;
+}
+
+
