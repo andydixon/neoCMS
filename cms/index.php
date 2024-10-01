@@ -24,7 +24,7 @@ require_once "init.php";
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
 <body>
-
+<div id="message-bar" style="display:none;"></div>
 <div class="pageContainer">
     <div class="controls">
         <div class="logo"></div>
