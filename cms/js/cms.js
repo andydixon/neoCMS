@@ -39,7 +39,7 @@ $(document).ready(function () {
                     images_upload_credentials: true,
                     force_br_newlines: false,
                     force_p_newlines: false,
-                    forced_root_block: '',
+                    newline_behavior: 'linebreak',
                     setup: function (editor) {
                         editor.on('init', function (e) {
                             editor.setContent(content);
@@ -77,6 +77,11 @@ $(document).ready(function () {
             uri: $('#frameContainer').contents().get(0).location.pathname,
             content: new XMLSerializer().serializeToString($('#frameContainer').contents().get(0))
         }, function (data) {
+            if( typeof data.error == "undefined") {
+                showMessage(data.message,"success");
+            } else {
+                showMessage(data.message,"error");
+            }
             // alert(data)
         });
     });
@@ -111,14 +116,15 @@ $(document).ready(function () {
             },
             success: function (response) {
                 if (typeof response.error != "undefined") {
-                    alert(response.error);
+                    showMessage(response.error,"error");
                 } else {
+                    showMessage("New page Created","success");
                     $('#frameContainer').contents().get(0).location.href = response.url;
                     $("#newPageForm").dialog("close"); // Close the modal on success
                 }
             },
             error: function () {
-                alert('Failed to create the new page.');
+                showMessage("Failed to create the new page (API error)","error");
             }
         });
     });
@@ -189,3 +195,42 @@ $(document).ready(function () {
     });
 
 });
+
+/**
+ * Show A message bar across the top of the screen for a few seconds
+ * @param message - string - message to be shown
+ * @param type - string "success" or "error"
+ */
+function showMessage(message, type) {
+    var messageBar = $('#message-bar');
+
+    // Set the text message
+    messageBar.text(message);
+
+    // Set the color based on the type
+    if (type === 'error') {
+        messageBar.css('background-color', 'red');
+    } else if (type === 'success') {
+        messageBar.css('background-color', 'green');
+    }
+
+    // Set the full width and position
+    messageBar.css({
+        'width': '100%',
+        'position': 'fixed',
+        'top': '0',
+        'left': '0',
+        'padding': '10px',
+        'color': 'white',
+        'text-align': 'center',
+        'z-index': '9999'
+    });
+
+    // Show the message bar
+    messageBar.slideDown();
+
+    // Hide the bar after 5 seconds
+    setTimeout(function() {
+        messageBar.slideUp();
+    }, 5000);
+}
