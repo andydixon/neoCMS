@@ -18,7 +18,6 @@ To install:
 
 ## Known Bugs
 
-* Templating (New Page) not yet implemented
 * File (not images) uploads need to be implemented
 * Not completely tested
 
