@@ -39,7 +39,7 @@ $(document).ready(function () {
                     images_upload_credentials: true,
                     force_br_newlines: false,
                     force_p_newlines: false,
-                    forced_root_block: '',
+                    forced_root_block: false,
                     setup: function (editor) {
                         editor.on('init', function (e) {
                             editor.setContent(content);
