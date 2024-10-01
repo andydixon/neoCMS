@@ -51,6 +51,7 @@ $(document).ready(function () {
         });
     });
 
+    // Save changes made to a div, but not save to the file on the server
     $('#saveBtn').click(function () {
         // Get the data from TinyMCE
         var data = tinymce.get('editor').getContent();
@@ -69,13 +70,76 @@ $(document).ready(function () {
         }
     });
 
+    // Handle Saving changes to the page
     $('#savePage').click(() => {
         $.post("./controller/", {
             action: "save",
             uri: $('#frameContainer').contents().get(0).location.pathname,
             content: new XMLSerializer().serializeToString($('#frameContainer').contents().get(0))
         }, function (data) {
-            alert(data)
+            // alert(data)
         });
     });
+
+    // Show dialog for page templates
+    $("#newPage").click(function() {
+        loadItems(); // Call the function to load items when the modal is opened
+        $("#newPageDialog").dialog({
+            modal: true,
+            width: 500,
+            buttons: {
+                Close: function() {
+                    $(this).dialog("close");
+                }
+            }
+        });
+    });
+
+    // Handle form submission
+    $("#newPageForm").submit(function(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        let selectedItemId = $('input[name="item"]:checked').val();
+        let filename = $("#filename").val();
+
+        $.ajax({
+            url: "/controller/?action=newPage",
+            method: "POST",
+            data: {
+                template: selectedItemId,
+                filename: filename
+            },
+            success: function(response) {
+                alert('Page created successfully, I think. TODO: Check JSON response');
+                $("#newPageForm").dialog("close"); // Close the modal on success
+            },
+            error: function() {
+                alert('Failed to create the new page.');
+            }
+        });
+    });
+
+    // Function to load the items via an AJAX GET request and populate the radio buttons for page templates
+    function loadItems() {
+        $.ajax({
+            url: "/controller/?action=getTemplates",
+            method: "GET",
+            success: function(data) {
+                let radioList = $('#radioList');
+                radioList.empty(); // Clear previous content
+                data.forEach(function(item, index) {
+                    radioList.append(`
+            <label>
+              <input type="radio" name="item" value="${item.id}" ${index === 0 ? 'checked' : ''}>
+              ${item.name}
+            </label>
+          `);
+                });
+            },
+            error: function() {
+                alert('Failed to load templates.');
+            }
+        });
+    }
+
 });
