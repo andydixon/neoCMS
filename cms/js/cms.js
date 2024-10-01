@@ -116,14 +116,15 @@ $(document).ready(function () {
             },
             success: function (response) {
                 if (typeof response.error != "undefined") {
-                    alert(response.error);
+                    showMessage(response.error,"error");
                 } else {
+                    showMessage("New page Created","success");
                     $('#frameContainer').contents().get(0).location.href = response.url;
                     $("#newPageForm").dialog("close"); // Close the modal on success
                 }
             },
             error: function () {
-                alert('Failed to create the new page.');
+                showMessage("Failed to create the new page (API error)","error");
             }
         });
     });
@@ -195,6 +196,11 @@ $(document).ready(function () {
 
 });
 
+/**
+ * Show A message bar across the top of the screen for a few seconds
+ * @param message - string - message to be shown
+ * @param type - string "success" or "error"
+ */
 function showMessage(message, type) {
     var messageBar = $('#message-bar');
 
