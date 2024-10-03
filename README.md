@@ -26,7 +26,7 @@ That’s it! You’re up and running.
 
 ## Requirements
 
-* PHP 8 running on a Linux server. (May work on Windows servers, but don't want to stoo to that level)
+* PHP 8 running on a Linux server. (May work on Windows servers, but don't want to stoop to that level)
 
 ## Known Bugs & Issues
 
