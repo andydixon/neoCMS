@@ -18,14 +18,10 @@ $(document).ready(function () {
             // Get the content of the div
             var content = currentDiv.html();
 
-            // Set the content in TinyMCE
-            $('#editor').val(content);
-
-            // Open the modal
-            $('#editModal').modal('show');
-
-            // Initialize TinyMCE when the modal is shown
-            $('#editModal').on('shown.bs.modal', function () {
+            // Set the content in TinyMCE, Show the modal and initialise TinyMCE
+            $('#editor').val(content)
+                .modal('show')
+                .on('shown.bs.modal', function () {
                 tinymce.init({
                     promotion: false,
                     branding: false,
@@ -33,18 +29,13 @@ $(document).ready(function () {
                     height: 300,
                     plugins: 'print preview paste importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount textpattern noneditable help charmap quickbars emoticons',
                     toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | pagebreak | charmap emoticons | fullscreen  preview save print | insertfile image media template link anchor codesample | ltr rtl',
-                    images_upload_url: '/cms/image_upload.php', // URL of your server-side script
+                    images_upload_url: '/cms/image_upload.php',
                     automatic_uploads: true,
                     images_reuse_filename: false,
                     images_upload_credentials: true,
                     force_br_newlines: false,
                     force_p_newlines: false,
-                    newline_behavior: 'linebreak',
-                    setup: function (editor) {
-                        editor.on('init', function (e) {
-                            editor.setContent(content);
-                        });
-                    }
+                    newline_behavior: 'linebreak'
                 });
             });
 
@@ -61,6 +52,11 @@ $(document).ready(function () {
 
         // Close the modal
         $('#editModal').modal('hide');
+
+        if (tinymce.get('editor')) {
+            tinymce.get('editor').remove();
+        }
+
     });
 
     // Clean up TinyMCE when modal is closed
@@ -72,15 +68,16 @@ $(document).ready(function () {
 
     // Handle Saving changes to the page
     $('#savePage').click(() => {
+        frameContainer=$('#frameContainer').contents().get(0)
         $.post("/cms/controller/", {
             action: "save",
-            uri: $('#frameContainer').contents().get(0).location.pathname,
-            content: new XMLSerializer().serializeToString($('#frameContainer').contents().get(0))
+            uri: frameContainer.location.pathname,
+            content: new XMLSerializer().serializeToString(frameContainer)
         }, function (data) {
-            if( typeof data.error == "undefined") {
-                showMessage(data.message,"success");
+            if (typeof data.error == "undefined") {
+                showMessage(data.message, "success");
             } else {
-                showMessage(data.message,"error");
+                showMessage(data.message, "error");
             }
             // alert(data)
         });
@@ -116,15 +113,15 @@ $(document).ready(function () {
             },
             success: function (response) {
                 if (typeof response.error != "undefined") {
-                    showMessage(response.error,"error");
+                    showMessage(response.error, "error");
                 } else {
-                    showMessage("New page Created","success");
+                    showMessage("New page Created", "success");
                     $('#frameContainer').contents().get(0).location.href = response.url;
                     $("#newPageForm").dialog("close"); // Close the modal on success
                 }
             },
             error: function () {
-                showMessage("Failed to create the new page (API error)","error");
+                showMessage("Failed to create the new page (API error)", "error");
             }
         });
     });
@@ -169,8 +166,7 @@ $(document).ready(function () {
 
                 // Add click event to list items to redirect
                 $("#fileList li").click(function () {
-                    const fileUrl = $(this).data("url");
-                    $('#frameContainer').contents().get(0).location.href = fileUrl; // Redirect to the clicked file's URL
+                    $('#frameContainer').contents().get(0).location.href = $(this).data("url"); // Redirect to the clicked file's URL
                     $("#fileListDialog").dialog("close"); // Close the modal
                 });
             },
@@ -230,7 +226,7 @@ function showMessage(message, type) {
     messageBar.slideDown();
 
     // Hide the bar after 5 seconds
-    setTimeout(function() {
+    setTimeout(function () {
         messageBar.slideUp();
     }, 5000);
 }

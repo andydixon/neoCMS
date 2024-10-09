@@ -30,7 +30,7 @@ class neoCMSCore
     public function writeAudit($value)
     {
         if ($this->auditEnabled)
-            file_put_contents(__DIR__ . "/" . date('y-m-d-') . "audit.txt", date('Y-m-d H:i:s') . "\t" . $this->loggedInUser . "\t" . trim($value) . "\n", FILE_APPEND);
+            file_put_contents(__DIR__ . "/logs/" . date('y-m-d-') . "audit.txt", date('Y-m-d H:i:s') . "\t" . $this->loggedInUser . "\t" . trim($value) . "\n", FILE_APPEND);
     }
 
     public function isLoggedIn()
