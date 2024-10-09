@@ -62,7 +62,7 @@ body {
     display: inline-block;
     cursor: pointer;
     color: #ffffff;
-    font-family: Arial;
+    font-family: Arial, Helvetica, sans-serif;
     font-size: 15px;
     padding: 6px 13px;
     text-decoration: none;
@@ -82,7 +82,7 @@ body {
     display: inline-block;
     cursor: pointer;
     color: #ffffff;
-    font-family: Arial;
+    font-family: Arial, Helvetica, sans-serif;
     font-size: 15px;
     padding: 6px 13px;
     text-decoration: none;
