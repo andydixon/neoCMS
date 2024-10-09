@@ -68,10 +68,11 @@ $(document).ready(function () {
 
     // Handle Saving changes to the page
     $('#savePage').click(() => {
+        frameContainer=$('#frameContainer').contents().get(0)
         $.post("/cms/controller/", {
             action: "save",
-            uri: $('#frameContainer').contents().get(0).location.pathname,
-            content: new XMLSerializer().serializeToString($('#frameContainer').contents().get(0))
+            uri: frameContainer.location.pathname,
+            content: new XMLSerializer().serializeToString(frameContainer)
         }, function (data) {
             if (typeof data.error == "undefined") {
                 showMessage(data.message, "success");
@@ -165,8 +166,7 @@ $(document).ready(function () {
 
                 // Add click event to list items to redirect
                 $("#fileList li").click(function () {
-                    const fileUrl = $(this).data("url");
-                    $('#frameContainer').contents().get(0).location.href = fileUrl; // Redirect to the clicked file's URL
+                    $('#frameContainer').contents().get(0).location.href = $(this).data("url"); // Redirect to the clicked file's URL
                     $("#fileListDialog").dialog("close"); // Close the modal
                 });
             },
