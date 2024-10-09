@@ -1,12 +1,12 @@
 $(document).ready(function () {
 
-    var currentDiv;
-    var iframeDoc;
+    let currentDiv;
+    let iframeDoc;
 
     $('#frameContainer').on('load', function () {
 
         // Get the iframe document
-        var iframe = document.getElementById('frameContainer');
+        const iframe = document.getElementById('frameContainer');
         iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
         // Set up click handler on divs with class 'editable' in the iframe
@@ -16,7 +16,7 @@ $(document).ready(function () {
             currentDiv = $(this);
 
             // Get the content of the div
-            var content = currentDiv.html();
+            const content = currentDiv.html();
 
             // Set the content in TinyMCE
             $('#editor').val(content);
@@ -47,7 +47,7 @@ $(document).ready(function () {
     // Save changes made to a div, but not save to the file on the server
     $('#saveBtn').click(function () {
         // Get the data from TinyMCE
-        var data = tinymce.get('editor').getContent();
+        const data = tinymce.get('editor').getContent();
 
         // Set the data back to the div in the iframe
         $(currentDiv).html(data);
@@ -200,7 +200,7 @@ $(document).ready(function () {
  * @param type - string "success" or "error"
  */
 function showMessage(message, type) {
-    var messageBar = $('#message-bar');
+    const messageBar = $('#message-bar');
 
     // Set the text message
     messageBar.text(message);

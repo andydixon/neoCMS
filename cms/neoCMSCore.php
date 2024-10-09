@@ -3,11 +3,11 @@
 class neoCMSCore
 {
 
-    public $auditEnabled = true;
-    public $users = [];
-    public $loggedIn = false;
-    public $version = '2.0';
-    private $loggedInUser = '';
+    public bool $auditEnabled = true;
+    public array $users = [];
+    public bool $loggedIn = false;
+    public string $version = '2.0';
+    private string $loggedInUser = '';
 
     public function __construct()
     {
@@ -27,7 +27,7 @@ class neoCMSCore
      * @param $value
      * @return void
      */
-    public function writeAudit($value)
+    public function writeAudit($value): void
     {
         if ($this->auditEnabled)
             file_put_contents(__DIR__ . "/logs/" . date('y-m-d-') . "audit.txt", date('Y-m-d H:i:s') . "\t" . $this->loggedInUser . "\t" . trim($value) . "\n", FILE_APPEND);
@@ -38,12 +38,12 @@ class neoCMSCore
         return $this->loggedIn;
     }
 
-    public function getLoggedinUser()
+    public function getLoggedinUser(): string
     {
         return $this->loggedInUser;
     }
 
-    public function saveContent($uri, $content)
+    public function saveContent($uri, $content): void
     {
         $this->writeAudit("Content for " . $uri . " was saved.");
         $uri = str_replace("../", "./", $uri);
