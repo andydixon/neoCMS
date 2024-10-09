@@ -36,7 +36,12 @@ require_once "init.php";
             </ul>
         </div>
         <div class="loggedInDetails">
-            Logged in as: <?php echo $_SESSION["core"]->getLoggedinUser(); ?>
+            Logged in as: <?php echo $_SESSION["core"]->getLoggedinUser(); ?><br />
+            <?php
+            if ( ! is_writable("logs/")) {
+                echo "<span class='redText'>Make /cms/logs/ writeable!</span>";
+            }
+            ?>
         </div>
     </div>
     <iframe id="frameContainer" src="welcome.html" class="frame"></iframe>
