@@ -39,7 +39,7 @@ require_once "init.php";
             Logged in as: <?php echo $_SESSION["core"]->getLoggedinUser(); ?><br />
             <?php
             if ( ! is_writable("logs/")) {
-                echo "<span style='redText'>Make /cms/logs/ writeable!</span>";
+                echo "<span class='redText'>Make /cms/logs/ writeable!</span>";
             }
             ?>
         </div>
