@@ -15,7 +15,7 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Login</title>
     <style>

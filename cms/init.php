@@ -26,7 +26,7 @@ if (!$_SESSION["core"]->isLoggedIn() && stripos($_SERVER['REQUEST_URI'], "/login
 
 // str_starts_with compatibility for php 7
 if (!function_exists('str_starts_with')) {
-    function str_starts_with($haystack, $needle)
+    function str_starts_with($haystack, $needle): bool
     {
         //str_starts_with(string $haystack, string $needle): bool
 
@@ -40,7 +40,7 @@ if (!function_exists('str_starts_with')) {
 
 //str_ends_with compatibility for php 7
 if (!function_exists('str_ends_with')) {
-    function str_ends_with($haystack, $needle)
+    function str_ends_with($haystack, $needle): bool
     {
         //str_starts_with(string $haystack, string $needle): bool
 
