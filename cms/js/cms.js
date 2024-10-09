@@ -119,7 +119,7 @@ $(document).ready(function () {
                 } else {
                     showMessage("New page Created", "success");
                     $('#frameContainer').contents().get(0).location.href = response.url;
-                    $("#newPageForm").dialog("close"); // Close the modal on success
+                    $('.ui-dialog-content').dialog('close');
                 }
             },
             error: function () {
@@ -169,7 +169,7 @@ $(document).ready(function () {
                 // Add click event to list items to redirect
                 $("#fileList li").click(function () {
                     $('#frameContainer').contents().get(0).location.href = $(this).data("url"); // Redirect to the clicked file's URL
-                    $("#fileListDialog").dialog("close"); // Close the modal
+                    $('.ui-dialog-content').dialog('close');
                 });
             },
             error: function () {
@@ -186,7 +186,7 @@ $(document).ready(function () {
             width: 500,
             buttons: {
                 Close: function () {
-                    $(this).dialog("close");
+                    $('.ui-dialog-content').dialog('close');
                 }
             }
         });
