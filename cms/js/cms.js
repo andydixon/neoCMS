@@ -18,9 +18,11 @@ $(document).ready(function () {
             // Get the content of the div
             var content = currentDiv.html();
 
-            // Set the content in TinyMCE, Show the modal and initialise TinyMCE
-            $('#editor').val(content)
-                .modal('show')
+            // Set the content in TinyMCE
+            $('#editor').val(content);
+
+            // Open the modal and init tinyMCE
+            $('#editModal').modal('show')
                 .on('shown.bs.modal', function () {
                 tinymce.init({
                     promotion: false,
@@ -68,11 +70,11 @@ $(document).ready(function () {
 
     // Handle Saving changes to the page
     $('#savePage').click(() => {
-        frameContainer=$('#frameContainer').contents().get(0)
+        frameContainerElement=$('#frameContainer').contents().get(0);
         $.post("/cms/controller/", {
             action: "save",
-            uri: frameContainer.location.pathname,
-            content: new XMLSerializer().serializeToString(frameContainer)
+            uri: frameContainerElement.location.pathname,
+            content: new XMLSerializer().serializeToString(frameContainerElement)
         }, function (data) {
             if (typeof data.error == "undefined") {
                 showMessage(data.message, "success");
