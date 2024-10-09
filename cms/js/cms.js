@@ -24,22 +24,22 @@ $(document).ready(function () {
             // Open the modal and init tinyMCE
             $('#editModal').modal('show')
                 .on('shown.bs.modal', function () {
-                tinymce.init({
-                    promotion: false,
-                    branding: false,
-                    selector: '#editor',
-                    height: 300,
-                    plugins: 'print preview paste importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount textpattern noneditable help charmap quickbars emoticons',
-                    toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | pagebreak | charmap emoticons | fullscreen  preview save print | insertfile image media template link anchor codesample | ltr rtl',
-                    images_upload_url: '/cms/image_upload.php',
-                    automatic_uploads: true,
-                    images_reuse_filename: false,
-                    images_upload_credentials: true,
-                    force_br_newlines: false,
-                    force_p_newlines: false,
-                    newline_behavior: 'linebreak'
+                    tinymce.init({
+                        promotion: false,
+                        branding: false,
+                        selector: '#editor',
+                        height: 300,
+                        plugins: 'print preview paste importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount textpattern noneditable help charmap quickbars emoticons',
+                        toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | pagebreak | charmap emoticons | fullscreen  preview save print | insertfile image media template link anchor codesample | ltr rtl',
+                        images_upload_url: '/cms/image_upload.php',
+                        automatic_uploads: true,
+                        images_reuse_filename: false,
+                        images_upload_credentials: true,
+                        force_br_newlines: false,
+                        force_p_newlines: false,
+                        newline_behavior: 'linebreak'
+                    });
                 });
-            });
 
         });
     });
@@ -70,7 +70,7 @@ $(document).ready(function () {
 
     // Handle Saving changes to the page
     $('#savePage').click(() => {
-        frameContainerElement=$('#frameContainer').contents().get(0);
+        frameContainerElement = $('#frameContainer').contents().get(0);
         $.post("/cms/controller/", {
             action: "save",
             uri: frameContainerElement.location.pathname,
