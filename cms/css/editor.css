@@ -12,7 +12,7 @@ body {
 
 .pageContainer .controls {
     flex: 0 1 auto;
-    height: 70px;
+    height: 60px;
     background-color: #666666;
     border-bottom: 1px solid #1a1a1a;
     -webkit-box-shadow: 0 10px 13px -7px #000000, -1px -1px 15px 5px rgba(0, 0, 0, 0);
@@ -27,19 +27,19 @@ body {
 .controls .logo {
     background-image: url("/cms/img/logo.png");
     width: 128px;
-    height: 70px;
+    height: 60px;
     display: block;
     position: absolute;
 }
 
 .controls .buttonContainer {
     width: 400px;
-    margin: 18px auto;
+    margin: 12px auto;
 }
 
 .controls .loggedInDetails {
     position: absolute;
-    top: 25px;
+    top: 12px;
     right: 10px;
 }
 
@@ -72,6 +72,11 @@ body {
 .blueButton:hover {
     background: #415989 linear-gradient(to bottom, #415989 5%, #2e466e 100%);
     color: #ffffff;
+    text-decoration: none;
+}
+
+.blueButton:active {
+    text-decoration: none;
 }
 
 .greenButton {
@@ -92,11 +97,15 @@ body {
 .greenButton:hover {
     background: #72b352 linear-gradient(to bottom, #72b352 5%, #77b55a 100%);
     color: #ffffff;
+    text-decoration: none;
+
 }
 
 .greenButton:active {
     position: relative;
     top: 1px;
+    text-decoration: none;
+
 }
 
 

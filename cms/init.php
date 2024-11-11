@@ -8,6 +8,9 @@ $authentication = [
     "editor" => "password",
 ];
 
+// Set to true if you do not want to see the welcome page and want to go straight to your site
+$skipWelcomePage = false;
+
 /**
  * DO NOT CHANGE ANYTHING BENEATH THIS LINE - IT WILL BUGGER STUFF UP
  */
