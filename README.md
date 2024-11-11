@@ -14,7 +14,7 @@ smoother for your content editing experience.
 * No Database Required: NeoCMS works without a database, so you don’t have to worry about setup hassles or performance
   slowdowns.
 * Easy Content Editing: With our intuitive WYSIWYG editor, anyone can update content without writing a single line of
-  code.
+  code. Adding the additional class *neo-dupe* will allow an element and it's children to be cloned.
 * Seamless Integration: Simply add the CMS to any existing static website. Just assign a special class to the elements
   you want to make editable, and you’re all set.
 * Consistent Layouts: NeoCMS supports page templates to keep your layouts neat and uniform across all pages.
