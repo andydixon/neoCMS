@@ -44,7 +44,7 @@ require_once "init.php";
             ?>
         </div>
     </div>
-    <iframe id="frameContainer" src="welcome.html" class="frame"></iframe>
+    <iframe id="frameContainer" src="<?php echo $skipWelcomePage ? "/" : "welcome.html"; ?>" class="frame"></iframe>
 </div>
 <!-- Modal -->
 <div id="editModal" class="modal fade" role="dialog">
