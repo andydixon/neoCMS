@@ -11,12 +11,12 @@ $(document).ready(function () {
 
         // Set up click handler on divs with class 'editable' in the iframe
         $(iframeDoc).find('.editable').css('cursor', 'pointer').click(function (event) {
-            editElement(event,$(this));
+            editElement(event, $(this));
         });
 
         // Edit Element Shared functionality
 
-        function editElement(event,element) {
+        function editElement(event, element) {
             event.preventDefault();
 
             currentDiv = element;
@@ -52,7 +52,7 @@ $(document).ready(function () {
         regenerateButtons();
 
         // Set up event handlers for duplication buttons inside the iframe
-        $(iframeDoc).on('click', '.duplicate-btn-before', function() {
+        $(iframeDoc).on('click', '.duplicate-btn-before', function () {
             var parentElement = $(this).closest('.neo-dupe');
             var clonedElement = $(parentElement).clone();
 
@@ -70,7 +70,7 @@ $(document).ready(function () {
             clonedElement.trigger('elementDuplicated');
         });
 
-        $(iframeDoc).on('click', '.duplicate-btn-after', function() {
+        $(iframeDoc).on('click', '.duplicate-btn-after', function () {
             var parentElement = $(this).closest('.neo-dupe');
             var clonedElement = $(parentElement).clone();
 
@@ -89,14 +89,14 @@ $(document).ready(function () {
         });
 
         // Handle the custom 'elementDuplicated' event
-        $(iframeDoc).on('elementDuplicated', '.neo-dupe', function(event) {
+        $(iframeDoc).on('elementDuplicated', '.neo-dupe', function (event) {
             // Example action: Animate the new element
             $(this).hide().fadeIn('slow');
 
             // Remove buttons if they are there
             $(this).find('.button-container').remove();
 
-            editElement(event,$(this));
+            editElement(event, $(this));
         });
         // Here for addButtonsForNeoDupe
     });
@@ -275,15 +275,15 @@ $(document).ready(function () {
 
         var $buttonContainer = $(iframeDoc.createElement('div'));
         $buttonContainer.addClass('button-container');
-        $buttonContainer.css("position","absolute");
-        $buttonContainer.css("top","5px");
-        $buttonContainer.css("right","5px");
+        $buttonContainer.css("position", "absolute");
+        $buttonContainer.css("top", "5px");
+        $buttonContainer.css("right", "5px");
 
         var $duplicateBeforeButton = $(iframeDoc.createElement('button'));
-        $duplicateBeforeButton.addClass('duplicate-btn-before').text('◀️').prop('title','Clone before');
+        $duplicateBeforeButton.addClass('duplicate-btn-before').text('◀️').prop('title', 'Clone before');
 
         var $duplicateAfterButton = $(iframeDoc.createElement('button'));
-        $duplicateAfterButton.addClass('duplicate-btn-after').text('▶️').prop('title','Clone after');
+        $duplicateAfterButton.addClass('duplicate-btn-after').text('▶️').prop('title', 'Clone after');
 
         // Append buttons to the container
         $buttonContainer.append($duplicateBeforeButton, $duplicateAfterButton);
