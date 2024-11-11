@@ -11,9 +11,15 @@ $(document).ready(function () {
 
         // Set up click handler on divs with class 'editable' in the iframe
         $(iframeDoc).find('.editable').css('cursor', 'pointer').click(function (event) {
+            editElement(event, $(this));
+        });
+
+        // Edit Element Shared functionality
+
+        function editElement(event, element) {
             event.preventDefault();
 
-            currentDiv = $(this);
+            currentDiv = element;
 
             // Get the content of the div
             const content = currentDiv.html();
@@ -21,7 +27,7 @@ $(document).ready(function () {
             // Set the content in TinyMCE
             $('#editor').val(content);
 
-            // Open the modal and init tinyMCE
+            // Open the modal and init TinyMCE
             $('#editModal').modal('show')
                 .on('shown.bs.modal', function () {
                     tinymce.init({
@@ -37,12 +43,64 @@ $(document).ready(function () {
                         images_upload_credentials: true,
                         force_br_newlines: false,
                         force_p_newlines: false,
+                        forced_root_block: 'aaa',
                         newline_behavior: 'linebreak'
                     });
                 });
+        }
 
+        regenerateButtons();
+
+        // Set up event handlers for duplication buttons inside the iframe
+        $(iframeDoc).on('click', '.duplicate-btn-before', function () {
+            var parentElement = $(this).closest('.neo-dupe');
+            var clonedElement = $(parentElement).clone();
+
+            // Remove buttons from the cloned element
+            clonedElement.find('.button-container').remove();
+
+            // Add system classes
+            clonedElement.addClass("neo-dupe");
+            clonedElement.addClass("editable");
+
+            // Insert the cloned element before the original parent element
+            clonedElement.insertBefore(parentElement);
+
+            // Trigger an event on the new duplicated element
+            clonedElement.trigger('elementDuplicated');
         });
+
+        $(iframeDoc).on('click', '.duplicate-btn-after', function () {
+            var parentElement = $(this).closest('.neo-dupe');
+            var clonedElement = $(parentElement).clone();
+
+            // Remove buttons from the cloned element
+            clonedElement.find('.button-container').remove();
+
+            // Add system classes
+            clonedElement.addClass("neo-dupe");
+            clonedElement.addClass("editable");
+
+            // Insert the cloned element after the original parent element
+            clonedElement.insertAfter(parentElement);
+
+            // Trigger an event on the new duplicated element
+            clonedElement.trigger('elementDuplicated');
+        });
+
+        // Handle the custom 'elementDuplicated' event
+        $(iframeDoc).on('elementDuplicated', '.neo-dupe', function (event) {
+            // Example action: Animate the new element
+            $(this).hide().fadeIn('slow');
+
+            // Remove buttons if they are there
+            $(this).find('.button-container').remove();
+
+            editElement(event, $(this));
+        });
+        // Here for addButtonsForNeoDupe
     });
+
 
     // Save changes made to a div, but not save to the file on the server
     $('#saveBtn').click(function () {
@@ -70,7 +128,11 @@ $(document).ready(function () {
 
     // Handle Saving changes to the page
     $('#savePage').click(() => {
-        frameContainerElement = $('#frameContainer').contents().get(0);
+
+        // Remove the buttons container as not to make things awks
+        $(iframeDoc).find('.button-container').remove();
+
+        let frameContainerElement = $('#frameContainer').contents().get(0);
         $.post("/cms/controller/", {
             action: "save",
             uri: frameContainerElement.location.pathname,
@@ -81,8 +143,8 @@ $(document).ready(function () {
             } else {
                 showMessage(data.message, "error");
             }
-            // alert(data)
         });
+        regenerateButtons();
     });
 
     // Show dialog for page templates
@@ -139,11 +201,11 @@ $(document).ready(function () {
                 radioList.empty(); // Clear previous content
                 data.forEach(function (item, index) {
                     radioList.append(`
-            <label>
-              <input type="radio" name="item" value="${item.id}" ${index === 0 ? 'checked' : ''}>
-              ${item.name}
-            </label>
-          `);
+                <label>
+                  <input type="radio" name="item" value="${item.id}" ${index === 0 ? 'checked' : ''}>
+                  ${item.name}
+                </label>
+              `);
                 });
             },
             error: function () {
@@ -192,10 +254,48 @@ $(document).ready(function () {
         });
     });
 
+    // Add buttons to all existing neo-dupe elements inside the iframe
+    function regenerateButtons() {
+        $(iframeDoc).find('.neo-dupe').each(function () {
+            $(this).find('.buttonContainer').remove();
+            addButtonsToNeoDupe(this);
+        });
+    }
+
+    // Function to add buttons to a neo-dupe element inside the iframe
+    function addButtonsToNeoDupe(element) {
+
+        /**
+         * DANGER WILL ROBINSON: This may break stuff, but is needed for the buttons to be positioned properly
+         * Since this is alpha, lets see how we go.
+         */
+        if ($(element).css('position') === 'static') {
+            $(element).css('position', 'relative');
+        }
+
+        var $buttonContainer = $(iframeDoc.createElement('div'));
+        $buttonContainer.addClass('button-container');
+        $buttonContainer.css("position", "absolute");
+        $buttonContainer.css("top", "5px");
+        $buttonContainer.css("right", "5px");
+
+        var $duplicateBeforeButton = $(iframeDoc.createElement('button'));
+        $duplicateBeforeButton.addClass('duplicate-btn-before').text('◀️').prop('title', 'Clone before');
+
+        var $duplicateAfterButton = $(iframeDoc.createElement('button'));
+        $duplicateAfterButton.addClass('duplicate-btn-after').text('▶️').prop('title', 'Clone after');
+
+        // Append buttons to the container
+        $buttonContainer.append($duplicateBeforeButton, $duplicateAfterButton);
+
+        // Prepend the container to the neo-dupe element
+        $(element).prepend($buttonContainer);
+    }
+
 });
 
 /**
- * Show A message bar across the top of the screen for a few seconds
+ * Show a message bar across the top of the screen for a few seconds
  * @param message - string - message to be shown
  * @param type - string "success" or "error"
  */
@@ -232,3 +332,4 @@ function showMessage(message, type) {
         messageBar.slideUp();
     }, 5000);
 }
+
