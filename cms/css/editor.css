@@ -72,6 +72,11 @@ body {
 .blueButton:hover {
     background: #415989 linear-gradient(to bottom, #415989 5%, #2e466e 100%);
     color: #ffffff;
+    text-decoration: none;
+}
+
+.blueButton:active {
+    text-decoration: none;
 }
 
 .greenButton {
@@ -92,11 +97,15 @@ body {
 .greenButton:hover {
     background: #72b352 linear-gradient(to bottom, #72b352 5%, #77b55a 100%);
     color: #ffffff;
+    text-decoration: none;
+
 }
 
 .greenButton:active {
     position: relative;
     top: 1px;
+    text-decoration: none;
+
 }
 
 
