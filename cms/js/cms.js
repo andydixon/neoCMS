@@ -132,7 +132,12 @@ $(document).ready(function () {
         // Remove the buttons container as not to make things awks
         $(iframeDoc).find('.button-container').remove();
 
+        // Remove pointer cursor, but need to find a proper way of removing the cursor inline style, so we can get rid of any unneeded inline styles
+        $(iframeDoc).find('.editable, .neo-dupe').css('cursor', 'default');
+
+        // Get page content and save it
         let frameContainerElement = $('#frameContainer').contents().get(0);
+
         $.post("/cms/controller/", {
             action: "save",
             uri: frameContainerElement.location.pathname,
