@@ -34,7 +34,22 @@ body {
 
 .controls .buttonContainer {
     width: 400px;
-    margin: 12px auto;
+    margin: 12px 0;
+    position: absolute;
+    right: 110px;
+}
+
+.controls #urlbox {
+    margin: 15px 150px;
+    text-align: center;
+    font-size: 1.5em;
+    color: black;
+    position: absolute;
+}
+
+.controls #urlbox div {
+    float: right;
+    margin-left:10px;
 }
 
 .controls .loggedInDetails {

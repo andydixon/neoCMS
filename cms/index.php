@@ -28,6 +28,7 @@ require_once "init.php";
 <div class="pageContainer">
     <div class="controls">
         <div class="logo"></div>
+       <?php if($showFullUrl) echo '<div id="urlbox"></div>';?>
         <div class="buttonContainer">
             <ul>
                 <li><a href="#" id="selectPage" class="blueButton">Select Page</a></li>
