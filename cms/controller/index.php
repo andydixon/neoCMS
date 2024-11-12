@@ -6,8 +6,8 @@ switch ($_REQUEST["action"]) {
     case "save":
         header('Content-type: application/json');
         if (!empty($_POST['uri']) && !empty($_POST['content'])) {
-            $_SESSION['core']->saveContent($_POST['uri'], $_POST['content']);
-            echo json_encode(array('message' => 'Page has been saved'));
+            $filename=$_SESSION['core']->saveContent($_POST['uri'], $_POST['content']);
+            echo json_encode(array('message' => 'Page has been saved','destination'=>$filename));
         } else {
             echo json_encode(array('error' => 'Unable to save page'));
         }
