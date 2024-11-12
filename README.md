@@ -25,7 +25,7 @@ Ready to get started? Just follow these simple steps:
 
 * Drop the CMS folder into your static website.
 * Add the uploads folder to your site as well.
-* Open /cms/init.php and edit the credentials for any users you want to set up.
+* Open /cms/config.php and edit the credentials for any users you want to set up.
 * Update the div elements you want to make editable by adding the class editable.
 * Visit /cms/, log in, and start editing!
 
@@ -33,7 +33,7 @@ That’s it! You’re up and running.
 
 ## Requirements
 
-* PHP 8 running on a Linux server. (May work on Windows servers, but don't want to stoop to that level)
+* PHP 8 running on Linux
 
 ## Known Bugs & Issues
 
