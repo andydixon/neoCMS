@@ -1,19 +1,49 @@
 <?php
-require_once "../neoCMSCore.php";
-require_once "../init.php";
-// Initialize error message variable
+// login.php
+
+require_once "../config.php";
+
+// Autoload classes (if not using Composer)
+spl_autoload_register(function ($class) {
+    $classPath = str_replace('\\', DIRECTORY_SEPARATOR, $class);
+    require_once "../src/{$classPath}.php";
+});
+
+use NeoCMS\Authentication;
+use NeoCMS\Logger;
+
+// Initialise error message variable
 $error = '';
 
-if (isset($_POST['username']) && isset($_POST['password'])) {
-    if (!$_SESSION['core']->login($_POST['username'], $_POST['password'])) {
-        $error = "Invalid username or password";
+// Instantiate the Authentication and Logger classes
+$authentication = new Authentication($config['authentication']??[]);
+$logger = new Logger($config['audit']??true);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+
+    if ($authentication->login($username, $password)) {
+        // Log successful login
+        $logger->write(
+            "User login for $username was successful from {$_SERVER['REMOTE_ADDR']}",
+            $username
+        );
+
+        // Redirect to the CMS dashboard or desired page
+        header("Location: /cms/");
+        exit("Well done, champ! You got this!! <3");
     } else {
-        header("Location:/cms/");
-        die("Well done, champ! You got this!! <3");
+        // Log failed login attempt
+        $logger->write(
+            "User login for $username was denied due to incorrect credentials from {$_SERVER['REMOTE_ADDR']}",
+            $username
+        );
+
+        $error = "Invalid username or password";
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>

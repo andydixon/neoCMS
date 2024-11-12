@@ -49,12 +49,12 @@ body {
 
 .controls #urlbox div {
     float: right;
-    margin-left:10px;
+    margin-left: 10px;
 }
 
 .controls .loggedInDetails {
     position: absolute;
-    top: 12px;
+    top: 20px;
     right: 10px;
 }
 
