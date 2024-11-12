@@ -1,7 +1,24 @@
 <?php
-require_once "neoCMSCore.php";
-require_once "init.php";
+require_once "config.php";
+// Autoload classes (if not using Composer)
+spl_autoload_register(function ($class) {
+    $classPath = str_replace('\\', DIRECTORY_SEPARATOR, $class);
+    require_once "./src/{$classPath}.php";
+});
+
+use NeoCMS\Authentication;
+
+// Instantiate the Authentication class
+$authentication = new Authentication($config['authentication']??[]);
+
+// Check if the user is logged in
+if (!$authentication->isLoggedIn()) {
+    // Redirect to the login page
+    header("Location: /cms/login/");
+    exit;
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en-gb">
 <head>
@@ -28,7 +45,7 @@ require_once "init.php";
 <div class="pageContainer">
     <div class="controls">
         <div class="logo"></div>
-       <?php if($showFullUrl) echo '<div id="urlbox"></div>';?>
+       <?php if($config['showFullUrl']) echo '<div id="urlbox"></div>';?>
         <div class="buttonContainer">
             <ul>
                 <li><a href="#" id="selectPage" class="blueButton">Select Page</a></li>
@@ -37,7 +54,7 @@ require_once "init.php";
             </ul>
         </div>
         <div class="loggedInDetails">
-            Logged in as: <?php echo $_SESSION["core"]->getLoggedinUser(); ?><br />
+            Logged in as: <?php echo $authentication->getLoggedinUser(); ?><br />
             <?php
             if ( ! is_writable("logs/")) {
                 echo "<span class='redText'>Make /cms/logs/ writeable!</span>";
@@ -45,7 +62,7 @@ require_once "init.php";
             ?>
         </div>
     </div>
-    <iframe id="frameContainer" src="<?php echo $skipWelcomePage ? "/" : "welcome.html"; ?>" class="frame"></iframe>
+    <iframe id="frameContainer" src="<?php echo $config['skipWelcomePage'] ? "/" : "welcome.html"; ?>" class="frame"></iframe>
 </div>
 <!-- Modal -->
 <div id="editModal" class="modal fade" role="dialog">
