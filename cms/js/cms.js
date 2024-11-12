@@ -43,6 +43,7 @@ $(document).ready(function () {
                         images_upload_credentials: true,
                         force_br_newlines: false,
                         force_p_newlines: false,
+                        license_key: 'gpl',
                         forced_root_block: 'aaa',
                         newline_behavior: 'linebreak'
                     });
@@ -265,6 +266,7 @@ $(document).ready(function () {
             $(this).find('.buttonContainer').remove();
             addButtonsToNeoDupe(this);
         });
+        $('#urlbox').html("<strong>Editing:</strong> <div>"+$(iframeDoc)[0].URL+"</div>");
     }
 
     // Function to add buttons to a neo-dupe element inside the iframe

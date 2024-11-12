@@ -11,6 +11,10 @@ $authentication = [
 // Set to true if you do not want to see the welcome page and want to go straight to your site
 $skipWelcomePage = false;
 
+// Show full URL of the page being edited on the control bar
+$showFullUrl = true;
+
+
 /**
  * DO NOT CHANGE ANYTHING BENEATH THIS LINE - IT WILL BUGGER STUFF UP
  */
