@@ -285,6 +285,8 @@ $(document).ready(function () {
         $buttonContainer.css("position", "absolute");
         $buttonContainer.css("top", "5px");
         $buttonContainer.css("right", "5px");
+        $buttonContainer.css("z-index","9999");
+
 
         var $duplicateBeforeButton = $(iframeDoc.createElement('button'));
         $duplicateBeforeButton.addClass('duplicate-btn-before').text('◀️').prop('title', 'Clone before');
