@@ -9,7 +9,7 @@ spl_autoload_register(function ($class) {
 use NeoCMS\Authentication;
 
 // Instantiate the Authentication class
-$authentication = new Authentication($config['authentication']??[]);
+$authentication = new Authentication($config['authentication'] ?? []);
 
 // Check if the user is logged in
 if (!$authentication->isLoggedIn()) {
@@ -23,21 +23,12 @@ if (!$authentication->isLoggedIn()) {
 <html lang="en-gb">
 <head>
     <title>NeoCMS</title>
-    <!-- Include jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.min.js" crossorigin="anonymous"></script>
-    <!-- Include TinyMCE -->
     <script src="/cms/tinymce/tinymce.min.js"></script>
-    <!-- Include Bootstrap for modal -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-
-    <!-- Include JqueryUI CSS -->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.0/themes/base/jquery-ui.css">
-
-    <!-- Include editor styles -->
     <link rel="stylesheet" href="/cms/css/editor.css">
-
-    <!-- Include Bootstrap JS -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
 <body>
@@ -45,24 +36,33 @@ if (!$authentication->isLoggedIn()) {
 <div class="pageContainer">
     <div class="controls">
         <div class="logo"></div>
-       <?php if($config['showFullUrl']) echo '<div id="urlbox"></div>';?>
+        <?php if ($config['showFullUrl']) {?>
+        <div id="urlbox"></div>
+        <?php } ?>
         <div class="buttonContainer">
             <ul>
-                <li><a href="#" id="selectPage" class="blueButton">Select Page</a></li>
-                <li><a href="#" id="newPage" class="blueButton">New Page</a></li>
-                <li><a href="#" id="savePage" class="greenButton">Save Changes</a></li>
+                <li>
+                    <button class="headerButton" id="newPage" role="button">New Page</button>
+                </li>
+                <li>
+                    <button class="headerButton" id="selectPage" role="button">Select Page</button>
+                </li>
+                <li>
+                    <button class="headerButton dangerButton" id="savePage" role="button">Publish Changes</button>
+                </li>
             </ul>
         </div>
         <div class="loggedInDetails">
-            Logged in as: <?php echo $authentication->getLoggedinUser(); ?><br />
+            Logged in as: <?php echo $authentication->getLoggedinUser(); ?><br/>
             <?php
-            if ( ! is_writable("logs/")) {
+            if (!is_writable("logs/")) {
                 echo "<span class='redText'>Make /cms/logs/ writeable!</span>";
             }
             ?>
         </div>
     </div>
-    <iframe id="frameContainer" src="<?php echo $config['skipWelcomePage'] ? "/" : "welcome.html"; ?>" class="frame"></iframe>
+    <iframe id="frameContainer" src="<?php echo $config['skipWelcomePage'] ? "/" : "welcome.html"; ?>"
+            class="frame"></iframe>
 </div>
 <!-- Modal -->
 <div id="editModal" class="modal fade" role="dialog">
