@@ -16,8 +16,8 @@ use NeoCMS\Logger;
 $error = '';
 
 // Instantiate the Authentication and Logger classes
-$authentication = new Authentication($config['authentication']??[]);
-$logger = new Logger($config['audit']??true);
+$authentication = new Authentication($config['authentication'] ?? []);
+$logger = new Logger($config['audit'] ?? true);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
@@ -47,70 +47,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Login</title>
-    <style>
-        /* Basic styling for the login form */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #eef1f5;
-        }
-
-        .login-container {
-            width: 350px;
-            margin: 100px auto;
-            padding: 40px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .login-container h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #333333;
-        }
-
-        .login-container label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555555;
-        }
-
-        .login-container input[type="text"],
-        .login-container input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #cccccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        .login-container button {
-            width: 100%;
-            padding: 12px;
-            background-color: #0066cc;
-            border: none;
-            border-radius: 4px;
-            color: #ffffff;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        .login-container button:hover {
-            background-color: #005bb5;
-        }
-
-        .error-message {
-            color: #ff4d4d;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-    </style>
+    <title>NeoCMS Login</title>
+    <link rel="stylesheet" href="/cms/css/login.css"/>
 </head>
 <body>
 
 <div class="login-container">
+    <img class="logo" src="/cms/img/loginlogo.png" alt="NeoCMS logo"/>
     <h2>NeoCMS Login</h2>
     <?php if (!empty($error)): ?>
         <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
@@ -123,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="password" id="password" name="password" required>
 
         <button type="submit">Log In</button>
+        <p class="shamelessPlug">NeoCMS &copy;<?php echo date('Y'); ?> Andy Dixon</p>
     </form>
 </div>
 

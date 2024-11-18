@@ -266,7 +266,7 @@ $(document).ready(function () {
             $(this).find('.buttonContainer').remove();
             addButtonsToNeoDupe(this);
         });
-        $('#urlbox').html("<strong>Editing:</strong> <div>"+$(iframeDoc)[0].URL+"</div>");
+        $('#urlbox').html("<strong>Editing:</strong> <div>" + $(iframeDoc)[0].URL + "</div>");
     }
 
     // Function to add buttons to a neo-dupe element inside the iframe
@@ -274,7 +274,7 @@ $(document).ready(function () {
 
         /**
          * DANGER WILL ROBINSON: This may break stuff, but is needed for the buttons to be positioned properly
-         * Since this is alpha, lets see how we go.
+         * Lets see how we go.
          */
         if ($(element).css('position') === 'static') {
             $(element).css('position', 'relative');
@@ -285,7 +285,7 @@ $(document).ready(function () {
         $buttonContainer.css("position", "absolute");
         $buttonContainer.css("top", "5px");
         $buttonContainer.css("right", "5px");
-        $buttonContainer.css("z-index","9999");
+        $buttonContainer.css("z-index", "9999");
 
 
         var $duplicateBeforeButton = $(iframeDoc.createElement('button'));
