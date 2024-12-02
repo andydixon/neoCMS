@@ -37,8 +37,7 @@ That’s it! You’re up and running.
 
 ## Known Bugs & Issues
 
-* File Uploads (non-image): Currently, file uploads are not fully implemented. We're working on it!
-* Testing: The system is functional, but it hasn’t been fully tested in all scenarios.
+* Testing: The system is functional, but it hasn’t been fully tested in all scenarios. Uploading and embedding youtube videos works perfectly!
 
 ## License
 
