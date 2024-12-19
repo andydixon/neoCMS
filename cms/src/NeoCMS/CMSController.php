@@ -164,17 +164,19 @@ class CMSController
             $filePath = $file->getRealPath();
 
             // Exclude CMS directory
-            if (strpos($filePath, $this->documentRoot . 'cms' . DIRECTORY_SEPARATOR) === 0) {
+            if (str_starts_with($filePath, $this->documentRoot . 'cms' . DIRECTORY_SEPARATOR)) {
                 continue;
             }
 
             // Include only .html and .htm files
             if (preg_match('/\.(html|htm)$/i', $filePath)) {
                 $relativePath = str_replace($this->documentRoot, '/', $filePath);
-                $pages[] = [
-                    'name' => $relativePath,
-                    'url' => $relativePath,
-                ];
+                if ($this->hasEditableClass($relativePath)) {
+                    $pages[] = [
+                        'name' => $relativePath,
+                        'url' => $relativePath,
+                    ];
+                }
             }
         }
 
@@ -282,5 +284,28 @@ class CMSController
     {
         header('Content-Type: application/json');
         echo json_encode($data);
+    }
+
+    /**
+     * Checks to see if a file has an editable class
+     * @param $filePath
+     * @return bool
+     */
+    private function hasEditableClass($filePath) {
+        // Load the HTML content from the file
+        $htmlContent = file_get_contents($filePath);
+
+        // Initialize a new DOMDocument object
+        $dom = new DOMDocument();
+
+        // Suppress warnings that might occur due to malformed HTML
+        @$dom->loadHTML($htmlContent);
+
+        // Find all elements with the class "editable"
+        $xpath = new DOMXPath($dom);
+        $editableElements = $xpath->query('//*[contains(@class, "editable")]');
+
+        // Return true if there are any elements with the "editable" class
+        return $editableElements->length > 0;
     }
 }
