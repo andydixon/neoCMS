@@ -295,14 +295,18 @@ class CMSController
         // Load the HTML content from the file
         $htmlContent = file_get_contents($filePath);
 
+        if ($htmlContent === false) {
+            $htmlContent = file_get_contents($this->documentRoot . ltrim($filePath, '/'));
+        }
+
         // Initialize a new DOMDocument object
-        $dom = new DOMDocument();
+        $dom = new \DOMDocument();
 
         // Suppress warnings that might occur due to malformed HTML
         @$dom->loadHTML($htmlContent);
 
         // Find all elements with the class "editable"
-        $xpath = new DOMXPath($dom);
+        $xpath = new \DOMXPath($dom);
         $editableElements = $xpath->query('//*[contains(@class, "editable")]');
 
         // Return true if there are any elements with the "editable" class
