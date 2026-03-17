@@ -10,6 +10,7 @@ use NeoCMS\Authentication;
 
 // Instantiate the Authentication class
 $authentication = new Authentication($config['authentication'] ?? []);
+$csrfToken = $authentication->getCsrfToken();
 
 // Check if the user is logged in
 if (!$authentication->isLoggedIn()) {
@@ -23,6 +24,7 @@ if (!$authentication->isLoggedIn()) {
 <html lang="en-gb">
 <head>
     <title>NeoCMS</title>
+    <meta name="csrf-token" content="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.min.js" crossorigin="anonymous"></script>
     <script src="/cms/tinymce/tinymce.min.js"></script>

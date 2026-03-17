@@ -20,18 +20,32 @@ if (!$authentication->isLoggedIn()) {
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Invalid request method']);
+    exit;
+}
+
+$csrfToken = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+if (!$authentication->isValidCsrfToken($csrfToken)) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Invalid CSRF token']);
+    exit;
+}
+
 // Set appropriate headers
 header('Content-Type: application/json');
+header('X-Content-Type-Options: nosniff');
 
-// Allowed MIME types and extensions
+// TinyMCE uses this endpoint for images only.
 $allowed_types = [
     'image/jpeg' => 'jpg',
     'image/png'  => 'png',
     'image/gif'  => 'gif',
-    'text/pdf'  => 'pdf',
-    'text/docx'  => 'docx',
-    'text/xlsx'  => 'xlsx',
-    'text/doc' => 'doc',
+    'image/webp' => 'webp',
 ];
 
 // Maximum file size in bytes (50MB)
@@ -68,19 +82,25 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
 
     // Generate a unique name for the image
     $extension = $allowed_types[$mime_type];
-    $filename  = uniqid('', true) . '.' . $extension;
+    $filename  = bin2hex(random_bytes(16)) . '.' . $extension;
 
     // Set the upload directory
-    $upload_dir = realpath(__DIR__ . '/../uploads') . DIRECTORY_SEPARATOR;
-
-    // Ensure the upload directory exists
-    if (!is_dir($upload_dir) && !mkdir($upload_dir, 0755, true)) {
+    $uploadRoot = __DIR__ . '/../uploads';
+    if (!is_dir($uploadRoot) && !mkdir($uploadRoot, 0755, true)) {
         http_response_code(500);
         echo json_encode(['error' => 'Failed to create upload directory.']);
         exit;
     }
 
-    // Set the target file path
+    $upload_dir = realpath($uploadRoot);
+    if ($upload_dir === false) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Upload directory is invalid.']);
+        exit;
+    }
+    $upload_dir .= DIRECTORY_SEPARATOR;
+
+    // Ensure the upload directory exists
     $target_file = $upload_dir . $filename;
 
     // Move the uploaded file to the target directory

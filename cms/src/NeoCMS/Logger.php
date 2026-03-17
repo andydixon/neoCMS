@@ -37,10 +37,16 @@ class Logger
         $entry = sprintf(
             "[%s]\tUser: %s\t%s\n",
             date('Y-m-d H:i:s'),
-            $user,
-            trim($message)
+            $this->normaliseLogField($user),
+            $this->normaliseLogField($message)
         );
 
         file_put_contents($logFile, $entry, FILE_APPEND);
+    }
+
+    private function normaliseLogField($value): string
+    {
+        $value = trim((string) $value);
+        return str_replace(["\r", "\n", "\t"], [' ', ' ', ' '], $value);
     }
 }
