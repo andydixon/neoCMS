@@ -2,6 +2,7 @@ $(document).ready(function () {
 
     let currentDiv;
     let iframeDoc;
+    const csrfToken = $('meta[name="csrf-token"]').attr('content') || '';
 
     $('#frameContainer').on('load', function () {
 
@@ -28,7 +29,8 @@ $(document).ready(function () {
             $('#editor').val(content);
 
             // Open the modal and init TinyMCE
-            $('#editModal').modal('show')
+            $('#editModal')
+                .off('shown.bs.modal')
                 .on('shown.bs.modal', function () {
                     tinymce.init({
                         promotion: false,
@@ -41,13 +43,50 @@ $(document).ready(function () {
                         automatic_uploads: true,
                         images_reuse_filename: false,
                         images_upload_credentials: true,
+                        images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
+                            const formData = new FormData();
+                            formData.append('file', blobInfo.blob(), blobInfo.filename());
+                            formData.append('csrf_token', csrfToken);
+
+                            $.ajax({
+                                url: '/cms/image_upload.php',
+                                method: 'POST',
+                                data: formData,
+                                processData: false,
+                                contentType: false,
+                                xhr: function () {
+                                    const xhr = $.ajaxSettings.xhr();
+                                    if (xhr.upload) {
+                                        xhr.upload.addEventListener('progress', function (event) {
+                                            if (event.lengthComputable) {
+                                                progress((event.loaded / event.total) * 100);
+                                            }
+                                        });
+                                    }
+                                    return xhr;
+                                },
+                                success: function (response) {
+                                    if (response && response.location) {
+                                        resolve(response.location);
+                                        return;
+                                    }
+
+                                    reject((response && response.error) || 'Upload failed');
+                                },
+                                error: function (xhr) {
+                                    const response = xhr.responseJSON || {};
+                                    reject(response.error || 'Upload failed');
+                                }
+                            });
+                        }),
                         force_br_newlines: false,
                         force_p_newlines: false,
                         license_key: 'gpl',
                         forced_root_block: 'aaa',
                         newline_behavior: 'linebreak'
                     });
-                });
+                })
+                .modal('show');
         }
 
         regenerateButtons();
@@ -129,20 +168,18 @@ $(document).ready(function () {
 
     // Handle Saving changes to the page
     $('#savePage').click(() => {
+        // Clone the document so CMS-only controls and styles are not written back into the page.
+        const frameContainerElement = $('#frameContainer').contents().get(0);
+        const clonedDocument = frameContainerElement.cloneNode(true);
 
-        // Remove the buttons container as not to make things awks
-        $(iframeDoc).find('.button-container').remove();
-
-        // Remove pointer cursor, but need to find a proper way of removing the cursor inline style, so we can get rid of any unneeded inline styles
-        $(iframeDoc).find('.editable, .neo-dupe').css('cursor', 'default');
-
-        // Get page content and save it
-        let frameContainerElement = $('#frameContainer').contents().get(0);
+        $(clonedDocument).find('.button-container').remove();
+        $(clonedDocument).find('.editable, .neo-dupe').css('cursor', '');
 
         $.post("/cms/controller/", {
             action: "save",
             uri: frameContainerElement.location.pathname,
-            content: new XMLSerializer().serializeToString(frameContainerElement)
+            content: new XMLSerializer().serializeToString(clonedDocument),
+            csrf_token: csrfToken
         }, function (data) {
             if (typeof data.error == "undefined") {
                 showMessage(data.message, "success");
@@ -179,7 +216,8 @@ $(document).ready(function () {
             method: "POST",
             data: {
                 template: selectedItemId,
-                filename: filename
+                filename: filename,
+                csrf_token: csrfToken
             },
             success: function (response) {
                 if (typeof response.error != "undefined") {
@@ -249,12 +287,12 @@ $(document).ready(function () {
     // Handle 'Select Page' button
     $("#selectPage").click(function () {
         loadListOfPages(); // Call function to load the file list
-        $("#fileList").dialog({
+        $("#fileListDialog").dialog({
             modal: true,
             width: 500,
             buttons: {
                 Close: function () {
-                    $('.ui-dialog-content').dialog('close');
+                    $(this).dialog('close');
                 }
             }
         });
@@ -263,10 +301,13 @@ $(document).ready(function () {
     // Add buttons to all existing neo-dupe elements inside the iframe
     function regenerateButtons() {
         $(iframeDoc).find('.neo-dupe').each(function () {
-            $(this).find('.buttonContainer').remove();
+            $(this).find('.button-container').remove();
             addButtonsToNeoDupe(this);
         });
-        $('#urlbox').html("<strong>Editing:</strong> <div>" + $(iframeDoc)[0].URL + "</div>");
+        $('#urlbox').empty().append(
+            $('<strong>').text('Editing:'),
+            $('<div>').text($(iframeDoc)[0].URL)
+        );
     }
 
     // Function to add buttons to a neo-dupe element inside the iframe
@@ -341,4 +382,3 @@ function showMessage(message, type) {
         messageBar.slideUp();
     }, 5000);
 }
-

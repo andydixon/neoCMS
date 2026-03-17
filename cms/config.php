@@ -6,8 +6,9 @@
 
 $config = [
     'authentication' => [
-        // Add more users as needed - its 'username'=>'password' if you hadn't have guessed
-        'admin' => 'password123',
+        // Store password hashes generated with password_hash(...), not plaintext passwords.
+        // Default password for this sample hash is: change-this-password
+        'admin' => '$2y$10$.MiUOFPR.L9osXyKuUjqx.VeZeeD3bHrQrmPQAOzXSfWj.nene1ey',
     ],
     // Enable the auditing system
     'audit' => true,

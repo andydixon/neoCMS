@@ -34,7 +34,7 @@ class CMSController
         }
 
         // Check if the user is authenticated for actions that require it
-        if (in_array($action, ['save', 'newPage']) && !$this->authentication->isLoggedIn()) {
+        if (!$this->authentication->isLoggedIn()) {
             $this->sendJsonResponse(['error' => 'Not authenticated']);
             return;
         }
@@ -44,7 +44,11 @@ class CMSController
             try {
                 $this->$methodName();
             } catch (\Exception $e) {
-                $this->sendJsonResponse(['error' => $e->getMessage()]);
+                $this->logger->write(
+                    "Controller action {$action} failed: {$e->getMessage()}",
+                    $this->authentication->getLoggedInUser()
+                );
+                $this->sendJsonResponse(['error' => 'Request failed']);
             }
         } else {
             $this->sendJsonResponse(['error' => 'Unknown action']);
@@ -59,10 +63,11 @@ class CMSController
     private function saveAction(): void
     {
         $this->ensurePostRequest();
+        $this->ensureValidCsrfToken();
         $uri = $_POST['uri'] ?? '';
         $content = $_POST['content'] ?? '';
 
-        if (empty($uri) || empty($content)) {
+        if ($uri === '' || !is_string($content)) {
             $this->sendJsonResponse(['error' => 'URI and content are required']);
             return;
         }
@@ -101,6 +106,7 @@ class CMSController
     private function newPageAction(): void
     {
         $this->ensurePostRequest();
+        $this->ensureValidCsrfToken();
         $filename = $_POST['filename'] ?? '';
         $template = $_POST['template'] ?? '';
 
@@ -275,6 +281,14 @@ class CMSController
         }
     }
 
+    private function ensureValidCsrfToken(): void
+    {
+        $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+        if (!$this->authentication->isValidCsrfToken($token)) {
+            throw new \Exception('Invalid CSRF token');
+        }
+    }
+
     /**
      * Send the JSON response
      * @param $data
@@ -283,6 +297,7 @@ class CMSController
     private function sendJsonResponse($data): void
     {
         header('Content-Type: application/json');
+        header('X-Content-Type-Options: nosniff');
         echo json_encode($data);
     }
 
@@ -307,7 +322,7 @@ class CMSController
 
         // Find all elements with the class "editable"
         $xpath = new \DOMXPath($dom);
-        $editableElements = $xpath->query('//*[contains(@class, "editable")]');
+        $editableElements = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " editable ")]');
 
         // Return true if there are any elements with the "editable" class
         return $editableElements->length > 0;

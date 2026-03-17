@@ -20,27 +20,37 @@ $authentication = new Authentication($config['authentication'] ?? []);
 $logger = new Logger($config['audit'] ?? true);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
-
-    if ($authentication->login($username, $password)) {
-        // Log successful login
+    $csrfToken = $_POST['csrf_token'] ?? null;
+    if (!$authentication->isValidCsrfToken($csrfToken)) {
+        http_response_code(400);
         $logger->write(
-            "User login for $username was successful from {$_SERVER['REMOTE_ADDR']}",
-            $username
+            "User login attempt rejected due to invalid CSRF token from {$_SERVER['REMOTE_ADDR']}",
+            'anonymous'
         );
-
-        // Redirect to the CMS dashboard or desired page
-        header("Location: /cms/");
-        exit("Well done, champ! You got this!! <3");
+        $error = "Invalid request token";
     } else {
-        // Log failed login attempt
-        $logger->write(
-            "User login for $username was denied due to incorrect credentials from {$_SERVER['REMOTE_ADDR']}",
-            $username
-        );
+        $username = $_POST['username'] ?? '';
+        $password = $_POST['password'] ?? '';
 
-        $error = "Invalid username or password";
+        if ($authentication->login($username, $password)) {
+            // Log successful login
+            $logger->write(
+                "User login for $username was successful from {$_SERVER['REMOTE_ADDR']}",
+                $username
+            );
+
+            // Redirect to the CMS dashboard or desired page
+            header("Location: /cms/");
+            exit;
+        } else {
+            // Log failed login attempt
+            $logger->write(
+                "User login for $username was denied due to incorrect credentials from {$_SERVER['REMOTE_ADDR']}",
+                $username
+            );
+
+            $error = "Invalid username or password";
+        }
     }
 }
 ?>
@@ -56,9 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <img class="logo" src="/cms/img/loginlogo.png" alt="NeoCMS logo"/>
     <h2>NeoCMS Login</h2>
     <?php if (!empty($error)): ?>
-        <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
+        <div class="error-message"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
     <?php endif; ?>
     <form method="post">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($authentication->getCsrfToken(), ENT_QUOTES, 'UTF-8'); ?>">
         <label for="username">Username</label>
         <input type="text" id="username" name="username" required autofocus>
 
