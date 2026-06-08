@@ -1,0 +1,21 @@
+<?php
+
+/**
+ * Copy this file to config.local.php and replace the example values.
+ * config.local.php is ignored by Git and denied by the supplied Apache rules.
+ */
+return [
+    'authentication' => [
+        'admin' => '$2y$10$replace-with-a-real-password-hash',
+    ],
+    'roles' => [
+        'admin' => 'administrator',
+    ],
+    // Set this to true when HTTPS is terminated by a trusted reverse proxy.
+    'security' => [
+        'cookieSecure' => true,
+        // Uncomment only where local audit-retention policy differs from the secure defaults.
+        // 'auditMaxFileBytes' => 10 * 1024 * 1024,
+        // 'auditRetentionDays' => 90,
+    ],
+];

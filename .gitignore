@@ -1,0 +1,17 @@
+# Site-specific credentials and deployment overrides.
+/cms/config.local.php
+
+# Runtime CMS state; retain only the web-access guards committed below.
+/cms/data/*
+!/cms/data/.htaccess
+!/cms/data/index.php
+/cms/logs/*
+!/cms/logs/.htaccess
+!/cms/logs/index.php
+
+# Uploaded content belongs to the deployed site rather than source control.
+/uploads/*
+!/uploads/.htaccess
+!/uploads/index.php
+
+# Generated security-audit reports are retained deliberately and should remain visible to Git.

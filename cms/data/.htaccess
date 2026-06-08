@@ -1,0 +1,2 @@
+# NeoCMS metadata may contain drafts and revision history; never serve it directly.
+Require all denied

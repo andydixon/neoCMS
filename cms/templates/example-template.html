@@ -1,26 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-gb">
 <head>
+    <!-- Replace these metadata values through the CMS SEO dialogue after creating the page. -->
     <meta charset="UTF-8">
-    <title>Welcome to NeoCMS</title>
-    <link href="/cms/css/welcome.style.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>New NeoCMS Page</title>
+    <meta name="description" content="Describe this page for visitors and search engines.">
 </head>
 <body>
-<header>
-    <img alt="Application Logo" class="logo" src="/cms/img/welcomeLogo.png">
-</header>
-<main>
-    <h1>Welcome to NeoCMS</h1>
-    <p>This is an example template, found in /cms/templates/ - remove me and replace me with your own site
-        templates!</p>
-    <p class="editable">
-        This box is editable!<br/>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        Quisque sit amet accumsan tortor. Itaque earum rerum hic tenetur a sapiente delectus.
-    </p>
+<!-- The default editable class may be changed with editableClass in cms/config.php. -->
+<main class="editable">
+    <h1>New page</h1>
+    <p>Select this region in NeoCMS to replace the example content.</p>
 </main>
-<footer>
-    <p>&copy; 2024 Andy Dixon</p>
+
+<!-- Shared keys allow one saved block to update every matching page. -->
+<footer class="editable" data-neo-shared="site-footer">
+    <p>Shared site footer</p>
 </footer>
 </body>
 </html>

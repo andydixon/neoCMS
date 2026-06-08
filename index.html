@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-gb">
 <head>
-    <title>Iframe Content</title>
+    <!-- Minimal public demonstration page; production sites may use any static HTML structure. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NeoCMS Example Page</title>
+    <meta name="description" content="A minimal page demonstrating NeoCMS editable and repeatable regions.">
 </head>
 <body>
+<!-- Each region with the configured editable class opens in the visual editor. -->
 <div class="editable">This is editable content 1.</div>
 <div class="editable">This is editable content 2.</div>
+<!-- neo-dupe adds controls for cloning or removing this complete block. -->
 <div class="editable neo-dupe">This is editable content 3, and this element can be cloned.</div>
 </body>
 </html>

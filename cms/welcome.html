@@ -1,129 +1,75 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head>
-    <meta charset="UTF-8" />
-    <title>NeoCMS - Super Lightweight CMS</title>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
-    <!-- Material Design Bootstrap -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.20.0/css/mdb.min.css" />
-    <!-- Custom Styles -->
+<html lang="en-gb">
+<head>
+    <!-- Built-in, read-only introduction displayed after login unless skipWelcomePage is enabled. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome to NeoCMS 3</title>
+    <meta name="description" content="A concise guide to the NeoCMS 3 administration interface.">
     <style>
-        body {
-            padding-top: 70px;
-            background-color: #ECEFF1;
-        }
-        .feature-icon {
-            font-size: 50px;
-            margin-bottom: 20px;
-            color: #2196F3;
-        }
-        .footer {
-            padding: 20px 0;
-            background-color: #CFD8DC;
-        }
-        .jumbotron {
-            background-color: #90CAF9;
-            color: #FFFFFF;
-        }
-        h2 {
-            color: #1976D2;
-        }
-        .btn-primary {
-            background-color: #1976D2;
-            border: none;
-        }
-        .btn-primary:hover {
-            background-color: #1565C0;
-        }
+        /* The welcome page is self-contained so it remains useful without a theme or network access. */
+        :root { color-scheme: light; font-family: system-ui, sans-serif; color: #25313c; background: #eef2f5; }
+        body { max-width: 1050px; margin: 0 auto; padding: 32px 20px 60px; line-height: 1.55; }
+        header { padding: 32px; border-radius: 12px; color: #fff; background: #185f91; }
+        h1, h2 { line-height: 1.2; }
+        h1 { margin-top: 0; }
+        main { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 22px; }
+        section { padding: 22px; border: 1px solid #d4dde4; border-radius: 10px; background: #fff; }
+        code { padding: 2px 5px; border-radius: 4px; background: #e8edf1; }
+        footer { margin-top: 24px; color: #586673; text-align: center; }
     </style>
-    <style type="text/css">/* Chart.js */
-    @-webkit-keyframes chartjs-render-animation{from{opacity:0.99}to{opacity:1}}@keyframes chartjs-render-animation{from{opacity:0.99}to{opacity:1}}.chartjs-render-monitor{-webkit-animation:chartjs-render-animation 0.001s;animation:chartjs-render-animation 0.001s;}</style><style type="text/css">/* Chart.js */
-@-webkit-keyframes chartjs-render-animation{from{opacity:0.99}to{opacity:1}}@keyframes chartjs-render-animation{from{opacity:0.99}to{opacity:1}}.chartjs-render-monitor{-webkit-animation:chartjs-render-animation 0.001s;animation:chartjs-render-animation 0.001s;}</style></head>
+</head>
 <body>
-
-<!-- Header -->
-<header class="jumbotron text-center">
-    <h1 class="display-4">Welcome to NeoCMS! 🎉</h1>
-    <p class="lead editable" style="cursor: default;">The super lightweight, database-free content management system!</p>
-    <a href="/" class="btn btn-primary btn-lg waves-effect waves-light">Start Editing your Website</a>
-
+<!-- This page explains the administration tools; public site content is loaded with the Pages button. -->
+<header>
+    <h1>Welcome to NeoCMS 3</h1>
+    <p>A database-free CMS with drafts, revisions, scheduled publishing, and rather fewer excuses for editing live HTML.</p>
 </header>
 
-<!-- Version Section -->
-<section class="container my-5">
-    <h2 class="text-center mb-4">You are running version 2.0! ✨</h2>
-    <p class="text-center editable" style="cursor: default;">This page is editable for you to familiarise yourself with how Neo works! Any editable blocks will have a hand pointer instead of your usual pointer.</p>
-</section>
+<main>
+    <!-- Core page-editing workflow. -->
+    <section>
+        <h2>Edit and publish</h2>
+        <p>Open <strong>Pages</strong>, choose a page, and select any region carrying the configured editable class.</p>
+        <p><strong>Save Draft</strong> keeps work private. <strong>Publish</strong> creates a revision before replacing the public page.</p>
+    </section>
 
-<!-- Features Section -->
-<section class="container my-5">
-    <h2 class="text-center mb-4">Features 🚀</h2>
-    <div class="row">
-        <div class="col-md-6">
-            <div class="media mb-4">
-                <div class="feature-icon mr-3">📦</div>
-                <div class="editable media-body" style="cursor: default;">
-                    <h5 class="mt-0">No Database Required</h5>
-                    <p>NeoCMS works without a database, so you don’t have to worry about setup hassles or performance slowdowns.</p>
-                </div>
-            </div>
-            <div class="media mb-4">
-                <div class="feature-icon mr-3">✏️</div>
-                <div class="editable media-body" style="cursor: default;">
-                    <h5 class="mt-0">Easy Content Editing</h5>
-                    <p>With our intuitive WYSIWYG editor, anyone can update content without writing a single line of code. Adding the additional class <code>neo-dupe</code> will allow an element and its children to be cloned.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="media mb-4">
-                <div class="feature-icon mr-3">🔗</div>
-                <div class="editable media-body" style="cursor: default;">
-                    <h5 class="mt-0">Seamless Integration</h5>
-                    <p>Simply add the CMS to any existing static website. Assign a special class to the elements you want to make editable, and you’re all set.</p>
-                </div>
-            </div>
-            <div class="media mb-4">
-                <div class="feature-icon mr-3">🖼️</div>
-                <div class="editable media-body" style="cursor: default;">
-                    <h5 class="mt-0">Consistent Layouts</h5>
-                    <p>NeoCMS supports page templates to keep your layouts neat and uniform across all pages.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+    <!-- Content creation and rollback tools. -->
+    <section>
+        <h2>Pages and revisions</h2>
+        <p>Administrators can create, duplicate, rename, and delete pages. Publishers can restore earlier revisions from <strong>Tools</strong>.</p>
+        <p>Deleted pages retain a restorable snapshot, because accidents should be reversible rather than memorable.</p>
+    </section>
 
-<!-- License Section -->
-<section class="container my-5">
-    <h2 class="text-center mb-4">License 📄</h2>
-    <p class="text-center">NeoCMS is open-source software licensed under the GNU General Public License v3.0 (GPLv3). You are free to use, modify, and distribute this software under the terms of this license.</p>
-    <p class="text-center">For more information, see the full <a href="#" target="_blank">GPLv3 License</a> found in <code>LICENSE</code>.</p>
-</section>
+    <!-- Asset and metadata management. -->
+    <section>
+        <h2>Media and SEO</h2>
+        <p>The media library reuses uploaded images, records alternative text, and reports usage counts.</p>
+        <p>The SEO dialogue manages titles, descriptions, canonical URLs, Open Graph images, and indexing instructions.</p>
+    </section>
 
-<!-- Bug Report Section -->
-<section class="container my-5">
-    <h2 class="text-center mb-4">Found a Bug? 🐛</h2>
-    <p class="text-center">If you run into any issues or have feature requests, please submit them on our <a href="https://github.com/andydixon/neoCMS/issues" target="_blank">GitHub issues page</a>. Your feedback helps us improve NeoCMS!</p>
-</section>
+    <!-- Site-wide content management. -->
+    <section>
+        <h2>Shared content and menus</h2>
+        <p>Regions marked with <code>data-neo-shared</code> can be updated across every page. Named menus may be nested and propagated in the same fashion.</p>
+    </section>
 
-<!-- Footer -->
-<footer class="footer text-center">
-    <div class="container editable" style="cursor: default;">
-        <p>© 2024 <a href="https://www.andydixon.com">Andy Dixon</a>. All rights reserved.</p>
-        <p>
-            <a href="https://github.com/andydixon/neoCMS/issues" target="_blank">Report an Issue</a>
-        </p>
-    </div>
+    <!-- Publication timing and preview controls. -->
+    <section>
+        <h2>Schedule and preview</h2>
+        <p>Publishers may queue a future release. Desktop, tablet, and mobile controls resize the preview without altering page markup.</p>
+    </section>
+
+    <!-- Quality and operational tools. -->
+    <section>
+        <h2>Checks and activity</h2>
+        <p>The accessibility checker catches common authoring problems before publication. The dashboard lists drafts, schedules, recent activity, and writable-directory warnings.</p>
+    </section>
+</main>
+
+<!-- Detailed installation, configuration, role, cron, and markup guidance lives in README.md. -->
+<footer>
+    <p>NeoCMS 3 documentation is available in the project README.</p>
 </footer>
-
-<!-- Bootstrap JS and dependencies -->
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-<!-- Material Design Bootstrap JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.20.0/js/mdb.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-
-
-<div class="hiddendiv common"></div></body></html>
+</body>
+</html>

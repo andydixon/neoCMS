@@ -1,3 +1,4 @@
+/* Full-height application shell: the toolbar takes what it needs and the preview takes the rest. */
 html,
 body {
     height: 100%;
@@ -17,6 +18,7 @@ body {
     min-width: 0;
 }
 
+/* Dark, wrapping administration toolbar shared by wide and narrow screens. */
 .pageContainer .controls {
     flex: 0 0 auto;
     min-height: 60px;
@@ -35,6 +37,7 @@ body {
     flex-wrap: wrap;
 }
 
+/* Same-origin preview iframe; JavaScript narrows its width for responsive previews. */
 .pageContainer .frame {
     flex: 1 1 auto;
     display: block;
@@ -45,6 +48,7 @@ body {
     border: 0;
 }
 
+/* Product mark remains a fixed size while neighbouring controls wrap around it. */
 .controls .logo {
     background-image: url("/cms/img/logo.png");
     width: 60px;
@@ -56,14 +60,27 @@ body {
     background-position: center;
 }
 
+/* The two toolbar rows stay together and yield horizontal space when necessary. */
 .controls .buttonContainer {
     margin-left: auto;
     flex: 0 1 auto;
     min-width: 0;
 }
 
+.toolbar-row {
+    display: flex;
+    gap: 7px;
+    justify-content: flex-end;
+    margin: 3px 0;
+    flex-wrap: wrap;
+}
 
-/* CSS */
+.publish-controls {
+    opacity: 0.94;
+}
+
+
+/* Shared toolbar button treatment, including keyboard focus and destructive emphasis. */
 .headerButton {
     display: inline-flex;
     align-items: center;
@@ -100,6 +117,7 @@ body {
     filter: brightness(1.08);
 }
 
+/* Current page path and unpublished-state label. */
 .controls #urlbox {
     flex: 1 1 320px;
     min-width: 0;
@@ -119,6 +137,7 @@ body {
     white-space: nowrap;
 }
 
+/* Compact account, role, logout, and operational-warning area. */
 .controls .loggedInDetails {
     flex: 0 1 auto;
     color: #dee2e6;
@@ -128,6 +147,15 @@ body {
     max-width: 260px;
 }
 
+.link-button {
+    border: 0;
+    padding: 0;
+    color: #9ecbff;
+    background: transparent;
+    cursor: pointer;
+}
+
+/* Legacy list support retained for installations with locally customised toolbar markup. */
 .controls .buttonContainer ul {
     list-style-type: none;
     margin: 0;
@@ -142,9 +170,7 @@ body {
     display: block;
 }
 
-/**
-New Page Modal
- */
+/* New-page dialogue: template selection followed by the destination filename. */
 
 #newPageDialog {
     display: none;
@@ -176,9 +202,7 @@ New Page Modal
     display: block;
 }
 
-/**
-File List Modal
- */
+/* Page-picker dialogue and searchable action rows. */
 
 #fileListDialog {
     display: none;
@@ -204,6 +228,120 @@ File List Modal
     margin-bottom: 5px;
 }
 
+#pageSearch {
+    width: 100%;
+    padding: 9px;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+}
+
+#fileList li {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+#fileList .page-open {
+    flex: 1;
+    text-align: left;
+}
+
+.cms-dialog label {
+    display: block;
+    margin: 12px 0;
+    font-weight: 600;
+}
+
+/* Consistent form controls across SEO, scheduling, shared-content, and menu dialogues. */
+.cms-dialog input[type="text"],
+.cms-dialog input[type="url"],
+.cms-dialog input[type="datetime-local"],
+.cms-dialog textarea {
+    display: block;
+    width: 100%;
+    margin-top: 5px;
+    padding: 8px;
+    box-sizing: border-box;
+    font-weight: normal;
+}
+
+/* Content-editor actions sit beneath TinyMCE now that no Bootstrap modal is required. */
+.editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* Tool launcher expands to available width without requiring a row of tiny buttons. */
+.tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.tool-grid button,
+.cms-dialog button,
+#fileList button {
+    padding: 7px 10px;
+    cursor: pointer;
+}
+
+/* Media cards keep previews useful while accommodating long generated filenames. */
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    max-height: 65vh;
+    overflow: auto;
+}
+
+.media-card {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    overflow: hidden;
+}
+
+.media-card img {
+    width: 100%;
+    height: 130px;
+    object-fit: contain;
+    background: #eee;
+    cursor: pointer;
+}
+
+/* Reusable rows serve revisions, schedules, activity, shared blocks, and menus. */
+.list-row {
+    display: block;
+    width: 100%;
+    margin: 5px 0;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+/* Findings use a restrained warning treatment; no flashing sirens are required. */
+.issue {
+    margin: 7px 0;
+    padding: 9px;
+    border-left: 4px solid #b52b3a;
+    background: #fff0f1;
+}
+
+/* Semantic status colours shared by checks and destructive actions. */
+.success-text {
+    color: #18733c;
+    font-weight: 600;
+}
+
+.danger-text {
+    color: #a51d2d;
+}
+
 #fileList li:hover {
     background-color: #e0e0e0;
 }
@@ -212,6 +350,7 @@ File List Modal
     color: #ff4d4d;
 }
 
+/* At medium widths the page path receives its own row. */
 @media (max-width: 1100px) {
     .pageContainer .controls {
         gap: 12px;
@@ -228,6 +367,7 @@ File List Modal
     }
 }
 
+/* On small screens controls stack into touch-friendly full-width rows. */
 @media (max-width: 760px) {
     .pageContainer .controls {
         align-items: flex-start;
