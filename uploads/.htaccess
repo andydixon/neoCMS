@@ -1,0 +1,12 @@
+# Uploaded files are images only; deny executable extensions even if one appears by other means.
+Options -Indexes
+
+<FilesMatch "\.(?:php[0-9]?|phtml|phar|cgi|pl|py|sh)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Content-Security-Policy "default-src 'none'; sandbox"
+    Header always set Cross-Origin-Resource-Policy "same-origin"
+</IfModule>

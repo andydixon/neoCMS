@@ -1,8 +1,10 @@
+/* Standalone login palette kept deliberately separate from the administration application. */
 body {
     font-family: Arial, sans-serif;
     background-color: #111519;
 }
 
+/* Centred credential card with enough contrast to survive a late-night publishing session. */
 .login-container {
     width: 350px;
     margin: 100px auto;
@@ -12,6 +14,7 @@ body {
     box-shadow: 0 4px 10px rgb(0, 0, 0);
 }
 
+/* Form typography and labels follow the same light-on-dark visual hierarchy. */
 .login-container h2 {
     text-align: center;
     margin-bottom: 30px;
@@ -24,6 +27,7 @@ body {
     color: #dee2e6;
 }
 
+/* Inputs use border-box so their declared width includes padding and borders. */
 .login-container input[type="text"],
 .login-container input[type="password"] {
     width: 100%;
@@ -36,6 +40,7 @@ body {
     color: #dee2e6;
 }
 
+/* The single primary action spans the card and receives a clear hover state. */
 .login-container button {
     width: 100%;
     padding: 12px;
@@ -51,17 +56,20 @@ body {
     background-color: #005bb5;
 }
 
+/* Authentication failures remain visible without exposing sensitive detail. */
 .error-message {
     color: #ff4d4d;
     margin-bottom: 20px;
     text-align: center;
 }
 
+/* Brand artwork centres independently of its source image dimensions. */
 .logo {
     display: block;
     margin: auto;
 }
 
+/* Low-contrast project credit: present, but not competing with the login form. */
 .shamelessPlug {
     margin: 12px 0 -30px 0;
     padding: 0;
