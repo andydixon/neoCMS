@@ -2,13 +2,7 @@
 /** Login form and authentication request handler. */
 
 // Load account configuration before constructing authentication services.
-require_once "../config.php";
-
-// Resolve NeoCMS classes without introducing a package-manager requirement.
-spl_autoload_register(function ($class) {
-    $classPath = str_replace('\\', DIRECTORY_SEPARATOR, $class);
-    require_once "../src/{$classPath}.php";
-});
+require_once __DIR__ . '/../bootstrap.php';
 
 use NeoCMS\Authentication;
 use NeoCMS\LoginRateLimiter;
@@ -62,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (int) ($_SERVER['CONTENT_LENGTH'] ?
             );
 
             // Redirect after POST so browser refreshes do not resubmit credentials.
-            header("Location: /cms/");
+            header("Location: " . $config['basePath'] . "/cms/");
             exit;
         } else {
             $rateLimiter->recordFailure($address, $username);
@@ -81,13 +75,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (int) ($_SERVER['CONTENT_LENGTH'] ?
 <html lang="en-gb">
 <head>
     <title>NeoCMS Login</title>
-    <link rel="stylesheet" href="/cms/css/login.css"/>
+    <link rel="stylesheet" href="<?php echo htmlspecialchars($config['basePath'], ENT_QUOTES, 'UTF-8'); ?>/cms/css/login.css"/>
 </head>
 <body>
 
 <!-- The compact login card is intentionally independent of the heavier administration UI. -->
 <div class="login-container">
-    <img class="logo" src="/cms/img/loginlogo.png" alt="NeoCMS logo"/>
+    <img class="logo" src="<?php echo htmlspecialchars($config['basePath'], ENT_QUOTES, 'UTF-8'); ?>/cms/img/loginlogo.png" alt="NeoCMS logo"/>
     <h2>NeoCMS Login</h2>
     <?php if (!empty($error)): ?>
         <div class="error-message"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>

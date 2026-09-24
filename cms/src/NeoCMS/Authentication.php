@@ -25,6 +25,9 @@ class Authentication
     /** Maximum total lifetime of an authenticated session. */
     private int $absoluteTimeout;
 
+    /** URL path the session cookie is scoped to; the CMS directory, which moves when the site is in a subfolder. */
+    private string $cookiePath;
+
     /** Optional explicit Secure-cookie setting for TLS-terminating reverse proxies. */
     private ?bool $cookieSecure;
 
@@ -36,6 +39,7 @@ class Authentication
         $this->idleTimeout = max(300, (int) ($sessionOptions['idleTimeout'] ?? 1800));
         $this->absoluteTimeout = max($this->idleTimeout, (int) ($sessionOptions['absoluteTimeout'] ?? 43200));
         $this->cookieSecure = isset($sessionOptions['cookieSecure']) ? (bool) $sessionOptions['cookieSecure'] : null;
+        $this->cookiePath = (string) ($sessionOptions['cookiePath'] ?? '/cms');
         $this->startSession();
         $this->enforceSessionLifetime();
     }
@@ -65,7 +69,7 @@ class Authentication
 
         session_set_cookie_params([
             'httponly' => true,
-            'path' => '/cms',
+            'path' => $this->cookiePath,
             'samesite' => 'Lax',
             'secure' => $isHttps,
         ]);
