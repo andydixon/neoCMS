@@ -7,16 +7,12 @@
  */
 
 // Load credentials, role assignments, and shared application settings.
-require_once "config.php";
+require_once __DIR__ . '/bootstrap.php';
 
-// Resolve project classes without requiring Composer for this deliberately lightweight CMS.
-spl_autoload_register(function ($class) {
-    $classPath = str_replace('\\', DIRECTORY_SEPARATOR, $class);
-    require_once "./src/{$classPath}.php";
-});
-
+use NeoCMS\Activity;
 use NeoCMS\Authentication;
 use NeoCMS\FileStore;
+use NeoCMS\Logger;
 use NeoCMS\SecurityHeaders;
 
 SecurityHeaders::json(isset($config['security']['cookieSecure']) ? (bool) $config['security']['cookieSecure'] : null);
@@ -164,7 +160,7 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
         chmod($target_file, 0644);
 
         // Seed media metadata from the original basename; editors can improve the alt text later.
-        $location = '/uploads/' . $filename;
+        $location = $config['basePath'] . '/uploads/' . $filename;
         $metadata = $store->read('media');
         $originalBase = pathinfo((string) $file['name'], PATHINFO_FILENAME);
         $altText = substr(preg_replace('/[\x00-\x1F\x7F]/u', '', $originalBase) ?? '', 0, 200);
@@ -181,6 +177,13 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
         }
         flock($uploadLock, LOCK_UN);
         fclose($uploadLock);
+        // The file is saved by now, so a failure to write the audit entry must not fail the upload.
+        try {
+            (new Activity($store, new Logger($config['audit'] ?? true, $config['security'] ?? [])))
+                ->record($authentication->getLoggedInUser(), 'Uploaded image', $filename . ' (' . max(1, (int) round(((int) $file['size']) / 1024)) . ' KB)');
+        } catch (\Throwable $exception) {
+            // Deliberately ignored.
+        }
         echo json_encode(['location' => $location]);
     } else {
         flock($uploadLock, LOCK_UN);

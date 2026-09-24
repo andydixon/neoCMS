@@ -109,10 +109,6 @@ body {
     outline: 0;
 }
 
-.headerButton.dangerButton {
-    background-color: #6E4D50;
-}
-
 .headerButton:hover {
     filter: brightness(1.08);
 }
@@ -208,42 +204,11 @@ body {
     display: none;
 }
 
-.filelist-content {
-    padding: 20px;
-    background-color: #fefefe;
-    border: 1px solid #888;
-    width: 400px;
-    margin: auto;
-}
-
-#fileList {
-    list-style-type: none;
-    padding: 0;
-}
-
-#fileList li {
-    padding: 10px;
-    cursor: pointer;
-    background-color: #f0f0f0;
-    margin-bottom: 5px;
-}
-
 #pageSearch {
     width: 100%;
     padding: 9px;
     margin-bottom: 12px;
     box-sizing: border-box;
-}
-
-#fileList li {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
-
-#fileList .page-open {
-    flex: 1;
-    text-align: left;
 }
 
 .cms-dialog label {
@@ -268,9 +233,45 @@ body {
 /* Content-editor actions sit beneath TinyMCE now that no Bootstrap modal is required. */
 .editor-actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 8px;
     margin-top: 12px;
+}
+
+/* Light, regular-weight buttons; Publish Now is the only filled one, in green. */
+#editModal .editor-actions button {
+    padding: 6px 14px;
+    border: 1px solid #c9cfd8;
+    border-radius: 4px;
+    background: #fff;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+#editModal .editor-actions button:hover {
+    background: #f3f5f8;
+}
+
+#editModal .editor-actions #saveBtn {
+    border-color: #9db8d8;
+    color: #2f5a8a;
+}
+
+#editModal .editor-actions #saveBtn:hover {
+    background: #eaf1fb;
+}
+
+#editModal .editor-actions .publish-now {
+    background: #2e7d4f;
+    border-color: #2e7d4f;
+    color: #fff;
+}
+
+#editModal .editor-actions .publish-now:hover {
+    background: #256a42;
 }
 
 /* Tool launcher expands to available width without requiring a row of tiny buttons. */
@@ -342,10 +343,6 @@ body {
     color: #a51d2d;
 }
 
-#fileList li:hover {
-    background-color: #e0e0e0;
-}
-
 .redText {
     color: #ff4d4d;
 }
@@ -403,3 +400,111 @@ body {
         margin-top: 4px;
     }
 }
+
+/* Site scan dialogue: selectable page rows and the option group. */
+#siteScanOptions { border: 1px solid #ccc; margin: 12px 0; padding: 8px 12px; }
+#siteScanOptions label { display: block; margin: 4px 0; }
+#siteScanPages { max-height: 40vh; overflow: auto; }
+.scan-row { display: block; cursor: pointer; }
+.scan-note { color: #555; font-size: 0.9em; }
+
+/* Image dialogue: thumbnail picker and address fields. */
+#imagePicker img { cursor: pointer; }
+#imageForm label { display: block; margin: 8px 0; }
+#imageForm input[type="text"] { display: block; width: 100%; box-sizing: border-box; }
+/* Page picker: full-width table with a document icon, draft badge, and per-row actions. */
+.filelist-content { padding: 4px 0 0; }
+.table-wrap { max-height: 60vh; overflow: auto; border: 1px solid #dfe3ea; border-radius: 8px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th {
+    position: sticky; top: 0; z-index: 1; text-align: left; padding: 10px 14px;
+    background: #f3f5f8; color: #4b5563; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid #dfe3ea;
+}
+.data-table td { padding: 10px 14px; border-bottom: 1px solid #edf0f4; vertical-align: middle; }
+.data-table tbody tr:last-child td { border-bottom: 0; }
+.data-table tbody tr:nth-child(even) { background: #fafbfc; }
+.page-row { cursor: pointer; }
+.page-row:hover { background: #eaf1fb !important; }
+.page-cell { white-space: nowrap; }
+.doc-icon { vertical-align: middle; margin-right: 8px; color: #4a7bb7; flex: none; }
+.data-table .page-open { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: #1f2937; cursor: pointer; text-align: left; }
+.data-table .page-open:hover, .data-table .page-open:focus { color: #2563a8; text-decoration: underline; }
+.page-title { color: #4b5563; }
+.page-date { color: #6b7280; white-space: nowrap; }
+.row-actions { white-space: nowrap; text-align: right; }
+.row-actions button, .row-button { margin-left: 4px; padding: 4px 9px; font-size: 12px; cursor: pointer; }
+.badge-draft {
+    margin-left: 10px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
+    background: #fff3d6; color: #8a5a00; border: 1px solid #f0d58a;
+}
+@media (max-width: 700px) { #fileList .page-title, #fileList th:nth-child(2), #fileList .page-date, #fileList th:nth-child(3) { display: none; } }
+
+/* Site scan progress bar and file count. */
+#siteScanProgress { margin: 0 0 12px; }
+#scanProgressBar { width: 100%; height: 16px; accent-color: #4a7bb7; }
+#scanProgressText { margin-top: 4px; font-size: 13px; color: #4b5563; }
+
+
+/* Shared polish for dialogue content: stat tiles, section headings, empty states, badges. */
+.stat-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
+.stat { padding: 10px 14px; background: #f3f5f8; border: 1px solid #dfe3ea; border-radius: 8px; font-size: 13px; color: #4b5563; }
+.stat strong { font-size: 18px; color: #1f2937; margin-right: 2px; }
+.dialog-section { margin: 18px 0 8px; font-size: 14px; color: #374151; }
+.empty-state { padding: 18px; text-align: center; color: #6b7280; background: #fafbfc; border: 1px dashed #dfe3ea; border-radius: 8px; }
+.page-sub { display: block; margin: 2px 0 0 26px; font-size: 12px; font-weight: 400; color: #6b7280; white-space: normal; }
+.check-cell { width: 34px; text-align: center; }
+.data-table .page-cell strong { font-weight: 600; color: #1f2937; }
+.badge-pending, .badge-failed { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.badge-pending { background: #e7f0fb; color: #1e5a99; border: 1px solid #bcd3ee; }
+.badge-failed { background: #fdeaec; color: #a51d2d; border: 1px solid #f0b8bf; }
+.issue { border-radius: 6px; }
+
+/* New-page templates as selectable rows. */
+#radioList { display: grid; gap: 8px; margin-bottom: 14px; }
+.template-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #dfe3ea; border-radius: 8px; cursor: pointer; }
+.template-option:hover { background: #f3f7fc; }
+.template-option:has(input:checked) { border-color: #4a7bb7; background: #eaf1fb; }
+.template-option .doc-icon { margin: 0; }
+
+/* Media library cards. */
+.media-card { border-radius: 10px; border-color: #dfe3ea; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); transition: box-shadow 0.15s; }
+.media-card:hover { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12); }
+.media-card img { border-radius: 6px; }
+.media-card strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.media-card small { color: #6b7280; }
+
+/* Snackbar: bottom-centre toast for success and error messages. */
+#message-bar {
+    position: fixed; left: 50%; bottom: 28px; z-index: 100000;
+    display: flex; align-items: center; gap: 12px;
+    min-width: 280px; max-width: min(560px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 12px 10px 12px 14px; background: #fff; color: #1f2937;
+    border-left: 5px solid #18733c; border-radius: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    opacity: 0; transform: translate(-50%, 24px); pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+#message-bar[hidden] { display: none; }
+#message-bar.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+#message-bar.is-error { border-left-color: #a51d2d; }
+.snack-icon { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #18733c; color: #fff; font-size: 14px; font-weight: 700; }
+#message-bar.is-error .snack-icon { background: #a51d2d; }
+#message-bar.is-success .snack-icon::before { content: "\2713"; }
+#message-bar.is-error .snack-icon::before { content: "!"; }
+.snack-text { flex: 1; word-break: break-word; }
+.snack-close { flex: none; border: 0; background: none; padding: 0 6px; font-size: 22px; line-height: 1; color: #6b7280; cursor: pointer; }
+.snack-close:hover { color: #111827; }
+@media (prefers-reduced-motion: reduce) { #message-bar { transition: none; } }
+
+/* New-page dialogue: fill the dialogue instead of sitting in a bordered box inside it. */
+.newpage-content { padding: 0; background: none; border: 0; width: auto; }
+#newPageForm > label[for="filename"] { margin: 4px 0 6px; font-weight: 600; }
+#newPageForm input[type="text"] { width: 100%; box-sizing: border-box; padding: 9px; margin-bottom: 16px; border: 1px solid #c9cfd8; border-radius: 6px; }
+#newPageForm button[type="submit"] { align-self: flex-end; padding: 9px 22px; border: 0; border-radius: 6px; background: #3b6ea5; color: #fff; font-weight: 600; cursor: pointer; }
+#newPageForm button[type="submit"]:hover { background: #2f5a8a; }
+
+/* Primary submit buttons inside dialogue forms. */
+.cms-dialog form button[type="submit"] { padding: 9px 18px; border: 0; border-radius: 6px; background: #3b6ea5; color: #fff; font-weight: 600; cursor: pointer; }
+.cms-dialog form button[type="submit"]:hover { background: #2f5a8a; }
+#sharedList, #menuList { margin-bottom: 16px; }

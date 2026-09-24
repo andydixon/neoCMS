@@ -2,13 +2,7 @@
 /** Server-rendered shell for the authenticated NeoCMS administration application. */
 
 // Load configuration before initialising sessions and role-aware controls.
-require_once "config.php";
-
-// Resolve project classes without requiring Composer.
-spl_autoload_register(function ($class) {
-    $classPath = str_replace('\\', DIRECTORY_SEPARATOR, $class);
-    require_once "./src/{$classPath}.php";
-});
+require_once __DIR__ . '/bootstrap.php';
 
 use NeoCMS\Authentication;
 use NeoCMS\SecurityHeaders;
@@ -24,7 +18,7 @@ if (!is_string($editableClass) || !preg_match('/^[a-zA-Z_][a-zA-Z0-9_-]*$/', $ed
 
 // Keep the administration shell private by redirecting anonymous requests to login.
 if (!$authentication->isLoggedIn()) {
-    header("Location: /cms/login/");
+    header("Location: " . $config['basePath'] . "/cms/login/");
     exit;
 }
 SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) $config['security']['cookieSecure'] : null);
@@ -35,16 +29,21 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
 <head>
     <title>NeoCMS</title>
     <meta name="csrf-token" content="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+    <meta name="neo-base-path" content="<?php echo htmlspecialchars($config['basePath'], ENT_QUOTES, 'UTF-8'); ?>">
     <meta name="neo-editable-class" content="<?php echo htmlspecialchars($editableClass, ENT_QUOTES, 'UTF-8'); ?>">
     <script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha384-fgGyf7Mo7DURSOMnOy7ed+dkq5Job205Gnzu6QIg0BOHKaqt4D76Dt8VlDCzcMHV" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.14.2/jquery-ui.min.js" integrity="sha384-tBcEcHGtNy7/Mx08+YxuvQ6v6s0N2jgehtFiT+bLtGwTj/txXtB/L5GqXfggm5sS" crossorigin="anonymous"></script>
-    <script src="/cms/tinymce/tinymce.min.js"></script>
+    <script src="<?php echo htmlspecialchars($config['basePath'], ENT_QUOTES, 'UTF-8'); ?>/cms/tinymce/tinymce.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.2/themes/base/jquery-ui.css" integrity="sha384-pUvA/6DQjteMxpaV6uGxZ1QuYrFLJgrLMvBWf06VcJIg6ky/Y5m3UZJlrv11V1I+" crossorigin="anonymous">
-    <link rel="stylesheet" href="/cms/css/editor.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars($config['basePath'], ENT_QUOTES, 'UTF-8'); ?>/cms/css/editor.css">
 </head>
 <body data-role="<?php echo htmlspecialchars($authentication->getRole(), ENT_QUOTES, 'UTF-8'); ?>">
 <!-- Status messages sit outside the flex layout so they may overlay the full viewport. -->
-<div id="message-bar" style="display:none;"></div>
+<div id="message-bar" role="status" aria-live="polite" hidden>
+    <span class="snack-icon" aria-hidden="true"></span>
+    <span class="snack-text"></span>
+    <button type="button" class="snack-close" aria-label="Dismiss message">&times;</button>
+</div>
 <div class="pageContainer">
     <div class="controls">
         <div class="logo"></div>
@@ -62,9 +61,6 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
                 <button class="headerButton" id="moreButton">Tools</button>
             </div>
             <div class="toolbar-row publish-controls">
-                <button class="headerButton" id="saveDraft">Save Draft</button>
-                <button class="headerButton publish-only" id="scheduleButton">Schedule</button>
-                <button class="headerButton dangerButton publish-only" id="savePage">Publish</button>
                 <button class="headerButton viewport-button" data-width="100%">Desktop</button>
                 <button class="headerButton viewport-button" data-width="768px">Tablet</button>
                 <button class="headerButton viewport-button" data-width="390px">Mobile</button>
@@ -81,15 +77,17 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
             ?>
         </div>
     </div>
-    <iframe id="frameContainer" src="<?php echo $config['skipWelcomePage'] ? "/" : "welcome.html"; ?>"
+    <iframe id="frameContainer" src="<?php echo $config['skipWelcomePage'] ? htmlspecialchars($config['basePath'], ENT_QUOTES, 'UTF-8') . "/" : "welcome.html"; ?>"
             class="frame" sandbox="allow-same-origin"></iframe>
 </div>
-<!-- TinyMCE content editor. Saving here changes the preview, not the public page. -->
+<!-- TinyMCE content editor. Save Draft keeps changes private; Schedule Publish and Publish Now act on the whole page. -->
 <div id="editModal" class="cms-dialog" title="Edit Content">
     <textarea id="editor"></textarea>
     <div class="editor-actions">
-        <button id="saveBtn" type="button">Save</button>
-        <button id="closeEditorBtn" type="button">Close</button>
+        <button id="saveBtn" type="button" title="Applies your changes and saves them as a private draft">Save Draft</button>
+        <button id="scheduleBtn" type="button" class="publish-only" title="Publishes this page automatically at a time you choose">Schedule Publish</button>
+        <button id="publishBtn" type="button" class="publish-only publish-now" title="Replaces the live page now; a revision of the old page is kept">Publish Now</button>
+        <button id="closeEditorBtn" type="button">Cancel</button>
     </div>
 </div>
 
@@ -97,6 +95,7 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
 <div id="newPageDialog" title="Create a New Page">
     <div class="newpage-content">
         <form id="newPageForm">
+            <h3 class="dialog-section">Choose a template</h3>
             <div id="radioList">
                 <!-- JavaScript populates available filesystem templates here. -->
             </div>
@@ -111,10 +110,18 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
 <!-- Searchable page picker with role-dependent management actions. -->
 <div id="fileListDialog" title="Select an Existing Page">
     <div class="filelist-content">
-        <input id="pageSearch" type="search" placeholder="Search pages">
-        <ul id="fileList">
-            <!-- JavaScript populates discovered editable pages here. -->
-        </ul>
+        <input id="pageSearch" type="search" placeholder="Search pages" aria-label="Search pages">
+        <div class="table-wrap">
+            <table id="fileList" class="data-table">
+                <thead>
+                    <tr><th>Page</th><th>Title</th><th>Last modified</th><th class="manage-col">Actions</th></tr>
+                </thead>
+                <tbody>
+                    <!-- JavaScript populates discovered editable pages here. -->
+                </tbody>
+            </table>
+            <p id="pageListEmpty" class="scan-note" hidden>No pages match your search.</p>
+        </div>
     </div>
 </div>
 
@@ -128,6 +135,7 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
         <button id="accessibilityButton">Accessibility check</button>
         <button id="sharedButton" class="manage-only">Shared content</button>
         <button id="menusButton" class="manage-only">Navigation menus</button>
+        <button id="siteScanButton" class="manage-only">Site scan</button>
     </div>
 </div>
 
@@ -165,25 +173,53 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
 
 <!-- Site-wide shared-region registry and propagation form. -->
 <div id="sharedDialog" class="cms-dialog" title="Shared Content">
+    <div id="sharedList"></div>
     <form id="sharedForm">
         <label>Block name<input id="sharedKey" type="text" pattern="[A-Za-z0-9_-]+" required></label>
         <label>HTML content<textarea id="sharedContent" rows="8" required></textarea></label>
         <button type="submit">Save and update every page</button>
     </form>
-    <div id="sharedList"></div>
 </div>
 
 <!-- Line-oriented menu editor supporting an optional parent label for nesting. -->
 <div id="menusDialog" class="cms-dialog" title="Navigation Menus">
+    <div id="menuList"></div>
     <form id="menuForm">
         <label>Menu name<input id="menuName" type="text" pattern="[A-Za-z0-9_-]+" required></label>
         <label>One item per line: Label | URL | Optional parent label<textarea id="menuItems" rows="9" placeholder="Home | /&#10;About | /about.html&#10;Team | /team.html | About" required></textarea></label>
         <button type="submit">Save menu</button>
     </form>
-    <div id="menuList"></div>
 </div>
 
-<script src="/cms/js/cms.js"></script>
+<!-- Whole-site analysis with one-click tagging of content regions, images, and SEO tags. Administrators only. -->
+<div id="siteScanDialog" class="cms-dialog" title="Site Scan">
+    <div id="siteScanProgress" hidden>
+        <progress id="scanProgressBar" max="100" value="0"></progress>
+        <div id="scanProgressText" role="status" aria-live="polite"></div>
+    </div>
+    <div id="siteScanSummary"></div>
+    <fieldset id="siteScanOptions">
+        <legend>Changes to make</legend>
+        <label><input type="checkbox" id="scanContent" checked> Make content areas editable</label>
+        <label><input type="checkbox" id="scanImages" checked> Make images editable</label>
+        <label><input type="checkbox" id="scanSeo" checked> Add missing SEO tags (never overwrites existing ones)</label>
+    </fieldset>
+    <div id="siteScanPages"></div>
+    <p class="scan-note">Each changed page keeps a revision, so this can be undone from Revision history.</p>
+    <button id="siteScanApply" type="button">Apply to selected pages</button>
+</div>
+
+<!-- Replace or describe an image that sits outside an editable region. -->
+<div id="imageDialog" class="cms-dialog" title="Edit Image">
+    <div id="imagePicker" class="media-grid"></div>
+    <form id="imageForm">
+        <label>Image address<input id="imageSrc" type="text" required></label>
+        <label>Alternative text<input id="imageAlt" type="text"></label>
+        <button type="submit">Apply image</button>
+    </form>
+</div>
+
+<script src="<?php echo htmlspecialchars($config['basePath'], ENT_QUOTES, 'UTF-8'); ?>/cms/js/cms.js"></script>
 
 </body>
 </html>

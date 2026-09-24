@@ -7,13 +7,7 @@
  */
 
 // Load the site-specific credentials, roles, and content settings.
-require_once "../config.php";
-
-// Resolve NeoCMS namespaces to the matching class beneath cms/src/.
-spl_autoload_register(function ($class) {
-    $classPath = str_replace('\\', DIRECTORY_SEPARATOR, $class);
-    require_once "../src/{$classPath}.php";
-});
+require_once __DIR__ . '/../bootstrap.php';
 
 use NeoCMS\CMSController;
 

@@ -68,6 +68,32 @@ final class FileStore
         @chmod($path, 0600);
     }
 
+    /**
+     * Read, modify, and write a JSON document under an exclusive lock so concurrent requests cannot lose updates.
+     *
+     * @param callable $fn Receives the current array and returns the array to store.
+     * @return array The stored document.
+     */
+    public function update(string $name, callable $fn, array $default = []): array
+    {
+        $lockPath = $this->directory('locks') . preg_replace('/[^a-zA-Z0-9_.-]/', '', $name) . '.lock';
+        $lock = fopen($lockPath, 'c+');
+        if ($lock === false || !flock($lock, LOCK_EX)) {
+            if (is_resource($lock)) {
+                fclose($lock);
+            }
+            throw new \RuntimeException('Unable to lock CMS data');
+        }
+        try {
+            $value = $fn($this->read($name, $default));
+            $this->write($name, $value);
+            return $value;
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
     /** Atomically write a private content file beneath a managed subdirectory. */
     public function writePrivateFile(string $directory, string $filename, string $content): string
     {
@@ -106,7 +132,7 @@ final class FileStore
     /** Create a directory recursively or fail with a useful application-level exception. */
     private function ensureDirectory(string $path): void
     {
-        if (!is_dir($path) && !mkdir($path, 0700, true) && !is_dir($path)) {
+        if (!is_dir($path) && !@mkdir($path, 0700, true) && !is_dir($path)) {
             throw new \RuntimeException('Unable to create CMS data directory');
         }
         @chmod($path, 0700);
