@@ -36,35 +36,50 @@ final class ContentDom
         return $dom->saveHTML();
     }
 
-    /** Replace every element marked data-neo-menu="$name" with the rendered <nav>; null when nothing to change. */
-    public static function withMenu(string $html, string $name, string $menuHtml): ?string
+    /**
+     * Replace the list inside every element marked data-neo-menu="$name", keeping the element's own attributes
+     * and every other byte of the page. Null when nothing needs to change.
+     */
+    public static function withMenu(string $html, string $name, array $items, string $uri = '', string $basePath = ''): ?string
     {
         if (!str_contains($html, 'data-neo-menu')) {
             return null;
         }
-        $dom = self::load($html);
-        $nodes = (new \DOMXPath($dom))->query('//*[@data-neo-menu="' . $name . '"]');
-        $sourceNav = self::load($menuHtml)->getElementsByTagName('nav')->item(0);
-        if ($nodes->length === 0 || !$sourceNav) {
-            return null;
+        $list = self::menuList($items, $uri, $basePath);
+        $flat = fn(string $s) => preg_replace('/>\s+</', '><', trim($s));
+        $edits = [];
+        foreach (SiteAnalyser::navs($html) as $nav) {
+            if ($nav['menu'] !== $name || $nav['close'] === null) {
+                continue;
+            }
+            if ($flat(substr($html, $nav['end'], $nav['close'] - $nav['end'])) !== $flat($list)) {
+                $edits[] = [$nav['end'], $nav['close'] - $nav['end']];
+            }
         }
-        foreach (iterator_to_array($nodes) as $node) {
-            $node->parentNode->replaceChild($dom->importNode($sourceNav, true), $node);
+        rsort($edits);
+        foreach ($edits as [$offset, $length]) {
+            $html = substr($html, 0, $offset) . $list . substr($html, $offset + $length);
         }
-        return $dom->saveHTML();
+        return $edits ? $html : null;
+    }
+
+    /** A menu as a standalone <nav> (the list itself comes from menuList). */
+    public static function renderMenu(string $name, array $items): string
+    {
+        return '<nav data-neo-menu="' . htmlspecialchars($name, ENT_QUOTES) . '">' . self::menuList($items) . '</nav>';
     }
 
     /**
-     * Render a nested, escaped navigation list from flat parent-labelled items.
+     * Render a nested, escaped list from flat parent-labelled items, marking the link to the page being written.
      * Circular parent references are stopped by the ancestor list rather than pursued forever.
      */
-    public static function renderMenu(string $name, array $items): string
+    public static function menuList(array $items, string $uri = '', string $basePath = ''): string
     {
         $children = [];
         foreach ($items as $item) {
             $children[$item['parent'] ?? ''][] = $item;
         }
-        $render = function (string $parent, array $ancestors = []) use (&$render, $children): string {
+        $render = function (string $parent, array $ancestors = []) use (&$render, $children, $uri, $basePath): string {
             if (empty($children[$parent])) {
                 return '';
             }
@@ -72,14 +87,48 @@ final class ContentDom
             foreach ($children[$parent] as $item) {
                 $label = htmlspecialchars($item['label'], ENT_QUOTES);
                 $url = htmlspecialchars($item['url'], ENT_QUOTES);
+                $current = $uri !== '' && self::isPage($item['url'], $uri, $basePath) ? ' aria-current="page"' : '';
                 $nested = in_array($item['label'], $ancestors, true) ? '' : $render($item['label'], array_merge($ancestors, [$item['label']]));
-                $html .= '<li><a href="' . $url . '">' . $label . '</a>' . $nested . '</li>';
+                $html .= '<li><a href="' . $url . '"' . $current . '>' . $label . '</a>' . $nested . '</li>';
             }
             return $html . '</ul>';
         };
-        return '<nav data-neo-menu="' . htmlspecialchars($name, ENT_QUOTES) . '">' . $render('') . '</nav>';
+        return $render('');
     }
 
+    /** Turn a page link into a site path (relative links resolved against the page, query/fragment kept); null for external or fragment-only links. */
+    public static function resolveLink(string $url, string $pageUri): ?string
+    {
+        $url = trim($url);
+        $path = parse_url($url, PHP_URL_PATH);
+        if ($url === '' || $url[0] === '#' || preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $url) || !is_string($path) || $path === '') {
+            return null;
+        }
+        if ($path[0] !== '/') {
+            $path = rtrim(str_replace('\\', '/', dirname($pageUri)), '/') . '/' . $path;
+        }
+        $out = [];
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+            $segment === '..' ? array_pop($out) : $out[] = $segment;
+        }
+        return '/' . implode('/', $out) . (str_ends_with($path, '/') && $out ? '/' : '') . substr($url, strcspn($url, '?#'));
+    }
+
+    /** Whether a menu link points at the page with this URI (a folder link means its index.html; a subfolder install's prefix is ignored). */
+    private static function isPage(string $url, string $uri, string $basePath): bool
+    {
+        $resolved = self::resolveLink($url, $uri);
+        if ($resolved === null) {
+            return false;
+        }
+        $index = fn(string $p) => str_ends_with($p, '/') ? $p . 'index.html' : $p;
+        $path = $index((string) parse_url($resolved, PHP_URL_PATH));
+        $uri = $index($uri);
+        return $path === $uri || ($basePath !== '' && $path === $basePath . $uri);
+    }
     /** Determine whether a document contains at least one element carrying exactly this CSS class token. */
     public static function hasClass(string $html, string $class): bool
     {

@@ -16,6 +16,8 @@
         main { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 22px; }
         section { padding: 22px; border: 1px solid #d4dde4; border-radius: 10px; background: #fff; }
         code { padding: 2px 5px; border-radius: 4px; background: #e8edf1; }
+        .important { color: #b3141f; }
+        .important code { color: inherit; background: #fbe4e6; }
         footer { margin-top: 24px; color: #586673; text-align: center; }
     </style>
 </head>
@@ -37,33 +39,35 @@
     <!-- Content creation and rollback tools. -->
     <section>
         <h2>Pages and revisions</h2>
-        <p>Administrators can create, duplicate, rename, and delete pages. Publishers can restore earlier revisions from <strong>Tools</strong>.</p>
-        <p>Deleted pages retain a restorable snapshot, because accidents should be reversible rather than memorable.</p>
+        <p>Administrators can create, duplicate, rename, and delete pages. The <strong>New page</strong> section under the list in <strong>Pages</strong> is a three-step wizard: choose a template, name the page (the filename is generated for you), then choose a navigation group. The new page stays a private draft until it is published; publishing creates the file and adds it to the chosen menu.</p>
+        <p>Use <strong>Create Template</strong> on any page in the list to offer it as a template, and Delete in the template list to stop offering one. Editors can restore earlier revisions from <strong>Tools</strong>.</p>
+        <p>Deleted pages retain a restorable snapshot: editors can bring one back with <strong>Recover</strong> in the <strong>Dashboard</strong>'s Deleted pages list, because accidents should be reversible rather than memorable.</p>
     </section>
 
     <!-- Asset and metadata management. -->
     <section>
         <h2>Media and SEO</h2>
-        <p>The media library reuses uploaded images, records alternative text, and reports usage counts.</p>
+        <p>The media library uploads images, documents, video and audio, sorts them by type, records alternative text or link text, and reports usage counts. In the editor, the <strong>Media library</strong> button inserts an uploaded file at the cursor. Executables and files containing code are refused.</p>
         <p>The SEO dialogue manages titles, descriptions, canonical URLs, Open Graph images, and indexing instructions.</p>
     </section>
 
     <!-- Site-wide content management. -->
     <section>
         <h2>Shared content and menus</h2>
-        <p>Regions marked with <code>data-neo-shared</code> can be updated across every page. Named menus may be nested and propagated in the same fashion.</p>
+        <p>Regions marked with <code>data-neo-shared</code> can be updated across every page. Open <strong>Navigation Menus</strong> to edit, rename, or delete menus; changes propagate to every page. Menus are created by your web developer, not the CMS: <strong>Site Scan</strong> and the menu dialogue's scan button find navigation in the site files (primary and secondary are detected automatically).</p>
     </section>
 
     <!-- Publication timing and preview controls. -->
     <section>
         <h2>Schedule and preview</h2>
-        <p>Publishers may queue a future release. Desktop, tablet, and mobile controls resize the preview without altering page markup.</p>
+        <p>Editors may queue a future release. The desktop, tablet, and mobile icon buttons resize the preview without altering page markup.</p>
     </section>
 
     <!-- Quality and operational tools. -->
     <section>
-        <h2>Checks and activity</h2>
-        <p>The accessibility checker catches common authoring problems before publication. The dashboard lists drafts, schedules, recent activity, and writable-directory warnings.</p>
+        <h2>Users, checks and activity</h2>
+        <p>The accessibility checker catches common authoring problems before publication. The dashboard lists drafts, schedules, deleted pages you can recover, recent activity, writable-directory warnings, and recommendations.</p>
+        <p>Everyone can update their display name, email address and password from <strong>Tools &gt; Users</strong>. An <strong>Editor</strong> edits and publishes content; an <strong>Administrator</strong> can also manage pages, menus and shared content, and add, invite, edit, block or delete users. Accounts in <code>config.local.php</code> stay managed there. <strong class="important">Important: CMS-created accounts are stored in the data folder, so on a live site set <code>dataDirectory</code> in <code>config.local.php</code> to an absolute path outside the web root; administrators see a Dashboard recommendation until it is.</strong></p>
     </section>
 </main>
 

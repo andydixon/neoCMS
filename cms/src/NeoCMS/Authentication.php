@@ -16,7 +16,7 @@ class Authentication
     /** Map of usernames to password hashes. */
     private array $credentials;
 
-    /** Map of usernames to editor, publisher, or administrator roles. */
+    /** Map of usernames to editor or administrator roles (the legacy publisher role counts as editor). */
     private array $roles;
 
     /** Maximum permitted inactivity for an authenticated session. */
@@ -91,10 +91,7 @@ class Authentication
             session_regenerate_id(true);
             $_SESSION['loggedIn'] = true;
             $_SESSION['loggedInUser'] = $username;
-            $configuredRole = $this->roles[$username] ?? 'editor';
-            $_SESSION['role'] = in_array($configuredRole, ['editor', 'publisher', 'administrator'], true)
-                ? $configuredRole
-                : 'editor';
+            $_SESSION['role'] = UserStore::normaliseRole($this->roles[$username] ?? 'editor');
             $_SESSION['credentialFingerprint'] = hash('sha256', (string) $this->credentials[$username]);
             $_SESSION['csrfToken'] = bin2hex(random_bytes(32));
             $_SESSION['authenticatedAt'] = time();
@@ -131,10 +128,7 @@ class Authentication
     public function getRole(): string
     {
         $username = $this->getLoggedInUser();
-        $configuredRole = $this->roles[$username] ?? 'editor';
-        $role = in_array($configuredRole, ['editor', 'publisher', 'administrator'], true)
-            ? $configuredRole
-            : 'editor';
+        $role = UserStore::normaliseRole($this->roles[$username] ?? 'editor');
         $_SESSION['role'] = $role;
         return $role;
     }
@@ -147,12 +141,27 @@ class Authentication
     public function can(string $capability): bool
     {
         $permissions = [
-            'editor' => ['draft', 'upload'],
-            'publisher' => ['draft', 'upload', 'publish', 'schedule'],
+            'editor' => ['draft', 'upload', 'publish', 'schedule'],
             'administrator' => ['draft', 'upload', 'publish', 'schedule', 'manage'],
         ];
 
         return in_array($capability, $permissions[$this->getRole()] ?? [], true);
+    }
+
+    /** Re-bind the current session to a changed credential so the user stays signed in while their other sessions end. */
+    public function renewSession(string $credentialHash): void
+    {
+        $_SESSION['credentialFingerprint'] = hash('sha256', $credentialHash);
+        if (session_status() === PHP_SESSION_ACTIVE && !headers_sent()) {
+            session_regenerate_id(true);
+        }
+        $_SESSION['lastRegeneratedAt'] = time();
+    }
+
+    /** Verify the signed-in user's password (for re-authentication before sensitive actions). */
+    public function verifyCurrentPassword(string $password): bool
+    {
+        return $this->credentialsAreValid($this->getLoggedInUser(), $password);
     }
 
     /** Return the session's CSRF token, generating a cryptographically random token when absent. */

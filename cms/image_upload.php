@@ -1,9 +1,9 @@
 <?php
 /**
- * Authenticated TinyMCE image-upload endpoint.
+ * Authenticated media-upload endpoint (images, documents, video, audio), also used by TinyMCE for pasted images.
  *
- * Files are checked by byte size, detected MIME type, and image decoding before receiving a random
- * server filename. Trusting only the browser-supplied extension would be admirably optimistic.
+ * Every file is checked by MediaTypes::inspect (extension allow-list, content sniffing, code scanning) before it receives a
+ * server-generated filename. Trusting only the browser-supplied extension would be admirably optimistic.
  */
 
 // Load credentials, role assignments, and shared application settings.
@@ -13,12 +13,13 @@ use NeoCMS\Activity;
 use NeoCMS\Authentication;
 use NeoCMS\FileStore;
 use NeoCMS\Logger;
+use NeoCMS\MediaTypes;
 use NeoCMS\SecurityHeaders;
 
 SecurityHeaders::json(isset($config['security']['cookieSecure']) ? (bool) $config['security']['cookieSecure'] : null);
 
 // Authentication is required before any upload details are processed.
-$authentication = new Authentication($config['authentication'] ?? [], $config['roles'] ?? [], $config['security'] ?? []);
+$authentication = new Authentication(...\NeoCMS\UserStore::authArgs($config));
 if (!$authentication->isLoggedIn()) {
     http_response_code(401);
     echo json_encode(['error' => 'Unauthorised']);
@@ -48,14 +49,6 @@ if (!$authentication->isValidCsrfToken($csrfToken)) {
     exit;
 }
 
-// Map explicitly supported image MIME types to controlled filename extensions.
-$allowed_types = [
-    'image/jpeg' => 'jpg',
-    'image/png'  => 'png',
-    'image/gif'  => 'gif',
-    'image/webp' => 'webp',
-];
-
 // Apply configured byte, dimension, pixel-count, file-count, and total-storage limits.
 $uploadConfig = is_array($config['uploads'] ?? null) ? $config['uploads'] : [];
 $max_file_size = max(1024, (int) ($uploadConfig['maxFileBytes'] ?? 10 * 1024 * 1024));
@@ -66,7 +59,7 @@ $maxFiles = max(1, (int) ($uploadConfig['maxFiles'] ?? 2000));
 $maxTotalBytes = max($max_file_size, (int) ($uploadConfig['maxTotalBytes'] ?? 500 * 1024 * 1024));
 if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > $max_file_size + 1024 * 1024) {
     http_response_code(413);
-    echo json_encode(['error' => 'Upload request is too large.']);
+    echo json_encode(['error' => 'This file is larger than the ' . round($max_file_size / 1048576, 1) . ' MB limit.']);
     exit;
 }
 
@@ -77,38 +70,32 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
     // Enforce the application limit even if php.ini permits larger files.
     if ($file['size'] > $max_file_size) {
         http_response_code(400);
-        echo json_encode(['error' => 'File size exceeds the maximum limit.']);
+        echo json_encode(['error' => 'This file is larger than the ' . round($max_file_size / 1048576, 1) . ' MB limit.']);
         exit;
     }
 
-    // Inspect file bytes rather than trusting the user-controlled original filename.
-    $finfo     = finfo_open(FILEINFO_MIME_TYPE);
-    $mime_type = finfo_file($finfo, $file['tmp_name']);
-    finfo_close($finfo);
+    // A pasted image may arrive without an extension; name it from its detected type so it can be checked like any other file.
+    $originalName = (string) $file['name'];
+    if (pathinfo($originalName, PATHINFO_EXTENSION) === '') {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $detected = (string) finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+        $originalName .= '.' . (['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp'][$detected] ?? '');
+    }
 
-    if (!array_key_exists($mime_type, $allowed_types)) {
+    // Extension allow-list, content sniffing, code scanning and per-format checks (see MediaTypes::inspect).
+    try {
+        $inspection = MediaTypes::inspect($file['tmp_name'], $originalName, [
+            'maxBytes' => $max_file_size, 'maxWidth' => $maxWidth, 'maxHeight' => $maxHeight, 'maxPixels' => $maxPixels,
+        ]);
+    } catch (\RuntimeException $exception) {
         http_response_code(400);
-        echo json_encode(['error' => 'Invalid file type.']);
+        echo json_encode(['error' => $exception->getMessage()]);
         exit;
     }
 
-    // Confirm that an image decoder recognises the payload as an actual image.
-    $imageInfo = getimagesize($file['tmp_name']);
-    if ($imageInfo === false) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Uploaded file is not a valid image.']);
-        exit;
-    }
-    [$width, $height] = $imageInfo;
-    if ($width > $maxWidth || $height > $maxHeight || $width * $height > $maxPixels) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Image dimensions exceed the configured limit.']);
-        exit;
-    }
-
-    // Random names prevent collisions and avoid publishing the original local filename.
-    $extension = $allowed_types[$mime_type];
-    $filename  = bin2hex(random_bytes(16)) . '.' . $extension;
+    // Generated names keep the original filename out of the URL namespace and allow only one extension.
+    $filename = MediaTypes::storedName($originalName, $inspection['ext']);
 
     // Create the public upload directory on a fresh installation.
     $uploadRoot = __DIR__ . '/../uploads';
@@ -164,7 +151,7 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
         $metadata = $store->read('media');
         $originalBase = pathinfo((string) $file['name'], PATHINFO_FILENAME);
         $altText = substr(preg_replace('/[\x00-\x1F\x7F]/u', '', $originalBase) ?? '', 0, 200);
-        $metadata[$filename] = ['alt' => $altText];
+        $metadata[$filename] = ['alt' => $altText, 'original' => substr(preg_replace('/[\x00-\x1F\x7F]/u', '', basename($originalName)) ?? '', 0, 200), 'by' => $authentication->getLoggedInUser()];
         try {
             $store->write('media', $metadata);
         } catch (\Throwable $exception) {
@@ -180,11 +167,11 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
         // The file is saved by now, so a failure to write the audit entry must not fail the upload.
         try {
             (new Activity($store, new Logger($config['audit'] ?? true, $config['security'] ?? [])))
-                ->record($authentication->getLoggedInUser(), 'Uploaded image', $filename . ' (' . max(1, (int) round(((int) $file['size']) / 1024)) . ' KB)');
+                ->record($authentication->getLoggedInUser(), 'Uploaded ' . (['imagery' => 'image', 'documents' => 'document', 'video' => 'video', 'audio' => 'audio'][$inspection['category']]), $filename . ' (' . max(1, (int) round(((int) $file['size']) / 1024)) . ' KB)');
         } catch (\Throwable $exception) {
             // Deliberately ignored.
         }
-        echo json_encode(['location' => $location]);
+        echo json_encode(['location' => $location, 'name' => $filename, 'category' => $inspection['category']]);
     } else {
         flock($uploadLock, LOCK_UN);
         fclose($uploadLock);

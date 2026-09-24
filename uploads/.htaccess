@@ -1,7 +1,7 @@
-# Uploaded files are images only; deny executable extensions even if one appears by other means.
-Options -Indexes
+# Uploaded media: images, documents, video and audio only. Deny executable and markup extensions even if one appears by other means.
+Options -Indexes -ExecCGI
 
-<FilesMatch "\.(?:php[0-9]?|phtml|phar|cgi|pl|py|sh)$">
+<FilesMatch "\.(?:php[0-9]?|phtml|phar|cgi|pl|py|sh|exe|dll|bat|cmd|com|msi|asp|aspx|jsp|jspx|html?|xhtml|shtml|svg|xml|js|jar|swf)$">
     Require all denied
 </FilesMatch>
 
@@ -9,4 +9,8 @@ Options -Indexes
     Header always set X-Content-Type-Options "nosniff"
     Header always set Content-Security-Policy "default-src 'none'; sandbox"
     Header always set Cross-Origin-Resource-Policy "same-origin"
+    # Documents download instead of rendering in the browser.
+    <FilesMatch "\.(?:pdf|docx|xlsx|pptx|odt|ods|odp|txt|csv)$">
+        Header always set Content-Disposition "attachment"
+    </FilesMatch>
 </IfModule>

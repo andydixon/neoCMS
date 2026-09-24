@@ -45,15 +45,19 @@ final class CMSController
     /** Maximum aggregate revision storage. */
     private int $maxRevisionBytes;
 
+    /** Account registry (config accounts plus CMS-managed accounts). */
+    private UserStore $users;
+
     /** Build the controller services and normalise all configured filesystem paths. */
     public function __construct(array $config)
     {
         $this->config = $config;
-        $this->authentication = new Authentication($config['authentication'] ?? [], $config['roles'] ?? [], $config['security'] ?? []);
+        $this->authentication = new Authentication(...UserStore::authArgs($config));
         $this->logger = new Logger($config['audit'] ?? true, $config['security'] ?? []);
         // A custom data directory is primarily useful for tests and hardened deployments.
         $dataDirectory = $config['dataDirectory'] ?? (__DIR__ . '/../../data');
         $this->store = new FileStore((string) $dataDirectory);
+        $this->users = new UserStore($this->store, $config);
         $this->activity = new Activity($this->store, $this->logger);
         $templatesDir = realpath(__DIR__ . '/../../templates');
         $documentRoot = realpath((string) ($config['siteRoot'] ?? $_SERVER['DOCUMENT_ROOT'] ?? ''));
@@ -147,6 +151,14 @@ final class CMSController
         $this->requirePost('draft');
         $uri = $this->requiredPost('uri');
         $content = $this->requiredContentPost('content');
+        $this->storeDraft($uri, $content);
+        $this->activity('Saved draft', $uri);
+        $this->respond(['message' => 'Draft saved', 'updated' => date(DATE_ATOM)]);
+    }
+
+    /** Write a private draft (within the draft quota) and record it in the drafts index. */
+    private function storeDraft(string $uri, string $content): void
+    {
         $draftName = hash('sha256', $this->paths->normaliseUri($uri)) . '.html';
         $draftPath = $this->store->directory('drafts') . $draftName;
         $draftBytes = $this->directoryBytes('drafts') - (is_file($draftPath) ? (int) filesize($draftPath) : 0);
@@ -161,8 +173,6 @@ final class CMSController
             $drafts[$draftUri] = $entry;
             return $drafts;
         });
-        $this->activity('Saved draft', $uri);
-        $this->respond(['message' => 'Draft saved', 'updated' => date(DATE_ATOM)]);
     }
 
     /** Return the saved draft for one URI, if present. */
@@ -179,7 +189,7 @@ final class CMSController
         $this->requirePost('schedule');
         $uri = $this->requiredPost('uri');
         $content = $this->requiredContentPost('content');
-        $this->paths->existing($uri);
+        $this->assertPublishable($uri);
         $publishAt = new \DateTimeImmutable($this->requiredPost('publish_at'));
         if ($publishAt <= new \DateTimeImmutable()) {
             throw new \RuntimeException('Publish time must be in the future');
@@ -225,35 +235,211 @@ final class CMSController
                 $templates[] = ['id' => $file, 'name' => pathinfo($file, PATHINFO_FILENAME)];
             }
         }
+        // Pages an administrator has marked as templates are offered too.
+        foreach (array_keys($this->store->read('pagetemplates')) as $uri) {
+            try {
+                $html = (string) file_get_contents($this->paths->existing($uri));
+            } catch (PageNotFoundException) {
+                continue;
+            }
+            $templates[] = ['id' => 'page:' . $uri, 'name' => $this->extractTitle($html) ?: $uri, 'detail' => $uri];
+        }
         $this->respond($templates);
     }
 
-    /** Create a new page from a selected template; administrators only. */
+    /** Delete a template file, or stop using a page as a template (the page itself is kept); administrators only. */
+    private function deleteTemplateAction(): void
+    {
+        $this->requirePost('manage');
+        $template = $this->requiredPost('template');
+        if (str_starts_with($template, 'page:')) {
+            $uri = $this->paths->normaliseUri(substr($template, 5));
+            $this->store->update('pagetemplates', function (array $marked) use ($uri) {
+                unset($marked[$uri]);
+                return $marked;
+            });
+            $this->activity('Unmarked page as template', $uri);
+            $this->respond(['message' => 'Page is no longer a template']);
+            return;
+        }
+        $file = basename($template);
+        $path = realpath($this->templatesDir . $file);
+        if (!$path || !str_starts_with($path, $this->templatesDir) || !preg_match('/\.html?$/i', $file) || !unlink($path)) {
+            throw new \RuntimeException('Template not found');
+        }
+        $this->activity('Deleted template', $file);
+        $this->respond(['message' => 'Template deleted']);
+    }
+
+    /** Mark a page as a template for New Page, or remove the mark; administrators only. */
+    private function setPageTemplateAction(): void
+    {
+        $this->requirePost('manage');
+        $uri = $this->paths->normaliseUri($this->requiredPost('uri'));
+        $this->paths->existing($uri);
+        $on = ($_POST['value'] ?? '') === '1';
+        $this->store->update('pagetemplates', function (array $marked) use ($uri, $on) {
+            if ($on) {
+                $marked[$uri] = ['user' => $this->user(), 'created' => date(DATE_ATOM)];
+            } else {
+                unset($marked[$uri]);
+            }
+            return $marked;
+        });
+        $this->activity($on ? 'Marked page as template' : 'Unmarked page as template', $uri);
+        $this->respond(['message' => $on ? 'Template created. It is now available in New Page.' : 'Page is no longer a template']);
+    }
+
+    /**
+     * Start a new page from a template. Nothing is written to the site: the page exists only as a private draft
+     * and a pending record until it is first published, so it is not visible on the front end before then.
+     */
     private function newPageAction(): void
     {
         $this->requirePost('manage');
-        $uri = $this->paths->normaliseNewUri($this->requiredPost('filename'));
-        $template = basename($this->requiredPost('template'));
-        $source = realpath($this->templatesDir . $template);
-        if (!$source || !str_starts_with($source, $this->templatesDir)) {
-            throw new \RuntimeException('Template not found');
+        $name = mb_substr(trim((string) preg_replace('/\s+/u', ' ', $this->requiredPost('name'))), 0, 80);
+        if ($name === '') {
+            throw new \RuntimeException('A page name is required');
         }
-        if (count($this->paths->files()) >= $this->maxManagedPages) {
+        $template = $this->requiredPost('template');
+        if (str_starts_with($template, 'page:')) {
+            // A page marked as a template: it must still be marked, and still exist.
+            $templateUri = $this->paths->normaliseUri(substr($template, 5));
+            if (!isset($this->store->read('pagetemplates')[$templateUri])) {
+                throw new \RuntimeException('Template not found');
+            }
+            $source = $this->paths->existing($templateUri);
+        } else {
+            $template = basename($template);
+            $source = realpath($this->templatesDir . $template);
+            if (!$source || !str_starts_with($source, $this->templatesDir)) {
+                throw new \RuntimeException('Template not found');
+            }
+        }
+        $menu = trim((string) ($_POST['menu'] ?? ''));
+        if ($menu !== '' && !isset($this->store->read('menus')[$menu])) {
+            throw new \RuntimeException('Navigation group not found');
+        }
+        if (count($this->paths->files()) + count($this->store->read('newpages')) >= $this->maxManagedPages) {
             throw new \RuntimeException('Managed page limit has been reached');
         }
-        $destination = $this->paths->newPath($uri);
-        if (file_exists($destination)) {
-            throw new \RuntimeException('Page already exists');
-        }
-        $this->ensureParentDirectory($destination);
-        $this->paths->assertNoSymlinks($destination);
-        if (!copy($source, $destination)) {
-            throw new \RuntimeException('Template copy failed');
-        }
-        $this->activity('Created page', $uri);
-        $this->respond(['message' => 'Page created', 'url' => $uri]);
+        $uri = $this->uniqueUri($name);
+        $html = (string) file_get_contents($source);
+        $safeName = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $html = (string) preg_replace_callback('#(<title\b[^>]*>).*?(</title>)#is', fn(array $m) => $m[1] . $safeName . $m[2], $html, 1);
+        $this->storeDraft($uri, $html);
+        $entry = ['title' => $name, 'menu' => $menu, 'template' => $template, 'user' => $this->user(), 'created' => date(DATE_ATOM)];
+        $this->store->update('newpages', function (array $pending) use ($uri, $entry) {
+            $pending[$uri] = $entry;
+            return $pending;
+        });
+        $this->activity('Created page (unpublished)', $uri);
+        $this->respond(['message' => 'Page created as a draft. It is not visible on the site until you publish it.', 'url' => $uri]);
     }
 
+    /** A filename derived from the page name (about-us.html), numbered when a page or pending page already uses it. */
+    private function uniqueUri(string $name): string
+    {
+        $ascii = function_exists('iconv') ? (string) @iconv('UTF-8', 'ASCII//TRANSLIT', $name) : $name;
+        $slug = trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower($ascii)), '-') ?: 'page';
+        $pending = $this->store->read('newpages');
+        for ($n = 1; $n < 1000; $n++) {
+            $uri = $this->paths->normaliseNewUri('/' . $slug . ($n > 1 ? '-' . $n : '') . '.html');
+            if (!isset($pending[$uri]) && !file_exists($this->paths->newPath($uri))) {
+                return $uri;
+            }
+        }
+        throw new \RuntimeException('Could not find a free filename for this page');
+    }
+
+    /** The pending record for a page that has been created but never published, or null. */
+    private function pendingPage(string $uri): ?array
+    {
+        return $this->store->read('newpages')[$this->paths->normaliseUri($uri)] ?? null;
+    }
+
+    /** Whether a page can be published or scheduled: it exists, or it is a new page waiting for its first publication. */
+    private function assertPublishable(string $uri): void
+    {
+        try {
+            $this->paths->existing($uri);
+        } catch (PageNotFoundException $exception) {
+            if (!$this->pendingPage($uri)) {
+                throw $exception;
+            }
+        }
+    }
+
+    /** Throw away a new page that was never published: its pending record, draft and any scheduled publication. */
+    private function discardNewPageAction(): void
+    {
+        $this->requirePost('manage');
+        $uri = $this->paths->normaliseUri($this->requiredPost('uri'));
+        if (!$this->pendingPage($uri)) {
+            throw new \RuntimeException('Unpublished page not found');
+        }
+        $this->store->update('newpages', function (array $pending) use ($uri) {
+            unset($pending[$uri]);
+            return $pending;
+        });
+        $this->deleteDraft($uri);
+        $staged = [];
+        $this->store->update('schedules', function (array $jobs) use ($uri, &$staged) {
+            foreach ($jobs as $id => $job) {
+                if (($job['uri'] ?? '') === $uri) {
+                    $staged[] = (string) $id;
+                    unset($jobs[$id]);
+                }
+            }
+            return $jobs;
+        });
+        foreach ($staged as $id) {
+            @unlink($this->store->directory('scheduled') . basename($id) . '.html');
+        }
+        $this->activity('Discarded unpublished page', $uri);
+        $this->respond(['message' => 'Unpublished page discarded']);
+    }
+
+    /** After a new page's first publication: add its link to the chosen menu on every page, then forget the pending record. */
+    private function finishNewPage(string $uri): void
+    {
+        $uri = $this->paths->normaliseUri($uri);
+        $pending = $this->pendingPage($uri);
+        if (!$pending) {
+            return;
+        }
+        try {
+            $menu = (string) ($pending['menu'] ?? '');
+            $items = null;
+            if ($menu !== '') {
+                $url = (string) ($this->config['basePath'] ?? '') . $uri;
+                $this->store->update('menus', function (array $menus) use ($menu, $url, $pending, &$items) {
+                    if (!isset($menus[$menu])) {
+                        return $menus;
+                    }
+                    $menus[$menu]['items'] = $menus[$menu]['items'] ?? [];
+                    if (!in_array($url, array_column($menus[$menu]['items'], 'url'), true)) {
+                        $menus[$menu]['items'][] = ['label' => (string) $pending['title'], 'url' => $url, 'parent' => ''];
+                        $menus[$menu]['updated'] = date(DATE_ATOM);
+                    }
+                    $items = $menus[$menu]['items'];
+                    return $menus;
+                });
+                if ($items !== null) {
+                    $this->propagateMenu($menu, $items);
+                    $this->activity('Added page to menu', $uri . ' -> ' . $menu);
+                }
+            }
+        } catch (\Throwable $exception) {
+            // The page is already live; a menu problem is reported in the log rather than failing the publish.
+            $this->logger->write("Adding {$uri} to its menu failed: {$exception->getMessage()}", $this->user());
+        }
+        $this->store->update('newpages', function (array $all) use ($uri) {
+            unset($all[$uri]);
+            return $all;
+        });
+        $this->deleteDraft($uri);
+    }
     /** Rename, duplicate, or revision-then-delete an existing managed page. */
     private function pageAction(): void
     {
@@ -268,6 +454,10 @@ final class CMSController
             if (!unlink($source)) {
                 throw new \RuntimeException('Unable to delete page');
             }
+            $this->store->update('pagetemplates', function (array $marked) use ($sourceUri) {
+                unset($marked[$sourceUri]);
+                return $marked;
+            });
             $this->activity('Deleted page', $sourceUri);
             $this->respond(['message' => 'Page deleted']);
             return;
@@ -283,6 +473,15 @@ final class CMSController
         $ok = $operation === 'rename' ? rename($source, $target) : ($operation === 'duplicate' && copy($source, $target));
         if (!$ok) {
             throw new \RuntimeException('Page operation failed');
+        }
+        if ($operation === 'rename') {
+            $this->store->update('pagetemplates', function (array $marked) use ($sourceUri, $targetUri) {
+                if (isset($marked[$sourceUri])) {
+                    $marked[$targetUri] = $marked[$sourceUri];
+                    unset($marked[$sourceUri]);
+                }
+                return $marked;
+            });
         }
         $this->activity(ucfirst($operation) . 'd page', $sourceUri . ' -> ' . $targetUri);
         $this->respond(['message' => 'Page ' . $operation . 'd', 'url' => $targetUri]);
@@ -306,6 +505,9 @@ final class CMSController
                 'modified' => date(DATE_ATOM, filemtime($path)),
                 'draft' => isset($drafts[$uri]),
             ];
+        }
+        foreach ($this->store->read('newpages') as $uri => $entry) {
+            $pages[] = ['name' => $uri, 'url' => $uri, 'title' => (string) ($entry['title'] ?? ''), 'modified' => $entry['created'] ?? date(DATE_ATOM), 'draft' => true, 'pending' => true];
         }
         usort($pages, fn(array $a, array $b) => strcmp($a['name'], $b['name']));
         $this->respond($pages);
@@ -368,7 +570,8 @@ final class CMSController
         $this->requireCapability('manage');
         $uris = $this->uriBatch($this->requiredRequest('uris'));
         $basePath = (string) ($this->config['basePath'] ?? '');
-        $all = ['content' => true, 'images' => true, 'seo' => true];
+        $allNavs = !empty($_REQUEST['allNavs']);
+        $all = ['content' => true, 'images' => true, 'seo' => true, 'menus' => true, 'allNavs' => $allNavs];
         $pages = [];
         $usedUploads = [];
         foreach ($uris as $uri) {
@@ -378,21 +581,21 @@ final class CMSController
                 continue;
             }
             $html = (string) file_get_contents($path);
-            $a = SiteAnalyser::analyse($html, $this->editableClass);
+            $a = SiteAnalyser::analyse($html, $this->editableClass, $allNavs);
             $broken = [];
             foreach ($a['refs'] as $ref) {
                 if ($this->paths->refExists($path, $ref['url'], $basePath) === false) {
                     $broken[] = $ref['url'];
                 }
             }
-            if (preg_match_all('#/uploads/([a-f0-9]{32}\.(?:jpg|png|gif|webp))#', $html, $matches)) {
+            if (preg_match_all('#/uploads/(' . MediaTypes::nameRegex() . ')#', $html, $matches)) {
                 array_push($usedUploads, ...$matches[1]);
             }
             $plan = SiteAnalyser::apply($html, $this->editableClass, $all);
             $pages[] = [
                 'uri' => $this->paths->uriFor($path), 'title' => $a['title'], 'editableRegions' => $a['existingRegions'], 'proposed' => $a['proposed'],
                 'images' => count($a['images']), 'missingAlt' => count(array_filter($a['images'], fn($i) => !$i['hasAlt'])),
-                'broken' => $broken, 'seoMissing' => array_keys(array_filter($a['seo'], fn($present) => !$present)),
+                'navs' => $a['navs'], 'broken' => $broken, 'seoMissing' => array_keys(array_filter($a['seo'], fn($present) => !$present)),
                 'changes' => $plan['changes'] ?? [],
             ];
         }
@@ -420,18 +623,37 @@ final class CMSController
         if (!is_array($options)) {
             throw new \RuntimeException('Choose at least one kind of change');
         }
-        $flags = ['content' => !empty($options['content']), 'images' => !empty($options['images']), 'seo' => !empty($options['seo'])];
+        $flags = ['content' => !empty($options['content']), 'images' => !empty($options['images']), 'seo' => !empty($options['seo']), 'menus' => !empty($options['menus']), 'allNavs' => !empty($options['allNavs'])];
         if (!array_filter($flags)) {
             throw new \RuntimeException('Choose at least one kind of change');
         }
         $pages = [];
-        $count = $this->rewritePages(function (string $html, string $uri) use ($flags, &$pages) {
+        $seed = [];
+        $basePath = (string) ($this->config['basePath'] ?? '');
+        $count = $this->rewritePages(function (string $html, string $uri) use ($flags, &$pages, &$seed, $basePath) {
             $result = SiteAnalyser::apply($html, $this->editableClass, $flags);
             if ($result) {
                 $pages[$uri] = $result['changes'];
+                // The first page seen supplies a menu's items; links become site paths so they work from any folder.
+                foreach ($result['menus'] as $name => $links) {
+                    $seed[$name] ??= array_map(function (array $link) use ($uri, $basePath) {
+                        $path = ContentDom::resolveLink($link['url'], $uri);
+                        return ['label' => $link['label'], 'url' => $path === null ? $link['url'] : $basePath . $path, 'parent' => $link['parent']];
+                    }, $links);
+                }
             }
             return $result['html'] ?? null;
         }, 'Before auto-tagging', $uris);
+        if ($seed) {
+            // A menu someone has already saved is never replaced by a scan.
+            $this->store->update('menus', function (array $menus) use ($seed) {
+                foreach ($seed as $name => $items) {
+                    $menus[$name] ??= ['items' => $items, 'updated' => date(DATE_ATOM)];
+                }
+                return $menus;
+            });
+            $this->activity('Detected navigation menus', implode(', ', array_keys($seed)));
+        }
         $this->activity('Auto-tagged pages', $count . ' page(s)');
         $this->respond(['message' => "Updated {$count} page(s). Each has a revision to restore.", 'updated_pages' => $count, 'pages' => $pages]);
     }
@@ -466,6 +688,24 @@ final class CMSController
         $this->respond($this->store->read('menus'));
     }
 
+    /** Remove a saved menu. Pages keep the navigation they already contain; only the stored definition goes. */
+    private function deleteMenuAction(): void
+    {
+        $this->requirePost('manage');
+        $name = preg_replace('/[^a-zA-Z0-9_-]/', '', $this->requiredPost('name'));
+        $found = false;
+        $this->store->update('menus', function (array $menus) use ($name, &$found) {
+            $found = isset($menus[$name]);
+            unset($menus[$name]);
+            return $menus;
+        });
+        if (!$found) {
+            throw new \RuntimeException('Menu not found');
+        }
+        $this->activity('Deleted menu', $name);
+        $this->respond(['message' => "Menu '{$name}' deleted. Pages keep their current navigation."]);
+    }
+
     /** Validate, save, render, and propagate a named navigation menu. */
     private function saveMenuAction(): void
     {
@@ -483,12 +723,23 @@ final class CMSController
             }
             $clean[] = ['label' => trim((string) ($item['label'] ?? $item['url'])), 'url' => $this->paths->normaliseLink((string) $item['url']), 'parent' => trim((string) ($item['parent'] ?? ''))];
         }
-        $this->store->update('menus', function (array $menus) use ($name, $clean) {
-            $menus[$name] = ['items' => $clean, 'updated' => date(DATE_ATOM)];
+        // Menus come from navigation in the site's pages; the CMS edits and renames them but never creates them.
+        if (!isset($this->store->read('menus')[$name])) {
+            throw new \RuntimeException("Menu not found. New menus are added to the pages by the web developer, then found with the navigation scan.");
+        }
+        $title = mb_substr(trim((string) ($_POST['title'] ?? '')), 0, 60);
+        $this->store->update('menus', function (array $menus) use ($name, $clean, $title) {
+            $entry = ['items' => $clean, 'updated' => date(DATE_ATOM)] + $menus[$name];
+            if ($title !== '') {
+                $entry['title'] = $title;
+            } else {
+                unset($entry['title']);
+            }
+            $menus[$name] = $entry;
             return $menus;
         });
         $html = ContentDom::renderMenu($name, $clean);
-        $updated = $this->propagateMenu($name, $html);
+        $updated = $this->propagateMenu($name, $clean);
         $this->activity('Updated menu', $name);
         $this->respond(['message' => "Menu saved and updated on {$updated} page(s)", 'html' => $html, 'updated_pages' => $updated]);
     }
@@ -510,6 +761,8 @@ final class CMSController
                 'name' => basename($file), 'url' => ($this->config['basePath'] ?? '') . $url, 'size' => filesize($file),
                 'modified' => date(DATE_ATOM, filemtime($file)), 'alt' => $metadata[basename($file)]['alt'] ?? '',
                 'uses' => $usage[$url] ?? 0,
+                'category' => MediaTypes::categoryForName(basename($file)), 'ext' => strtolower(pathinfo($file, PATHINFO_EXTENSION)),
+                'original' => $metadata[basename($file)]['original'] ?? '',
             ];
         }
         usort($items, fn(array $a, array $b) => strcmp($b['modified'], $a['modified']));
@@ -524,10 +777,10 @@ final class CMSController
         $alt = is_string($_POST['alt'] ?? null) ? trim($_POST['alt']) : '';
         $entry = ['alt' => substr(preg_replace('/[\x00-\x1F\x7F]/u', '', $alt) ?? '', 0, 500)];
         $this->store->update('media', function (array $metadata) use ($name, $entry) {
-            $metadata[$name] = $entry;
+            $metadata[$name] = $entry + ($metadata[$name] ?? []);
             return $metadata;
         });
-        $this->activity('Updated image alt text', $name);
+        $this->activity(MediaTypes::categoryForName($name) === 'imagery' ? 'Updated image alt text' : 'Updated media description', $name);
         $this->respond(['message' => 'Media details saved']);
     }
 
@@ -555,16 +808,199 @@ final class CMSController
         $schedules = $this->store->read('schedules');
         $activity = array_slice(array_reverse($this->store->read('activity')), 0, 20);
         $problems = [];
-        foreach ([__DIR__ . '/../../data', dirname(__DIR__, 3) . '/uploads'] as $directory) {
+        foreach ([(string) ($this->config['dataDirectory'] ?? (__DIR__ . '/../../data')), dirname(__DIR__, 3) . '/uploads'] as $directory) {
             if (!is_dir($directory) || !is_writable($directory)) {
                 $problems[] = $directory . ' is not writable';
             }
         }
+        $notices = [];
+        $dataPath = realpath($this->config['dataDirectory'] ?? (__DIR__ . '/../../data'));
+        $sitePath = realpath((string) ($this->config['siteRoot'] ?? dirname(__DIR__, 3)));
+        if ($this->authentication->can('manage') && $dataPath !== false && $sitePath !== false
+            && str_starts_with(str_replace('\\', '/', $dataPath) . '/', rtrim(str_replace('\\', '/', $sitePath), '/') . '/')) {
+            $notices[] = 'Account and page data is stored inside the web root (cms/data). For a live site, set dataDirectory in config.local.php to a folder outside the web root so it can never be served, even if the web server ignores the .htaccess rules.';
+        }
         $this->respond([
+            'notices' => $notices,
+            'deleted' => $this->authentication->can('publish') ? $this->deletedPages() : [],
             'user' => $this->user(), 'role' => $this->authentication->getRole(),
             'permissions' => ['draft' => $this->authentication->can('draft'), 'publish' => $this->authentication->can('publish'), 'schedule' => $this->authentication->can('schedule'), 'manage' => $this->authentication->can('manage')],
             'drafts' => $drafts, 'schedules' => $schedules, 'activity' => $activity, 'problems' => $problems,
         ]);
+    }
+
+    /** Pages whose newest revision is a "Before delete" snapshot and whose file is gone, newest deletion first. */
+    private function deletedPages(): array
+    {
+        $latest = [];
+        foreach ($this->store->read('revisions') as $revision) {
+            $uri = $revision['uri'] ?? '';
+            if (!isset($latest[$uri]) || self::revisionTime($revision) > self::revisionTime($latest[$uri])) {
+                $latest[$uri] = $revision;
+            }
+        }
+        $deleted = [];
+        foreach ($latest as $uri => $revision) {
+            if (($revision['reason'] ?? '') !== 'Before delete') {
+                continue;
+            }
+            try {
+                $this->paths->existing($uri);
+            } catch (PageNotFoundException) {
+                $deleted[] = $revision;
+            } catch (\Throwable) {
+            }
+        }
+        usort($deleted, fn(array $a, array $b) => self::revisionTime($b) <=> self::revisionTime($a));
+        return $deleted;
+    }
+
+    /** The signed-in user's account, the role descriptions, and (administrators only) every account. Never includes hashes or tokens. */
+    private function usersAction(): void
+    {
+        $me = $this->user();
+        $profile = $this->users->profile($me);
+        $this->respond([
+            'me' => ['username' => $me, 'name' => $profile['name'], 'email' => $profile['email'], 'role' => $this->authentication->getRole(), 'managed' => $profile['managed']],
+            'roles' => UserStore::ROLE_INFO,
+            'users' => $this->authentication->can('manage') ? $this->users->accounts() : [],
+        ]);
+    }
+
+    /** Update the signed-in user's own display name and email; changing the email needs the current password. */
+    private function saveProfileAction(): void
+    {
+        $this->requirePost();
+        $me = $this->user();
+        $current = $this->users->profile($me);
+        $name = $this->requiredPost('name');
+        $email = is_string($_POST['email'] ?? null) ? trim($_POST['email']) : '';
+        if (strtolower($email) !== strtolower($current['email'])) {
+            $this->confirmPassword('current_password');
+        }
+        $this->users->setProfile($me, $name, $email);
+        $this->activity('Updated own account details', $me);
+        $this->respond(['message' => 'Account updated', 'name' => $this->users->profile($me)['name']]);
+    }
+
+    /** Change the signed-in user's own password. The current password is required and other sessions end. */
+    private function changePasswordAction(): void
+    {
+        $this->requirePost();
+        $me = $this->user();
+        if ($this->users->isManaged($me)) {
+            throw new \RuntimeException('This password is managed in config.local.php');
+        }
+        $new = is_string($_POST['new_password'] ?? null) ? $_POST['new_password'] : '';
+        if (!hash_equals($new, is_string($_POST['confirm_password'] ?? null) ? $_POST['confirm_password'] : "\0")) {
+            throw new \RuntimeException('The new password and confirmation do not match');
+        }
+        $this->confirmPassword('current_password');
+        $hash = $this->users->setPassword($me, $new);
+        $this->authentication->renewSession($hash);
+        $this->activity('Changed own password', $me);
+        $this->respond(['message' => 'Password changed. Your other sessions have been signed out.']);
+    }
+
+    /** Add a CMS account with a password, or edit one (blank password keeps it). Administrators only, with password confirmation. */
+    private function saveUserAction(): void
+    {
+        $this->requirePost('manage');
+        $this->confirmPassword('confirm_password');
+        $existing = is_string($_POST['existing'] ?? null) ? trim($_POST['existing']) : '';
+        $name = $this->requiredPost('name');
+        $email = is_string($_POST['email'] ?? null) ? $_POST['email'] : '';
+        $role = $this->requiredPost('role');
+        $password = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
+        if ($existing === '') {
+            $username = $this->requiredPost('username');
+            $this->users->create($username, $name, $email, $role, $password);
+            $this->activity('Added user', $username . ' (' . $role . ')');
+            $this->respond(['message' => 'User added']);
+            return;
+        }
+        $this->refuseSelf($existing);
+        $before = null;
+        foreach ($this->users->accounts() as $account) {
+            if ($account['username'] === $existing) {
+                $before = $account;
+            }
+        }
+        $this->users->update($existing, $name, $email, $role, $password);
+        $this->activity('Updated user', $existing);
+        if ($before && $before['role'] !== $role) {
+            $this->activity('Changed user role', $existing . ': ' . $before['role'] . ' -> ' . $role);
+        }
+        if ($password !== '') {
+            $this->activity('Reset user password', $existing);
+        }
+        $this->respond(['message' => 'User updated']);
+    }
+
+    /** Create or re-issue a one-time invitation link (shown once; only its hash is stored). */
+    private function inviteUserAction(): void
+    {
+        $this->requirePost('manage');
+        $this->confirmPassword('confirm_password');
+        $existing = is_string($_POST['existing'] ?? null) ? trim($_POST['existing']) : '';
+        [$username, $token] = $this->users->invite($this->requiredPost('name'), $this->requiredPost('email'), $this->requiredPost('role'), $existing);
+        $this->activity($existing === '' ? 'Invited user' : 'Re-issued invitation', $username);
+        $this->respond([
+            'message' => 'Invitation created. Copy the link now; it is shown only once and expires in 7 days.',
+            'link' => (string) ($this->config['basePath'] ?? '') . '/cms/login/?invite=' . $token,
+            'username' => $username,
+        ]);
+    }
+
+    /** Block or unblock a CMS account; a blocked account is signed out on its next request. */
+    private function blockUserAction(): void
+    {
+        $this->requirePost('manage');
+        $this->confirmPassword('confirm_password');
+        $username = $this->requiredPost('username');
+        $this->refuseSelf($username);
+        $blocked = ($_POST['blocked'] ?? '') === '1';
+        $this->users->setBlocked($username, $blocked);
+        $this->activity($blocked ? 'Blocked user' : 'Unblocked user', $username);
+        $this->respond(['message' => $blocked ? 'User blocked' : 'User unblocked']);
+    }
+
+    /** Delete a CMS account. */
+    private function deleteUserAction(): void
+    {
+        $this->requirePost('manage');
+        $this->confirmPassword('confirm_password');
+        $username = $this->requiredPost('username');
+        $this->refuseSelf($username);
+        $this->users->delete($username);
+        $this->activity('Deleted user', $username);
+        $this->respond(['message' => 'User deleted']);
+    }
+
+    /** Stop administrators locking themselves out through the account-management actions. */
+    private function refuseSelf(string $username): void
+    {
+        if ($username === $this->user()) {
+            throw new \RuntimeException('You cannot do that to your own account. Use My account for your own details.');
+        }
+    }
+
+    /** Require the signed-in user's own password before a sensitive account action; failures are rate limited and audited. */
+    private function confirmPassword(string $field): void
+    {
+        $address = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        $key = 'reauth:' . $this->user();
+        $limiter = new LoginRateLimiter((string) ($this->config['dataDirectory'] ?? (__DIR__ . '/../../data')), $this->config['security'] ?? []);
+        if (($wait = $limiter->retryAfter($address, $key)) > 0) {
+            throw new \RuntimeException("Too many incorrect passwords. Try again in {$wait} seconds.");
+        }
+        $password = is_string($_POST[$field] ?? null) ? $_POST[$field] : '';
+        if ($password === '' || strlen($password) > 4096 || !$this->authentication->verifyCurrentPassword($password)) {
+            $limiter->recordFailure($address, $key);
+            $this->activity('Password confirmation failed', 'users');
+            throw new \RuntimeException('Your password is incorrect');
+        }
+        $limiter->clear($address, $key);
     }
 
     /** End the authenticated session after CSRF validation. */
@@ -584,14 +1020,32 @@ final class CMSController
      */
     private function publishContent(string $uri, string $content, string $reason): void
     {
-        $path = $this->paths->existing($uri);
-        $old = (string) file_get_contents($path);
-        if ($old !== $content) {
+        $isNew = false;
+        try {
+            $path = $this->paths->existing($uri);
+        } catch (PageNotFoundException $exception) {
+            // A new page has no file until its first publication.
+            if (!$this->pendingPage($uri)) {
+                throw $exception;
+            }
+            if (count($this->paths->files()) >= $this->maxManagedPages) {
+                throw new \RuntimeException('Managed page limit has been reached');
+            }
+            $path = $this->paths->newPath($this->paths->normaliseNewUri($uri));
+            $this->ensureParentDirectory($path);
+            $this->paths->assertNoSymlinks($path);
+            $isNew = true;
+        }
+        $old = $isNew ? '' : (string) file_get_contents($path);
+        if (!$isNew && $old !== $content) {
             $this->createRevision($uri, $old, $reason);
         }
         $this->atomicWrite($path, $content);
         $this->captureSharedBlocks($content);
         $this->activity($reason, $uri);
+        if ($isNew) {
+            $this->finishNewPage($uri);
+        }
     }
 
     /** Write beside the destination and rename, so a public page is never served half-written. */
@@ -764,10 +1218,11 @@ final class CMSController
     }
 
     /** Replace matching generated menus across public pages, revisioning each page first. */
-    private function propagateMenu(string $name, string $menuHtml): int
+    private function propagateMenu(string $name, array $items): int
     {
+        $basePath = (string) ($this->config['basePath'] ?? '');
         return $this->rewritePages(
-            fn(string $html) => ContentDom::withMenu($html, $name, $menuHtml),
+            fn(string $html, string $uri) => ContentDom::withMenu($html, $name, $items, $uri, $basePath),
             'Before menu update'
         );
     }
@@ -830,7 +1285,7 @@ final class CMSController
         $uses = [];
         foreach ($this->paths->files() as $path) {
             $html = (string) file_get_contents($path);
-            if (preg_match_all('#/uploads/[a-f0-9]{32}\.(?:jpg|png|gif|webp)#', $html, $matches)) {
+            if (preg_match_all('#/uploads/' . MediaTypes::nameRegex() . '#', $html, $matches)) {
                 foreach ($matches[0] as $url) {
                     $uses[$url] = ($uses[$url] ?? 0) + 1;
                 }
@@ -839,7 +1294,7 @@ final class CMSController
         return $uses;
     }
 
-    /** Validate that a filename belongs to the randomised image namespace created by uploads. */
+    /** Validate that a filename belongs to the generated media namespace created by uploads. */
     private function managedMediaName(string $name): string
     {
         $name = basename($name);
@@ -849,10 +1304,10 @@ final class CMSController
         return $name;
     }
 
-    /** Return whether a filename is a random NeoCMS image name with an allowed extension. */
+    /** Return whether a filename is a NeoCMS-generated media name with an allowed extension. */
     private function isManagedMediaName(string $name): bool
     {
-        return preg_match('/^[a-f0-9]{32}\.(?:jpg|png|gif|webp)$/', $name) === 1;
+        return MediaTypes::isManagedName($name);
     }
 
     /** Extract a plain-text document title for the page picker. */
