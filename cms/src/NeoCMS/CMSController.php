@@ -18,10 +18,12 @@ final class CMSController
     private Logger $logger;
     /** JSON metadata and managed-file storage service. */
     private FileStore $store;
+    /** Dashboard activity feed and audit-log writer. */
+    private Activity $activity;
     /** Absolute directory containing page templates. */
     private string $templatesDir;
-    /** Canonical public document root, ending with a directory separator. */
-    private string $documentRoot;
+    /** Public-page URI/path resolution confined to the document root. */
+    private PagePaths $paths;
     /** Validated CSS class used to discover and bind editable content regions. */
     private string $editableClass;
     /** Maximum complete HTML document size accepted from an authenticated author. */
@@ -30,8 +32,6 @@ final class CMSController
     private int $maxRequestBytes;
     /** Safety ceiling for recursive public-page scans. */
     private int $maxManagedPages;
-    /** Safety ceiling for all directory entries visited during recursive page scans. */
-    private int $maxScannedEntries;
     /** Maximum aggregate private draft storage. */
     private int $maxDraftBytes;
     /** Maximum number of queued or failed scheduled publications. */
@@ -54,18 +54,22 @@ final class CMSController
         // A custom data directory is primarily useful for tests and hardened deployments.
         $dataDirectory = $config['dataDirectory'] ?? (__DIR__ . '/../../data');
         $this->store = new FileStore((string) $dataDirectory);
+        $this->activity = new Activity($this->store, $this->logger);
         $templatesDir = realpath(__DIR__ . '/../../templates');
-        $documentRoot = realpath((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''));
+        $documentRoot = realpath((string) ($config['siteRoot'] ?? $_SERVER['DOCUMENT_ROOT'] ?? ''));
         if ($templatesDir === false || $documentRoot === false) {
             throw new \RuntimeException('CMS filesystem paths are unavailable');
         }
         $this->templatesDir = rtrim($templatesDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-        $this->documentRoot = rtrim($documentRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         $security = is_array($config['security'] ?? null) ? $config['security'] : [];
         $this->maxContentBytes = max(1024, (int) ($security['maxContentBytes'] ?? 5 * 1024 * 1024));
         $this->maxRequestBytes = max($this->maxContentBytes, (int) ($security['maxRequestBytes'] ?? 6 * 1024 * 1024));
         $this->maxManagedPages = max(1, (int) ($security['maxManagedPages'] ?? 5000));
-        $this->maxScannedEntries = max($this->maxManagedPages, (int) ($security['maxScannedEntries'] ?? 20000));
+        $this->paths = new PagePaths(
+            rtrim($documentRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR,
+            $this->maxManagedPages,
+            max($this->maxManagedPages, (int) ($security['maxScannedEntries'] ?? 20000))
+        );
         $this->maxDraftBytes = max($this->maxContentBytes, (int) ($security['maxDraftBytes'] ?? 250 * 1024 * 1024));
         $this->maxSchedules = max(1, (int) ($security['maxSchedules'] ?? 100));
         $this->maxScheduledBytes = max($this->maxContentBytes, (int) ($security['maxScheduledBytes'] ?? 250 * 1024 * 1024));
@@ -98,7 +102,12 @@ final class CMSController
         }
 
         try {
-            $this->publishDueJobs();
+            // A failure here must not break unrelated requests; the cron worker will retry.
+            try {
+                $this->publishDueJobs();
+            } catch (\Throwable $exception) {
+                $this->logger->write("Opportunistic schedule run failed: {$exception->getMessage()}", $this->user());
+            }
             // Action names map to private methods such as saveDraftAction().
             $method = $action . 'Action';
             if ($action === '' || !method_exists($this, $method)) {
@@ -138,7 +147,7 @@ final class CMSController
         $this->requirePost('draft');
         $uri = $this->requiredPost('uri');
         $content = $this->requiredContentPost('content');
-        $draftName = hash('sha256', $this->normaliseUri($uri)) . '.html';
+        $draftName = hash('sha256', $this->paths->normaliseUri($uri)) . '.html';
         $draftPath = $this->store->directory('drafts') . $draftName;
         $draftBytes = $this->directoryBytes('drafts') - (is_file($draftPath) ? (int) filesize($draftPath) : 0);
         if ($draftBytes + strlen($content) > $this->maxDraftBytes) {
@@ -146,12 +155,12 @@ final class CMSController
         }
         $this->store->writePrivateFile('drafts', $draftName, $content);
         // Draft filenames are URI hashes, while this index keeps their human-readable metadata.
-        $drafts = $this->store->read('drafts');
-        $drafts[$this->normaliseUri($uri)] = [
-            'updated' => date(DATE_ATOM),
-            'user' => $this->user(),
-        ];
-        $this->store->write('drafts', $drafts);
+        $draftUri = $this->paths->normaliseUri($uri);
+        $entry = ['updated' => date(DATE_ATOM), 'user' => $this->user()];
+        $this->store->update('drafts', function (array $drafts) use ($draftUri, $entry) {
+            $drafts[$draftUri] = $entry;
+            return $drafts;
+        });
         $this->activity('Saved draft', $uri);
         $this->respond(['message' => 'Draft saved', 'updated' => date(DATE_ATOM)]);
     }
@@ -170,20 +179,21 @@ final class CMSController
         $this->requirePost('schedule');
         $uri = $this->requiredPost('uri');
         $content = $this->requiredContentPost('content');
-        $this->existingPagePath($uri);
+        $this->paths->existing($uri);
         $publishAt = new \DateTimeImmutable($this->requiredPost('publish_at'));
         if ($publishAt <= new \DateTimeImmutable()) {
             throw new \RuntimeException('Publish time must be in the future');
         }
         // Store bulky HTML separately so the JSON schedule index remains easy to inspect.
         $id = bin2hex(random_bytes(10));
-        $jobs = $this->store->read('schedules');
-        if (count($jobs) >= $this->maxSchedules || $this->directoryBytes('scheduled') + strlen($content) > $this->maxScheduledBytes) {
-            throw new \RuntimeException('Scheduled publication quota has been reached');
-        }
-        $this->store->writePrivateFile('scheduled', $id . '.html', $content);
-        $jobs[$id] = ['uri' => $this->normaliseUri($uri), 'publish_at' => $publishAt->format(DATE_ATOM), 'user' => $this->user()];
-        $this->store->write('schedules', $jobs);
+        $this->store->update('schedules', function (array $jobs) use ($id, $uri, $content, $publishAt) {
+            if (count($jobs) >= $this->maxSchedules || $this->directoryBytes('scheduled') + strlen($content) > $this->maxScheduledBytes) {
+                throw new \RuntimeException('Scheduled publication quota has been reached');
+            }
+            $this->store->writePrivateFile('scheduled', $id . '.html', $content);
+            $jobs[$id] = ['uri' => $this->paths->normaliseUri($uri), 'publish_at' => $publishAt->format(DATE_ATOM), 'user' => $this->user()];
+            return $jobs;
+        });
         $this->activity('Scheduled publication', $uri);
         $this->respond(['message' => 'Page scheduled', 'id' => $id, 'publish_at' => $publishAt->format(DATE_ATOM)]);
     }
@@ -193,10 +203,16 @@ final class CMSController
     {
         $this->requirePost('schedule');
         $id = $this->requiredPost('id');
-        $jobs = $this->store->read('schedules');
-        unset($jobs[$id]);
+        $removed = null;
+        $this->store->update('schedules', function (array $jobs) use ($id, &$removed) {
+            $removed = $jobs[$id] ?? null;
+            unset($jobs[$id]);
+            return $jobs;
+        });
         @unlink($this->store->directory('scheduled') . basename($id) . '.html');
-        $this->store->write('schedules', $jobs);
+        if ($removed) {
+            $this->activity('Cancelled scheduled publication', ($removed['uri'] ?? '') . ' (was due ' . ($removed['publish_at'] ?? '?') . ', scheduled by ' . ($removed['user'] ?? 'unknown') . ')');
+        }
         $this->respond(['message' => 'Schedule cancelled']);
     }
 
@@ -216,21 +232,21 @@ final class CMSController
     private function newPageAction(): void
     {
         $this->requirePost('manage');
-        $uri = $this->normaliseNewPageUri($this->requiredPost('filename'));
+        $uri = $this->paths->normaliseNewUri($this->requiredPost('filename'));
         $template = basename($this->requiredPost('template'));
         $source = realpath($this->templatesDir . $template);
         if (!$source || !str_starts_with($source, $this->templatesDir)) {
             throw new \RuntimeException('Template not found');
         }
-        if (count($this->pageFiles()) >= $this->maxManagedPages) {
+        if (count($this->paths->files()) >= $this->maxManagedPages) {
             throw new \RuntimeException('Managed page limit has been reached');
         }
-        $destination = $this->newPagePath($uri);
+        $destination = $this->paths->newPath($uri);
         if (file_exists($destination)) {
             throw new \RuntimeException('Page already exists');
         }
         $this->ensureParentDirectory($destination);
-        $this->assertNoSymlinkComponents($destination);
+        $this->paths->assertNoSymlinks($destination);
         if (!copy($source, $destination)) {
             throw new \RuntimeException('Template copy failed');
         }
@@ -243,8 +259,8 @@ final class CMSController
     {
         $this->requirePost('manage');
         $operation = $this->requiredPost('operation');
-        $sourceUri = $this->normaliseUri($this->requiredPost('uri'));
-        $source = $this->existingPagePath($sourceUri);
+        $sourceUri = $this->paths->normaliseUri($this->requiredPost('uri'));
+        $source = $this->paths->existing($sourceUri);
 
         // Deletion gets its own branch because it has no target URI.
         if ($operation === 'delete') {
@@ -257,13 +273,13 @@ final class CMSController
             return;
         }
 
-        $targetUri = $this->normaliseNewPageUri($this->requiredPost('target'));
-        $target = $this->newPagePath($targetUri);
+        $targetUri = $this->paths->normaliseNewUri($this->requiredPost('target'));
+        $target = $this->paths->newPath($targetUri);
         if (file_exists($target)) {
             throw new \RuntimeException('Target page already exists');
         }
         $this->ensureParentDirectory($target);
-        $this->assertNoSymlinkComponents($target);
+        $this->paths->assertNoSymlinks($target);
         $ok = $operation === 'rename' ? rename($source, $target) : ($operation === 'duplicate' && copy($source, $target));
         if (!$ok) {
             throw new \RuntimeException('Page operation failed');
@@ -277,10 +293,10 @@ final class CMSController
     {
         $drafts = $this->store->read('drafts');
         $pages = [];
-        foreach ($this->pageFiles() as $path) {
-            $uri = '/' . str_replace(DIRECTORY_SEPARATOR, '/', substr($path, strlen($this->documentRoot)));
+        foreach ($this->paths->files() as $path) {
+            $uri = $this->paths->uriFor($path);
             $html = (string) file_get_contents($path);
-            if (!$this->hasEditableClass($html)) {
+            if (!ContentDom::hasClass($html, $this->editableClass)) {
                 continue;
             }
             $pages[] = [
@@ -298,9 +314,9 @@ final class CMSController
     /** List newest-first revisions belonging to one page URI. */
     private function revisionsAction(): void
     {
-        $uri = $this->normaliseUri($this->requiredRequest('uri'));
+        $uri = $this->paths->normaliseUri($this->requiredRequest('uri'));
         $items = array_values(array_filter($this->store->read('revisions'), fn(array $item) => $item['uri'] === $uri));
-        usort($items, fn(array $a, array $b) => strcmp($b['created'], $a['created']));
+        usort($items, fn(array $a, array $b) => self::revisionTime($b) <=> self::revisionTime($a));
         $this->respond($items);
     }
 
@@ -318,14 +334,11 @@ final class CMSController
         $content = (string) file_get_contents($path);
         try {
             $this->publishContent($revision['uri'], $content, 'Restored revision');
-        } catch (\RuntimeException $exception) {
+        } catch (PageNotFoundException) {
             // A missing target is expected when restoring the revision of a deleted page.
-            if ($exception->getMessage() !== 'Invalid page path') {
-                throw $exception;
-            }
-            $destination = $this->newPagePath($this->normaliseNewPageUri($revision['uri']));
+            $destination = $this->paths->newPath($this->paths->normaliseNewUri($revision['uri']));
             $this->ensureParentDirectory($destination);
-            $this->assertNoSymlinkComponents($destination);
+            $this->paths->assertNoSymlinks($destination);
             if (file_put_contents($destination, $content, LOCK_EX) === false) {
                 throw new \RuntimeException('Unable to restore deleted page');
             }
@@ -334,6 +347,94 @@ final class CMSController
         $this->respond(['message' => 'Revision restored', 'url' => $revision['uri']]);
     }
 
+    /** List every managed page and uploaded image so the browser can analyse them in small, countable batches. */
+    private function listSitePagesAction(): void
+    {
+        $this->requireCapability('manage');
+        $uploads = [];
+        foreach (glob(dirname(__DIR__, 3) . '/uploads/*') ?: [] as $file) {
+            if (is_file($file) && $this->isManagedMediaName(basename($file))) {
+                $uploads[] = basename($file);
+            }
+        }
+        $pages = array_map(fn(string $path) => $this->paths->uriFor($path), $this->paths->files());
+        sort($pages);
+        $this->respond(['pages' => $pages, 'uploads' => $uploads]);
+    }
+
+    /** Report what a site scan would change for one batch of pages: regions, images, references, and SEO gaps. */
+    private function analyseSitePagesAction(): void
+    {
+        $this->requireCapability('manage');
+        $uris = $this->uriBatch($this->requiredRequest('uris'));
+        $basePath = (string) ($this->config['basePath'] ?? '');
+        $all = ['content' => true, 'images' => true, 'seo' => true];
+        $pages = [];
+        $usedUploads = [];
+        foreach ($uris as $uri) {
+            try {
+                $path = $this->paths->existing($uri);
+            } catch (PageNotFoundException) {
+                continue;
+            }
+            $html = (string) file_get_contents($path);
+            $a = SiteAnalyser::analyse($html, $this->editableClass);
+            $broken = [];
+            foreach ($a['refs'] as $ref) {
+                if ($this->paths->refExists($path, $ref['url'], $basePath) === false) {
+                    $broken[] = $ref['url'];
+                }
+            }
+            if (preg_match_all('#/uploads/([a-f0-9]{32}\.(?:jpg|png|gif|webp))#', $html, $matches)) {
+                array_push($usedUploads, ...$matches[1]);
+            }
+            $plan = SiteAnalyser::apply($html, $this->editableClass, $all);
+            $pages[] = [
+                'uri' => $this->paths->uriFor($path), 'title' => $a['title'], 'editableRegions' => $a['existingRegions'], 'proposed' => $a['proposed'],
+                'images' => count($a['images']), 'missingAlt' => count(array_filter($a['images'], fn($i) => !$i['hasAlt'])),
+                'broken' => $broken, 'seoMissing' => array_keys(array_filter($a['seo'], fn($present) => !$present)),
+                'changes' => $plan['changes'] ?? [],
+            ];
+        }
+        $this->respond(['pages' => $pages, 'usedUploads' => array_values(array_unique($usedUploads))]);
+    }
+
+    /** Decode a JSON list of page URIs, normalising each and bounding the batch size. */
+    private function uriBatch(string $json): array
+    {
+        $uris = json_decode($json, true);
+        if (!is_array($uris) || !$uris) {
+            throw new \RuntimeException('Select at least one page');
+        }
+        if (count($uris) > 100) {
+            throw new \RuntimeException('Too many pages in one request');
+        }
+        return array_values(array_unique(array_map(fn($uri) => $this->paths->normaliseUri((string) $uri), $uris)));
+    }
+    /** Add editing markers (content regions, image markers, missing SEO tags) to the selected pages. */
+    private function applySiteTaggingAction(): void
+    {
+        $this->requirePost('manage');
+        $uris = $this->uriBatch($this->limitedPost('uris', 1024 * 1024));
+        $options = json_decode($this->limitedPost('options', 4096), true);
+        if (!is_array($options)) {
+            throw new \RuntimeException('Choose at least one kind of change');
+        }
+        $flags = ['content' => !empty($options['content']), 'images' => !empty($options['images']), 'seo' => !empty($options['seo'])];
+        if (!array_filter($flags)) {
+            throw new \RuntimeException('Choose at least one kind of change');
+        }
+        $pages = [];
+        $count = $this->rewritePages(function (string $html, string $uri) use ($flags, &$pages) {
+            $result = SiteAnalyser::apply($html, $this->editableClass, $flags);
+            if ($result) {
+                $pages[$uri] = $result['changes'];
+            }
+            return $result['html'] ?? null;
+        }, 'Before auto-tagging', $uris);
+        $this->activity('Auto-tagged pages', $count . ' page(s)');
+        $this->respond(['message' => "Updated {$count} page(s). Each has a revision to restore.", 'updated_pages' => $count, 'pages' => $pages]);
+    }
     /** Return the complete shared-content registry. */
     private function sharedAction(): void
     {
@@ -349,9 +450,11 @@ final class CMSController
         if ($key === '') {
             throw new \RuntimeException('Shared block name is required');
         }
-        $shared = $this->store->read('shared');
-        $shared[$key] = ['content' => $content, 'updated' => date(DATE_ATOM), 'user' => $this->user()];
-        $this->store->write('shared', $shared);
+        $entry = ['content' => $content, 'updated' => date(DATE_ATOM), 'user' => $this->user()];
+        $this->store->update('shared', function (array $shared) use ($key, $entry) {
+            $shared[$key] = $entry;
+            return $shared;
+        });
         $updated = $this->propagateSharedBlock($key, $content);
         $this->activity('Updated shared block', $key);
         $this->respond(['message' => "Shared block updated on {$updated} page(s)", 'updated_pages' => $updated]);
@@ -378,12 +481,13 @@ final class CMSController
             if (!is_array($item) || empty($item['url'])) {
                 continue;
             }
-            $clean[] = ['label' => trim((string) ($item['label'] ?? $item['url'])), 'url' => $this->normaliseLink((string) $item['url']), 'parent' => trim((string) ($item['parent'] ?? ''))];
+            $clean[] = ['label' => trim((string) ($item['label'] ?? $item['url'])), 'url' => $this->paths->normaliseLink((string) $item['url']), 'parent' => trim((string) ($item['parent'] ?? ''))];
         }
-        $menus = $this->store->read('menus');
-        $menus[$name] = ['items' => $clean, 'updated' => date(DATE_ATOM)];
-        $this->store->write('menus', $menus);
-        $html = $this->renderMenu($name, $clean);
+        $this->store->update('menus', function (array $menus) use ($name, $clean) {
+            $menus[$name] = ['items' => $clean, 'updated' => date(DATE_ATOM)];
+            return $menus;
+        });
+        $html = ContentDom::renderMenu($name, $clean);
         $updated = $this->propagateMenu($name, $html);
         $this->activity('Updated menu', $name);
         $this->respond(['message' => "Menu saved and updated on {$updated} page(s)", 'html' => $html, 'updated_pages' => $updated]);
@@ -403,7 +507,7 @@ final class CMSController
             }
             $url = '/uploads/' . basename($file);
             $items[] = [
-                'name' => basename($file), 'url' => $url, 'size' => filesize($file),
+                'name' => basename($file), 'url' => ($this->config['basePath'] ?? '') . $url, 'size' => filesize($file),
                 'modified' => date(DATE_ATOM, filemtime($file)), 'alt' => $metadata[basename($file)]['alt'] ?? '',
                 'uses' => $usage[$url] ?? 0,
             ];
@@ -417,10 +521,13 @@ final class CMSController
     {
         $this->requirePost('upload');
         $name = $this->managedMediaName($this->requiredPost('name'));
-        $metadata = $this->store->read('media');
         $alt = is_string($_POST['alt'] ?? null) ? trim($_POST['alt']) : '';
-        $metadata[$name] = ['alt' => substr(preg_replace('/[\x00-\x1F\x7F]/u', '', $alt) ?? '', 0, 500)];
-        $this->store->write('media', $metadata);
+        $entry = ['alt' => substr(preg_replace('/[\x00-\x1F\x7F]/u', '', $alt) ?? '', 0, 500)];
+        $this->store->update('media', function (array $metadata) use ($name, $entry) {
+            $metadata[$name] = $entry;
+            return $metadata;
+        });
+        $this->activity('Updated image alt text', $name);
         $this->respond(['message' => 'Media details saved']);
     }
 
@@ -433,9 +540,10 @@ final class CMSController
         if (!is_file($path) || !unlink($path)) {
             throw new \RuntimeException('Unable to delete media');
         }
-        $metadata = $this->store->read('media');
-        unset($metadata[$name]);
-        $this->store->write('media', $metadata);
+        $this->store->update('media', function (array $metadata) use ($name) {
+            unset($metadata[$name]);
+            return $metadata;
+        });
         $this->activity('Deleted media', $name);
         $this->respond(['message' => 'Media deleted']);
     }
@@ -476,19 +584,24 @@ final class CMSController
      */
     private function publishContent(string $uri, string $content, string $reason): void
     {
-        $path = $this->existingPagePath($uri);
+        $path = $this->paths->existing($uri);
         $old = (string) file_get_contents($path);
         if ($old !== $content) {
             $this->createRevision($uri, $old, $reason);
         }
-        // Write beside the destination and rename to avoid serving a partially written document.
+        $this->atomicWrite($path, $content);
+        $this->captureSharedBlocks($content);
+        $this->activity($reason, $uri);
+    }
+
+    /** Write beside the destination and rename, so a public page is never served half-written. */
+    private function atomicWrite(string $path, string $content): void
+    {
         $temporary = $path . '.neo-' . bin2hex(random_bytes(5));
         if (file_put_contents($temporary, $content, LOCK_EX) === false || !rename($temporary, $path)) {
             @unlink($temporary);
             throw new \RuntimeException('Failed to publish page');
         }
-        $this->captureSharedBlocks($content);
-        $this->activity($reason, $uri);
     }
 
     /** Save an immutable HTML snapshot and add its searchable metadata to the revision index. */
@@ -496,20 +609,31 @@ final class CMSController
     {
         $id = date('YmdHis') . '-' . bin2hex(random_bytes(5));
         $this->store->writePrivateFile('revisions', $id . '.html', $content);
-        $index = $this->store->read('revisions');
-        $index[$id] = ['id' => $id, 'uri' => $this->normaliseUri($uri), 'created' => date(DATE_ATOM), 'user' => $this->user(), 'reason' => $reason];
-        $remove = $this->pruneRevisions($index);
-        $this->store->write('revisions', $index);
+        $entry = ['id' => $id, 'uri' => $this->paths->normaliseUri($uri), 'created' => date(DATE_ATOM), 'ts' => microtime(true), 'user' => $this->user(), 'reason' => $reason];
+        $remove = [];
+        $this->store->update('revisions', function (array $index) use ($id, $entry, &$remove) {
+            $index[$id] = $entry;
+            $remove = $this->pruneRevisions($index);
+            return $index;
+        });
         $directory = $this->store->directory('revisions');
         foreach ($remove as $removeId) {
             @unlink($directory . basename($removeId) . '.html');
         }
     }
 
+    /** Sortable creation time of a revision index entry. */
+    private static function revisionTime(array $revision): float
+    {
+        return (float) ($revision['ts'] ?? strtotime((string) ($revision['created'] ?? '')));
+    }
+
     /** Apply per-page, global-count, and aggregate-byte retention limits to revisions. */
     private function pruneRevisions(array &$index): array
     {
-        uasort($index, static fn(array $a, array $b): int => strcmp((string) ($b['created'] ?? ''), (string) ($a['created'] ?? '')));
+        // Newest first by microsecond 'ts'; 'created' has one-second resolution, so sorting on it alone could prune
+        // a revision made in the same second as older ones. Entries written before 'ts' existed fall back to 'created'.
+        uasort($index, static fn(array $a, array $b): int => self::revisionTime($b) <=> self::revisionTime($a));
         $perPage = [];
         $kept = 0;
         $bytes = 0;
@@ -557,6 +681,12 @@ final class CMSController
      */
     private function publishDueJobs(): int
     {
+        $isDue = static fn(array $job): bool => ($job['status'] ?? 'pending') === 'pending' && strtotime($job['publish_at'] ?? '') <= time();
+        // Cheap unlocked check first: most requests have nothing due, so they should not contend for the lock.
+        if (!array_filter($this->store->read('schedules'), $isDue)) {
+            return 0;
+        }
+
         $lockPath = $this->store->directory('locks') . 'scheduled.lock';
         $lock = fopen($lockPath, 'c+');
         if ($lock === false || !flock($lock, LOCK_EX)) {
@@ -568,13 +698,9 @@ final class CMSController
         @chmod($lockPath, 0600);
 
         try {
-            $jobs = $this->store->read('schedules');
-            $changed = false;
-            $published = 0;
-            foreach ($jobs as $id => &$job) {
-                if (($job['status'] ?? 'pending') !== 'pending' || strtotime($job['publish_at'] ?? '') > time()) {
-                    continue;
-                }
+            $published = [];
+            $failed = [];
+            foreach (array_filter($this->store->read('schedules'), $isDue) as $id => $job) {
                 $path = $this->store->directory('scheduled') . basename((string) $id) . '.html';
                 try {
                     if (!is_file($path)) {
@@ -582,22 +708,27 @@ final class CMSController
                     }
                     $this->publishContent((string) ($job['uri'] ?? ''), (string) file_get_contents($path), 'Scheduled publication');
                     unlink($path);
-                    unset($jobs[$id]);
-                    $published++;
+                    $published[] = $id;
                 } catch (\Throwable $exception) {
-                    $job['status'] = 'failed';
-                    $job['failed_at'] = date(DATE_ATOM);
-                    $job['error'] = 'Scheduled publication failed';
-                    $this->logger->write("Scheduled publication {$id} failed: {$exception->getMessage()}", (string) ($job['user'] ?? 'scheduler'));
+                    $failed[] = $id;
+                    $this->activity('Scheduled publication failed', ($job['uri'] ?? '') . ': ' . $exception->getMessage(), (string) ($job['user'] ?? 'scheduler'));
                 }
-                $changed = true;
             }
-            unset($job);
-            // The index is written once after the loop, avoiding needless churn for several due jobs.
-            if ($changed) {
-                $this->store->write('schedules', $jobs);
-            }
-            return $published;
+            // Apply outcomes to a fresh read so jobs scheduled or cancelled meanwhile are not lost.
+            $this->store->update('schedules', function (array $jobs) use ($published, $failed) {
+                foreach ($published as $id) {
+                    unset($jobs[$id]);
+                }
+                foreach ($failed as $id) {
+                    if (isset($jobs[$id])) {
+                        $jobs[$id]['status'] = 'failed';
+                        $jobs[$id]['failed_at'] = date(DATE_ATOM);
+                        $jobs[$id]['error'] = 'Scheduled publication failed';
+                    }
+                }
+                return $jobs;
+            });
+            return count($published);
         } finally {
             flock($lock, LOCK_UN);
             fclose($lock);
@@ -607,17 +738,13 @@ final class CMSController
     /** Capture shared-region values from a newly published page into the central registry. */
     private function captureSharedBlocks(string $html): void
     {
-        $dom = new \DOMDocument();
-        @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        $xpath = new \DOMXPath($dom);
-        $shared = $this->store->read('shared');
-        foreach ($xpath->query('//*[@data-neo-shared]') as $node) {
-            $key = $node->getAttribute('data-neo-shared');
-            if ($key !== '') {
-                $shared[$key] = ['content' => $this->innerHtml($node), 'updated' => date(DATE_ATOM), 'user' => $this->user()];
-            }
+        $found = [];
+        foreach (ContentDom::sharedBlocks($html) as $key => $content) {
+            $found[$key] = ['content' => $content, 'updated' => date(DATE_ATOM), 'user' => $this->user()];
         }
-        $this->store->write('shared', $shared);
+        if ($found) {
+            $this->store->update('shared', fn(array $shared) => array_replace($shared, $found));
+        }
     }
 
     /**
@@ -630,225 +757,78 @@ final class CMSController
      */
     private function propagateSharedBlock(string $key, string $content): int
     {
-        $count = 0;
-        foreach ($this->pageFiles() as $path) {
-            $html = (string) file_get_contents($path);
-            if (!str_contains($html, 'data-neo-shared')) {
-                continue;
-            }
-            $dom = new \DOMDocument();
-            @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-            $xpath = new \DOMXPath($dom);
-            $nodes = $xpath->query('//*[@data-neo-shared="' . $key . '"]');
-            if ($nodes->length === 0) {
-                continue;
-            }
-            $this->createRevision($this->uriForPath($path), $html, 'Before shared content update');
-            foreach ($nodes as $node) {
-                $this->replaceInnerHtml($dom, $node, $content);
-            }
-            file_put_contents($path, $dom->saveHTML(), LOCK_EX);
-            $count++;
-        }
-        return $count;
+        return $this->rewritePages(
+            fn(string $html) => ContentDom::withShared($html, $key, $content),
+            'Before shared content update'
+        );
     }
 
     /** Replace matching generated menus across public pages, revisioning each page first. */
     private function propagateMenu(string $name, string $menuHtml): int
     {
+        return $this->rewritePages(
+            fn(string $html) => ContentDom::withMenu($html, $name, $menuHtml),
+            'Before menu update'
+        );
+    }
+
+    /**
+     * Apply a page transform site-wide: revision each changed page, then replace it atomically.
+     *
+     * @param callable $transform Receives page HTML and URI; returns new HTML, or null to leave the page alone.
+     * @param array|null $onlyUris Restrict the pass to these page URIs; null means every page.
+     * @return int Number of changed pages.
+     */
+    private function rewritePages(callable $transform, string $reason, ?array $onlyUris = null): int
+    {
         $count = 0;
-        foreach ($this->pageFiles() as $path) {
+        // A URI list is resolved one page at a time, so a small batch does not rescan the whole document root.
+        if ($onlyUris !== null) {
+            $paths = [];
+            foreach ($onlyUris as $listed) {
+                try {
+                    $paths[] = $this->paths->existing($listed);
+                } catch (PageNotFoundException) {
+                    // A page deleted since it was listed is simply skipped.
+                }
+            }
+        }
+        foreach ($onlyUris !== null ? $paths : $this->paths->files() as $path) {
+            $uri = $this->paths->uriFor($path);
             $html = (string) file_get_contents($path);
-            if (!str_contains($html, 'data-neo-menu')) {
+            $changed = $transform($html, $uri);
+            if ($changed === null) {
                 continue;
             }
-            $dom = new \DOMDocument();
-            @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-            $xpath = new \DOMXPath($dom);
-            $nodes = $xpath->query('//*[@data-neo-menu="' . $name . '"]');
-            if ($nodes->length === 0) {
-                continue;
-            }
-            // Parse the rendered menu once, then import a fresh deep copy for each destination node.
-            $menuDom = new \DOMDocument();
-            @$menuDom->loadHTML($menuHtml, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-            $sourceNav = $menuDom->getElementsByTagName('nav')->item(0);
-            if (!$sourceNav) {
-                continue;
-            }
-            $this->createRevision($this->uriForPath($path), $html, 'Before menu update');
-            foreach (iterator_to_array($nodes) as $node) {
-                $replacement = $dom->importNode($sourceNav, true);
-                $node->parentNode->replaceChild($replacement, $node);
-            }
-            file_put_contents($path, $dom->saveHTML(), LOCK_EX);
+            $this->createRevision($this->paths->uriFor($path), $html, $reason);
+            $this->atomicWrite($path, $changed);
             $count++;
         }
         return $count;
     }
 
-    /**
-     * Replace a DOM node's children with an HTML fragment.
-     *
-     * DOMDocument parses forgiving HTML here rather than strict XML, allowing ordinary authoring
-     * fragments such as <br> without demanding that editors suddenly become XML librarians.
-     */
-    private function replaceInnerHtml(\DOMDocument $dom, \DOMNode $node, string $html): void
-    {
-        while ($node->firstChild) {
-            $node->removeChild($node->firstChild);
-        }
-        $temporary = new \DOMDocument();
-        @$temporary->loadHTML('<div id="neo-fragment">' . $html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        $wrapper = $temporary->getElementById('neo-fragment');
-        if (!$wrapper) {
-            $node->appendChild($dom->createTextNode($html));
-            return;
-        }
-        foreach (iterator_to_array($wrapper->childNodes) as $child) {
-            $node->appendChild($dom->importNode($child, true));
-        }
-    }
-
-    /** Return every public .html or .htm file while excluding the CMS application itself. */
-    private function pageFiles(): array
-    {
-        $files = [];
-        $scanned = 0;
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->documentRoot, \FilesystemIterator::SKIP_DOTS));
-        foreach ($iterator as $file) {
-            $scanned++;
-            if ($scanned > $this->maxScannedEntries) {
-                throw new \RuntimeException('Document root scan limit exceeded');
-            }
-            if (count($files) >= $this->maxManagedPages) {
-                throw new \RuntimeException('Managed page limit exceeded');
-            }
-            if ($file->isLink()) {
-                continue;
-            }
-            $path = $file->getRealPath();
-            if (!$file->isFile() || $path === false || !str_starts_with($path, $this->documentRoot) || !preg_match('/\.html?$/i', $path)) {
-                continue;
-            }
-            if (str_starts_with($path, $this->documentRoot . 'cms' . DIRECTORY_SEPARATOR)) {
-                continue;
-            }
-            $files[] = $path;
-        }
-        return $files;
-    }
-
-    /** Resolve an existing public URI to a canonical, in-root HTML file path. */
-    private function existingPagePath(string $uri): string
-    {
-        $uri = $this->normaliseUri($uri);
-        $candidate = $this->documentRoot . ltrim($uri, '/');
-        if (is_dir($candidate)) {
-            $candidate = rtrim($candidate, '/\\') . '/index.html';
-        } elseif (!preg_match('/\.html?$/i', $candidate)) {
-            $candidate .= '.html';
-        }
-        $real = realpath($candidate);
-        if (!$real || !str_starts_with($real, $this->documentRoot) || str_starts_with($real, $this->documentRoot . 'cms' . DIRECTORY_SEPARATOR) || !preg_match('/\.html?$/i', $real)) {
-            throw new \RuntimeException('Invalid page path');
-        }
-        return $real;
-    }
-
-    /** Build a safe path for a page that may not exist yet. */
-    private function newPagePath(string $uri): string
-    {
-        $path = $this->documentRoot . ltrim($uri, '/');
-        if (!str_starts_with($path, $this->documentRoot)) {
-            throw new \RuntimeException('Invalid page path');
-        }
-        $this->assertNoSymlinkComponents($path);
-        $parent = realpath(dirname($path));
-        if ($parent && !str_starts_with($parent . DIRECTORY_SEPARATOR, $this->documentRoot)) {
-            throw new \RuntimeException('Invalid page path');
-        }
-        if (str_starts_with($path, $this->documentRoot . 'cms' . DIRECTORY_SEPARATOR)) {
-            throw new \RuntimeException('CMS files cannot be managed as pages');
-        }
-        return $path;
-    }
-
-    /** Reject page targets whose existing path components contain symbolic links. */
-    private function assertNoSymlinkComponents(string $path): void
-    {
-        $relative = substr($path, strlen($this->documentRoot));
-        $current = rtrim($this->documentRoot, DIRECTORY_SEPARATOR);
-        foreach (explode('/', str_replace('\\', '/', $relative)) as $component) {
-            if ($component === '') {
-                continue;
-            }
-            $current .= DIRECTORY_SEPARATOR . $component;
-            if (is_link($current)) {
-                throw new \RuntimeException('Symbolic links are not permitted in managed page paths');
-            }
-            if (file_exists($current)) {
-                $real = realpath($current);
-                if ($real === false || !str_starts_with($real . (is_dir($real) ? DIRECTORY_SEPARATOR : ''), $this->documentRoot)) {
-                    throw new \RuntimeException('Invalid page path');
-                }
-            }
-        }
-    }
-
-    /** Canonicalise a request URI and reject traversal or null-byte input. */
-    private function normaliseUri(string $uri): string
-    {
-        $path = parse_url($uri, PHP_URL_PATH) ?: '/';
-        $path = '/' . ltrim(str_replace('\\', '/', $path), '/');
-        if (str_contains($path, '..') || str_contains($path, "\0")) {
-            throw new \RuntimeException('Invalid URI');
-        }
-        return $path;
-    }
-
-    /** Canonicalise a new page URI, append .html when absent, and enforce safe characters. */
-    private function normaliseNewPageUri(string $uri): string
-    {
-        $uri = $this->normaliseUri($uri);
-        if (!preg_match('/\.html?$/i', $uri)) {
-            $uri .= '.html';
-        }
-        if (!preg_match('#^/[a-zA-Z0-9_./-]+\.html?$#', $uri)) {
-            throw new \RuntimeException('Invalid page name');
-        }
-        return $uri;
-    }
-
-    /** Accept an absolute HTTP(S) link or normalise a local site path. */
-    private function normaliseLink(string $url): string
-    {
-        if (preg_match('#^https?://#i', $url)) {
-            return filter_var($url, FILTER_SANITIZE_URL);
-        }
-        return $this->normaliseUri($url);
-    }
-
     /** Derive the private draft filename from a stable hash of its public URI. */
     private function draftPath(string $uri): string
     {
-        return $this->store->directory('drafts') . hash('sha256', $this->normaliseUri($uri)) . '.html';
+        return $this->store->directory('drafts') . hash('sha256', $this->paths->normaliseUri($uri)) . '.html';
     }
 
     /** Remove a page's draft HTML and its dashboard metadata entry. */
     private function deleteDraft(string $uri): void
     {
         @unlink($this->draftPath($uri));
-        $drafts = $this->store->read('drafts');
-        unset($drafts[$this->normaliseUri($uri)]);
-        $this->store->write('drafts', $drafts);
+        $draftUri = $this->paths->normaliseUri($uri);
+        $this->store->update('drafts', function (array $drafts) use ($draftUri) {
+            unset($drafts[$draftUri]);
+            return $drafts;
+        });
     }
 
     /** Count all managed upload references in one pass across the public pages. */
     private function mediaUsageCounts(): array
     {
         $uses = [];
-        foreach ($this->pageFiles() as $path) {
+        foreach ($this->paths->files() as $path) {
             $html = (string) file_get_contents($path);
             if (preg_match_all('#/uploads/[a-f0-9]{32}\.(?:jpg|png|gif|webp)#', $html, $matches)) {
                 foreach ($matches[0] as $url) {
@@ -875,64 +855,10 @@ final class CMSController
         return preg_match('/^[a-f0-9]{32}\.(?:jpg|png|gif|webp)$/', $name) === 1;
     }
 
-    /**
-     * Render a nested, escaped navigation list from flat parent-labelled items.
-     * Circular parent references are stopped by the ancestor list rather than pursued forever.
-     */
-    private function renderMenu(string $name, array $items): string
-    {
-        $children = [];
-        foreach ($items as $item) {
-            $children[$item['parent'] ?? ''][] = $item;
-        }
-        $render = function (string $parent, array $ancestors = []) use (&$render, $children): string {
-            if (empty($children[$parent])) {
-                return '';
-            }
-            $html = '<ul>';
-            foreach ($children[$parent] as $item) {
-                $label = htmlspecialchars($item['label'], ENT_QUOTES);
-                $url = htmlspecialchars($item['url'], ENT_QUOTES);
-                $nested = in_array($item['label'], $ancestors, true) ? '' : $render($item['label'], array_merge($ancestors, [$item['label']]));
-                $html .= '<li><a href="' . $url . '">' . $label . '</a>' . $nested . '</li>';
-            }
-            return $html . '</ul>';
-        };
-        return '<nav data-neo-menu="' . htmlspecialchars($name, ENT_QUOTES) . '">' . $render('') . '</nav>';
-    }
-
     /** Extract a plain-text document title for the page picker. */
     private function extractTitle(string $html): string
     {
-        return preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $match) ? trim(strip_tags($match[1])) : 'Untitled';
-    }
-
-    /** Convert an absolute page path back into its public, slash-separated URI. */
-    private function uriForPath(string $path): string
-    {
-        return '/' . str_replace(DIRECTORY_SEPARATOR, '/', substr($path, strlen($this->documentRoot)));
-    }
-
-    /** Determine whether a document contains at least one exactly matching editable class. */
-    private function hasEditableClass(string $html): bool
-    {
-        $dom = new \DOMDocument();
-        @$dom->loadHTML($html);
-        $xpath = new \DOMXPath($dom);
-        $class = $this->editableClass;
-        // Class-token matching avoids treating "editable-extra" as though it were "editable".
-        $query = '//*[contains(concat(" ", normalize-space(@class), " "), " ' . $class . ' ")]';
-        return $xpath->query($query)->length > 0;
-    }
-
-    /** Serialise only the children of a DOM node, excluding the node's own wrapper tag. */
-    private function innerHtml(\DOMNode $node): string
-    {
-        $html = '';
-        foreach ($node->childNodes as $child) {
-            $html .= $node->ownerDocument->saveHTML($child);
-        }
-        return $html;
+        return preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $match) ? trim(html_entity_decode(strip_tags($match[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8')) : 'Untitled';
     }
 
     /** Create a new page's parent directories when they do not already exist. */
@@ -958,7 +884,15 @@ final class CMSController
         if (!$this->authentication->isValidCsrfToken($_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null)) {
             throw new \RuntimeException('Invalid CSRF token');
         }
-        if ($capability && !$this->authentication->can($capability)) {
+        if ($capability) {
+            $this->requireCapability($capability);
+        }
+    }
+
+    /** Refuse the request unless the current role includes the capability. */
+    private function requireCapability(string $capability): void
+    {
+        if (!$this->authentication->can($capability)) {
             throw new \RuntimeException('Your role cannot perform this action');
         }
     }
@@ -1007,13 +941,9 @@ final class CMSController
     }
 
     /** Add a bounded dashboard activity entry and mirror it to the audit log. */
-    private function activity(string $action, string $target): void
+    private function activity(string $action, string $target, ?string $user = null): void
     {
-        $entries = $this->store->read('activity');
-        $entries[] = ['created' => date(DATE_ATOM), 'user' => $this->user(), 'action' => $action, 'target' => $target];
-        // Retaining the latest 250 entries keeps the dashboard useful without growing forever.
-        $this->store->write('activity', array_slice($entries, -250));
-        $this->logger->write($action . ': ' . $target, $this->user());
+        $this->activity->record($user ?? $this->user(), $action, $target);
     }
 
     /** Return the authenticated username used for metadata and audit attribution. */
