@@ -16,7 +16,7 @@ final class SiteAnalyser
     private const MIN_SECTION_TEXT = 40;
 
     /** Describe a page: existing and proposed editable regions, images, local references, and SEO tags present. */
-    public static function analyse(string $html, string $editableClass): array
+    public static function analyse(string $html, string $editableClass, bool $allNavs = false): array
     {
         $c = self::scan($html, $editableClass, true);
         return [
@@ -26,14 +26,24 @@ final class SiteAnalyser
             'images' => array_map(fn(array $i) => ['src' => $i['src'], 'hasAlt' => $i['hasAlt'], 'inRegion' => $i['inRegion'], 'tagged' => $i['tagged']], $c['images']),
             'refs' => $c['refs'],
             'seo' => $c['seo'],
+            'navs' => array_values(array_map(
+                fn(array $n) => ['menu' => $n['menu'] ?? ($allNavs ? $n['name'] : $n['slot']), 'links' => count($n['links']), 'tagged' => $n['menu'] !== null, 'sig' => md5(implode("\n", array_column($n['links'], 'url')))],
+                array_filter($c['navs'], fn(array $n) => $n['menu'] !== null || ($allNavs ? $n['name'] : $n['slot']) !== null)
+            )),
         ];
+    }
+
+    /** Every navigation block in a page with its byte offsets, links and any data-neo-menu name (used to replace menus in place). */
+    public static function navs(string $html): array
+    {
+        return self::navList($html, self::elements($html));
     }
 
     /**
      * Insert the requested markers into a page.
      *
-     * @param array $options Booleans: content, images, seo.
-     * @return array|null ['html' => string, 'changes' => string[]], or null when the page needs no change.
+     * @param array $options Booleans: content, images, seo, menus; allNavs also names navs that are not clearly header or footer menus.
+     * @return array|null ['html' => string, 'changes' => string[], 'menus' => [name => links]], or null when the page needs no change.
      */
     public static function apply(string $html, string $editableClass, array $options): ?array
     {
@@ -64,6 +74,19 @@ final class SiteAnalyser
             $edits[] = $seo['edit'];
             array_push($changes, ...$seo['changes']);
         }
+        $menus = [];
+        if (!empty($options['menus'])) {
+            $named = array_filter(array_column($c['navs'], 'menu'));
+            foreach ($c['navs'] as $nav) {
+                $name = !empty($options['allNavs']) ? $nav['name'] : $nav['slot'];
+                // One nav per name per page, and never over a menu the page already marks by hand.
+                if ($nav['menu'] === null && $name !== null && !isset($menus[$name]) && !in_array($name, $named, true)) {
+                    $edits[] = [$nav['insertAt'], ' data-neo-menu="' . $name . '"'];
+                    $changes[] = 'Marked ' . $name . ' navigation as a menu (' . count($nav['links']) . ' links)';
+                    $menus[$name] = $nav['links'];
+                }
+            }
+        }
         if (!$edits) {
             return null;
         }
@@ -72,7 +95,72 @@ final class SiteAnalyser
         foreach ($edits as [$offset, $text]) {
             $html = substr($html, 0, $offset) . $text . substr($html, $offset);
         }
-        return ['html' => $html, 'changes' => $changes];
+        return ['html' => $html, 'changes' => $changes, 'menus' => $menus];
+    }
+
+    /** Navigation blocks: <nav> or role=navigation, classified as the primary (header) or secondary (footer) menu when recognisable. */
+    private static function navList(string $html, array $els): array
+    {
+        $navs = [];
+        foreach ($els as $k => $e) {
+            if ($e['name'] !== 'nav' && strtolower((string) self::attr($e['attrs'], 'role')) !== 'navigation') {
+                continue;
+            }
+            $links = [];
+            foreach ($els as $a) {
+                if ($a['name'] !== 'a' || ($href = self::attr($a['attrs'], 'href')) === null) {
+                    continue;
+                }
+                $inside = false;
+                $lis = [];
+                for ($p = $a['parent']; $p >= 0; $p = $els[$p]['parent']) {
+                    if ($p === $k) {
+                        $inside = true;
+                        break;
+                    }
+                    if ($els[$p]['name'] === 'li') {
+                        $lis[] = $p;
+                    }
+                }
+                $href = trim(html_entity_decode($href, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                $label = self::text($html, $a) ?: trim((string) self::attr($a['attrs'], 'aria-label'));
+                if (!$inside || $href === '' || $label === '' || stripos($href, 'javascript:') === 0) {
+                    continue;
+                }
+                // A link inside a nested list is a child of the link that owns the enclosing list item.
+                $parent = '';
+                if (isset($lis[1])) {
+                    foreach ($els as $b) {
+                        if ($b['name'] === 'a' && $b['parent'] === $lis[1]) {
+                            $parent = self::text($html, $b);
+                            break;
+                        }
+                    }
+                }
+                $links[] = ['label' => $label, 'url' => $href, 'parent' => $parent];
+            }
+
+            $ancestors = [];
+            for ($p = $e['parent']; $p >= 0; $p = $els[$p]['parent']) {
+                $ancestors[] = $els[$p]['name'] . ':' . strtolower((string) self::attr($els[$p]['attrs'], 'role'));
+            }
+            $in = fn(string $tag, string $role) => in_array($tag . ':', $ancestors, true) || in_array(':' . $role, $ancestors, true) || in_array($tag . ':' . $role, $ancestors, true);
+            $label = strtolower(self::attr($e['attrs'], 'aria-label') . ' ' . self::attr($e['attrs'], 'class') . ' ' . self::attr($e['attrs'], 'id'));
+            $slot = null;
+            if ($links) {
+                if ($in('footer', 'contentinfo') || preg_match('/\b(footer|secondary|legal)\b/', $label)) {
+                    $slot = 'secondary';
+                } elseif ($in('header', 'banner') || preg_match('/\b(main|primary|site-nav|top)\b/', $label)) {
+                    $slot = 'primary';
+                }
+            }
+            $navs[] = [
+                'menu' => ($m = self::attr($e['attrs'], 'data-neo-menu')) !== null && $m !== '' ? $m : null,
+                'slot' => $slot, 'name' => $slot ?? ($links ? (trim(preg_replace('/[^a-z0-9]+/', '-', strtolower(substr((string) (self::attr($e['attrs'], 'aria-label') ?: self::attr($e['attrs'], 'id')), 0, 40))), '-') ?: 'navigation') : null), 'links' => $links, 'attrs' => $e['attrs'],
+                'end' => $e['end'], 'close' => $e['close'], 'insertAt' => $e['start'] + 1 + strlen($e['name']),
+            ];
+        }
+        return $navs;
     }
 
     /** Tokenise a page and gather everything analyse() and apply() need. */
@@ -163,6 +251,7 @@ final class SiteAnalyser
         }
 
         return [
+            'navs' => self::navList($html, $els),
             'els' => $els, 'existing' => $existing, 'regions' => $regions, 'images' => $images, 'refs' => $refs,
             'title' => (string) $title, 'h1' => $h1, 'paragraph' => $firstParagraph, 'metaText' => $meta,
             'seo' => [

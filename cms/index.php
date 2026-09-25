@@ -8,7 +8,7 @@ use NeoCMS\Authentication;
 use NeoCMS\SecurityHeaders;
 
 // Prepare the session values required by both the rendered shell and JavaScript client.
-$authentication = new Authentication($config['authentication'] ?? [], $config['roles'] ?? [], $config['security'] ?? []);
+$authentication = new Authentication(...\NeoCMS\UserStore::authArgs($config));
 $csrfToken = $authentication->getCsrfToken();
 // Only a single valid CSS class is allowed; malformed values fall back safely.
 $editableClass = $config['editableClass'] ?? 'editable';
@@ -54,20 +54,20 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
         <div class="buttonContainer">
             <div class="toolbar-row">
                 <button class="headerButton" id="dashboardButton">Dashboard</button>
-                <button class="headerButton manage-only" id="newPage">New Page</button>
                 <button class="headerButton" id="selectPage">Pages</button>
                 <button class="headerButton" id="mediaButton">Media</button>
                 <button class="headerButton" id="seoButton">SEO</button>
+                <button class="headerButton manage-only" id="menusButton">Navigation Menus</button>
                 <button class="headerButton" id="moreButton">Tools</button>
             </div>
             <div class="toolbar-row publish-controls">
-                <button class="headerButton viewport-button" data-width="100%">Desktop</button>
-                <button class="headerButton viewport-button" data-width="768px">Tablet</button>
-                <button class="headerButton viewport-button" data-width="390px">Mobile</button>
+                <button class="headerButton viewport-button active" data-width="100%" title="Desktop view" aria-label="Desktop view" aria-pressed="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="19" height="12.5" rx="1.5"/><path d="M8 20.5h8M12 16.5v4"/></svg></button>
+                <button class="headerButton viewport-button" data-width="768px" title="Tablet view" aria-label="Tablet view" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M11 18.5h2"/></svg></button>
+                <button class="headerButton viewport-button" data-width="390px" title="Mobile view" aria-label="Mobile view" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg></button>
             </div>
         </div>
         <div class="loggedInDetails">
-            <?php echo htmlspecialchars($authentication->getLoggedInUser(), ENT_QUOTES, 'UTF-8'); ?>
+            <span id="whoami"><?php $profile = \NeoCMS\UserStore::fromConfig($config)->profile($authentication->getLoggedInUser()); echo htmlspecialchars($profile['name'] !== '' ? $profile['name'] : $authentication->getLoggedInUser(), ENT_QUOTES, 'UTF-8'); ?></span>
             (<?php echo htmlspecialchars($authentication->getRole(), ENT_QUOTES, 'UTF-8'); ?>)<br/>
             <button id="logoutButton" class="link-button">Log out</button><br/>
             <?php
@@ -91,24 +91,8 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
     </div>
 </div>
 
-<!-- Template and target path controls for administrator page creation. -->
-<div id="newPageDialog" title="Create a New Page">
-    <div class="newpage-content">
-        <form id="newPageForm">
-            <h3 class="dialog-section">Choose a template</h3>
-            <div id="radioList">
-                <!-- JavaScript populates available filesystem templates here. -->
-            </div>
-            <label for="filename">New Filename:</label>
-            <input type="text" id="filename" name="filename" placeholder="Enter new filename" required>
-
-            <button type="submit">Submit</button>
-        </form>
-    </div>
-</div>
-
 <!-- Searchable page picker with role-dependent management actions. -->
-<div id="fileListDialog" title="Select an Existing Page">
+<div id="fileListDialog" title="Pages">
     <div class="filelist-content">
         <input id="pageSearch" type="search" placeholder="Search pages" aria-label="Search pages">
         <div class="table-wrap">
@@ -123,6 +107,37 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
             <p id="pageListEmpty" class="scan-note" hidden>No pages match your search.</p>
         </div>
     </div>
+    <!-- New page wizard: template, name, navigation group. Administrators only. -->
+    <div id="newPageSection" class="manage-only">
+        <h3 class="dialog-section">New page</h3>
+        <div class="newpage-content">
+            <form id="newPageForm">
+                <p id="newPageStep" class="step-indicator"></p>
+                <section data-step="1">
+                    <h3 class="dialog-section">Choose a template</h3>
+                    <div id="radioList">
+                        <!-- JavaScript populates available filesystem templates here. -->
+                    </div>
+                    <div class="step-actions"><button type="button" class="step-next">Next</button></div>
+                </section>
+                <section data-step="2" hidden>
+                    <h3 class="dialog-section">Name your page</h3>
+                    <label for="pageName">Page name</label>
+                    <input type="text" id="pageName" maxlength="80" placeholder="For example: About us" autocomplete="off">
+                    <p class="scan-note">Used as the page title and the navigation link text. The filename is created for you.</p>
+                    <div class="step-actions"><button type="button" class="step-back">Back</button><button type="button" class="step-next">Next</button></div>
+                </section>
+                <section data-step="3" hidden>
+                    <h3 class="dialog-section">Choose a navigation group</h3>
+                    <div id="menuChoice">
+                        <!-- JavaScript lists the saved navigation menus here. -->
+                    </div>
+                    <p class="scan-note">The page is saved as a private draft. It appears on the site, and in this menu, only once you publish it.</p>
+                    <div class="step-actions"><button type="button" class="step-back">Back</button><button type="submit">Save</button></div>
+                </section>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Operational overview: pending work, schedules, activity, and filesystem warnings. -->
@@ -134,14 +149,20 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
         <button id="revisionsButton">Revision history</button>
         <button id="accessibilityButton">Accessibility check</button>
         <button id="sharedButton" class="manage-only">Shared content</button>
-        <button id="menusButton" class="manage-only">Navigation menus</button>
         <button id="siteScanButton" class="manage-only">Site scan</button>
+        <button id="usersButton">Users</button>
     </div>
 </div>
 
 <!-- Reusable uploaded-image browser and metadata editor. -->
 <div id="mediaDialog" class="cms-dialog" title="Media Library">
-    <p>Select an image to insert it into the open editable region.</p>
+    <div class="media-toolbar">
+        <button type="button" id="mediaUploadButton">Upload files</button>
+        <input type="file" id="mediaFile" multiple hidden accept="<?php echo htmlspecialchars('.' . implode(',.', \NeoCMS\MediaTypes::extensions()), ENT_QUOTES, 'UTF-8'); ?>">
+        <div id="mediaTabs" class="media-tabs" role="tablist" aria-label="Media categories"></div>
+    </div>
+    <p id="mediaHint" class="scan-note"></p>
+    <div id="mediaUploadReport" class="scan-note" role="status" aria-live="polite"></div>
     <div id="mediaList" class="media-grid"></div>
 </div>
 
@@ -184,13 +205,65 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
 <!-- Line-oriented menu editor supporting an optional parent label for nesting. -->
 <div id="menusDialog" class="cms-dialog" title="Navigation Menus">
     <div id="menuList"></div>
-    <form id="menuForm">
-        <label>Menu name<input id="menuName" type="text" pattern="[A-Za-z0-9_-]+" required></label>
+    <p class="scan-note"><button id="menuScanButton" type="button">Scan site for new navigation</button> Finds navigation added to any page since the last scan.</p>
+    <form id="menuForm" hidden>
+        <h3 class="dialog-section">Editing menu: <code id="menuKey"></code></h3>
+        <input id="menuName" type="hidden">
+        <label>Menu name<input id="menuTitle" type="text" maxlength="60" placeholder="Display name"></label>
         <label>One item per line: Label | URL | Optional parent label<textarea id="menuItems" rows="9" placeholder="Home | /&#10;About | /about.html&#10;Team | /team.html | About" required></textarea></label>
         <button type="submit">Save menu</button>
     </form>
 </div>
 
+<!-- Own account (everyone), role descriptions, and account management (administrators only). -->
+<div id="usersDialog" class="cms-dialog" title="Users">
+    <h3 class="dialog-section">My account</h3>
+    <form id="profileForm" autocomplete="off">
+        <label>Login name <span class="scan-note">(used to sign in; set by an administrator)</span><input id="profileLogin" type="text" readonly></label>
+        <label>Display name<input id="profileName" type="text" maxlength="80" required autocomplete="name"></label>
+        <label>Email address <span class="scan-note">(contact details only; not used to sign in)</span><input id="profileEmail" type="email" maxlength="254" autocomplete="email"></label>
+        <label>Current password <span class="scan-note">(only needed to change the email address)</span><input id="profileCurrent" type="password" maxlength="4096" autocomplete="current-password"></label>
+        <button type="submit">Save details</button>
+    </form>
+    <form id="passwordForm" autocomplete="off">
+        <h3 class="dialog-section">Change password</h3>
+        <label>Current password<input id="pwCurrent" type="password" maxlength="4096" required autocomplete="current-password"></label>
+        <label>New password <span class="scan-note">(12 to 72 characters)</span><input id="pwNew" type="password" minlength="12" maxlength="72" required autocomplete="new-password"></label>
+        <label>Confirm new password<input id="pwConfirm" type="password" minlength="12" maxlength="72" required autocomplete="new-password"></label>
+        <button type="submit">Change password</button>
+    </form>
+    <p id="passwordManaged" class="scan-note" hidden>Your password is managed in the site configuration (config.local.php) and cannot be changed here.</p>
+
+    <h3 class="dialog-section">Roles</h3>
+    <div id="rolesList"></div>
+
+    <div id="userAdmin" class="manage-only">
+        <h3 class="dialog-section">User accounts</h3>
+        <div id="userList"></div>
+        <p class="scan-note"><button id="userAddButton" type="button">Add user</button> <button id="userInviteButton" type="button">Invite user</button> Accounts marked Config are managed in config.local.php and cannot be changed here.</p>
+        <form id="userForm" autocomplete="off" hidden>
+            <h3 class="dialog-section" id="userFormTitle"></h3>
+            <input id="userExisting" type="hidden">
+            <label id="userUsernameRow">Login name <span class="scan-note">(3 to 32 letters, numbers, . - _)</span><input id="userUsername" type="text" maxlength="32" autocomplete="off"></label>
+            <label>Display name<input id="userName" type="text" maxlength="80" required autocomplete="off"></label>
+            <label>Email address <span class="scan-note">(contact details only; not used to sign in)</span><input id="userEmail" type="email" maxlength="254" autocomplete="off"></label>
+            <label>Role<select id="userRole"><option value="editor">Editor</option><option value="administrator">Administrator</option></select></label>
+            <label id="userPasswordRow">Password <span class="scan-note" id="userPasswordNote"></span><input id="userPassword" type="password" maxlength="72" autocomplete="new-password"></label>
+            <label>Your password <span class="scan-note">(to confirm this change)</span><input id="userConfirm" type="password" maxlength="4096" required autocomplete="current-password"></label>
+            <button type="submit" id="userSubmit">Save user</button> <button type="button" id="userCancel">Cancel</button>
+        </form>
+        <form id="confirmBox" autocomplete="off" hidden>
+            <h3 class="dialog-section" id="confirmTitle"></h3>
+            <label>Your password<input id="confirmPassword" type="password" maxlength="4096" required autocomplete="current-password"></label>
+            <button type="submit">Confirm</button> <button type="button" id="confirmCancel">Cancel</button>
+        </form>
+        <div id="inviteResult" hidden>
+            <h3 class="dialog-section">Invitation link</h3>
+            <p class="scan-note">Send this link to the person. It is shown only once, works once, and expires in 7 days. Their login name is <strong id="inviteLogin"></strong>.</p>
+            <input id="inviteLink" type="text" readonly> <button type="button" id="inviteCopy">Copy link</button>
+        </div>
+    </div>
+</div>
 <!-- Whole-site analysis with one-click tagging of content regions, images, and SEO tags. Administrators only. -->
 <div id="siteScanDialog" class="cms-dialog" title="Site Scan">
     <div id="siteScanProgress" hidden>
@@ -203,6 +276,7 @@ SecurityHeaders::html(true, isset($config['security']['cookieSecure']) ? (bool) 
         <label><input type="checkbox" id="scanContent" checked> Make content areas editable</label>
         <label><input type="checkbox" id="scanImages" checked> Make images editable</label>
         <label><input type="checkbox" id="scanSeo" checked> Add missing SEO tags (never overwrites existing ones)</label>
+        <label><input type="checkbox" id="scanMenus" checked> Detect navigation menus (fills Navigation Menus; never overwrites a saved menu)</label>
     </fieldset>
     <div id="siteScanPages"></div>
     <p class="scan-note">Each changed page keeps a revision, so this can be undone from Revision history.</p>

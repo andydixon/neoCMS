@@ -27,14 +27,15 @@ body {
     border-bottom: 1px solid #1a1a1a;
     -webkit-box-shadow: 0 10px 13px -7px #000000, -1px -1px 15px 5px rgba(0, 0, 0, 0);
     box-shadow: 0 10px 13px -7px #000000, -1px -1px 15px 5px rgba(0, 0, 0, 0);
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "logo url user" "logo url buttons";
     align-items: center;
-    gap: 16px;
+    gap: 6px 16px;
     padding: 10px 16px;
     box-sizing: border-box;
     width: 100%;
     min-width: 0;
-    flex-wrap: wrap;
 }
 
 /* Same-origin preview iframe; JavaScript narrows its width for responsive previews. */
@@ -50,33 +51,29 @@ body {
 
 /* Product mark remains a fixed size while neighbouring controls wrap around it. */
 .controls .logo {
-    background-image: url("/cms/img/logo.png");
+    background-image: url("../img/logo.png");
     width: 60px;
     height: 60px;
     display: block;
-    flex: 0 0 60px;
+    grid-area: logo;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
 }
 
-/* The two toolbar rows stay together and yield horizontal space when necessary. */
+/* Top right: user and Log out; the menu buttons sit directly beneath them. */
 .controls .buttonContainer {
-    margin-left: auto;
-    flex: 0 1 auto;
-    min-width: 0;
+    grid-area: buttons;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 7px 12px;
 }
 
 .toolbar-row {
     display: flex;
     gap: 7px;
-    justify-content: flex-end;
-    margin: 3px 0;
-    flex-wrap: wrap;
-}
-
-.publish-controls {
-    opacity: 0.94;
+    margin: 0;
 }
 
 
@@ -115,9 +112,12 @@ body {
 
 /* Current page path and unpublished-state label. */
 .controls #urlbox {
-    flex: 1 1 320px;
+    grid-area: url;
     min-width: 0;
-    text-align: center;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 1.1rem;
     line-height: 1.3;
     color: #dee2e6;
@@ -135,13 +135,17 @@ body {
 
 /* Compact account, role, logout, and operational-warning area. */
 .controls .loggedInDetails {
-    flex: 0 1 auto;
+    grid-area: user;
+    justify-self: end;
     color: #dee2e6;
     text-align: right;
     font-size: 0.9rem;
     line-height: 1.4;
-    max-width: 260px;
 }
+
+/* Name and Log out share one line. */
+.controls .loggedInDetails br:first-of-type { display: none; }
+.controls .loggedInDetails .link-button { margin-left: 10px; }
 
 .link-button {
     border: 0;
@@ -219,6 +223,9 @@ body {
 
 /* Consistent form controls across SEO, scheduling, shared-content, and menu dialogues. */
 .cms-dialog input[type="text"],
+.cms-dialog input[type="email"],
+.cms-dialog input[type="password"],
+.cms-dialog select,
 .cms-dialog input[type="url"],
 .cms-dialog input[type="datetime-local"],
 .cms-dialog textarea {
@@ -347,44 +354,34 @@ body {
     color: #ff4d4d;
 }
 
-/* At medium widths the page path receives its own row. */
+/* At medium widths the buttons take their own row under the user block; the path stays beside the logo. */
 @media (max-width: 1100px) {
     .pageContainer .controls {
-        gap: 12px;
-    }
-
-    .controls #urlbox {
-        order: 3;
-        flex-basis: 100%;
-        text-align: left;
-    }
-
-    .controls .buttonContainer {
-        margin-left: 0;
+        grid-template-areas: "logo url user" "buttons buttons buttons";
     }
 }
 
-/* On small screens controls stack into touch-friendly full-width rows. */
+/* On small screens controls stack into touch-friendly full-width rows; the user block stays top right. */
 @media (max-width: 760px) {
     .pageContainer .controls {
-        align-items: flex-start;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas: "logo user" "url url" "buttons buttons";
         padding: 12px;
     }
 
     .controls .logo {
         width: 48px;
         height: 48px;
-        flex-basis: 48px;
     }
 
-    .controls .buttonContainer,
-    .controls .loggedInDetails,
+    .toolbar-row {
+        flex: 1 1 100%;
+        flex-wrap: wrap;
+    }
+
     .controls #urlbox {
-        flex-basis: 100%;
-        max-width: none;
         text-align: left;
     }
-
     .controls .buttonContainer ul {
         gap: 8px;
     }
@@ -501,10 +498,58 @@ body {
 .newpage-content { padding: 0; background: none; border: 0; width: auto; }
 #newPageForm > label[for="filename"] { margin: 4px 0 6px; font-weight: 600; }
 #newPageForm input[type="text"] { width: 100%; box-sizing: border-box; padding: 9px; margin-bottom: 16px; border: 1px solid #c9cfd8; border-radius: 6px; }
-#newPageForm button[type="submit"] { align-self: flex-end; padding: 9px 22px; border: 0; border-radius: 6px; background: #3b6ea5; color: #fff; font-weight: 600; cursor: pointer; }
-#newPageForm button[type="submit"]:hover { background: #2f5a8a; }
-
-/* Primary submit buttons inside dialogue forms. */
-.cms-dialog form button[type="submit"] { padding: 9px 18px; border: 0; border-radius: 6px; background: #3b6ea5; color: #fff; font-weight: 600; cursor: pointer; }
-.cms-dialog form button[type="submit"]:hover { background: #2f5a8a; }
+/* Dialogue buttons use the small row-button metrics; primary actions are filled blue. */
+.ui-dialog .ui-dialog-content :where(button:not([class*="tox"]):not([class*="ui-"]):not(.page-open)) {
+    padding: 4px 9px; font-family: inherit; font-size: 12px; font-weight: 400; color: #374151;
+    background: #fff; border: 1px solid #c9cfd8; border-radius: 4px; cursor: pointer;
+}
+.ui-dialog .ui-dialog-content :where(button:not([class*="tox"]):not([class*="ui-"]):not(.page-open)):hover { background: #f3f5f8; }
+.ui-dialog .ui-dialog-content button.danger-text { color: #a51d2d; }
+.ui-dialog .ui-dialog-content button[type="submit"], .ui-dialog .ui-dialog-content .step-next, .ui-dialog .ui-dialog-content #siteScanApply {
+    border-color: #3b6ea5; background: #3b6ea5; color: #fff; font-weight: 600;
+}
+.ui-dialog .ui-dialog-content button[type="submit"]:hover, .ui-dialog .ui-dialog-content .step-next:hover, .ui-dialog .ui-dialog-content #siteScanApply:hover { background: #2f5a8a; }
+#fileList .row-actions button { padding: 4px 9px; font-size: 12px; }
+/* Action buttons (editor Save/Schedule/Publish, dialogue Save/Next/Apply) are a step larger than row buttons. */
+#editModal .editor-actions button, .ui-dialog .ui-dialog-content button[type="submit"], .ui-dialog .ui-dialog-content .step-next, .ui-dialog .ui-dialog-content .step-back, .ui-dialog .ui-dialog-content #siteScanApply { padding: 6px 14px; font-size: 13px; }
 #sharedList, #menuList { margin-bottom: 16px; }
+
+/* Device-preview buttons are icon-only; the active one is highlighted. */
+.viewport-button {
+    min-width: 42px;
+    padding: 8px 10px;
+}
+
+.viewport-button.active {
+    outline: 2px solid rgba(255, 255, 255, 0.85);
+    outline-offset: -3px;
+}
+
+/* New-page wizard. */
+.step-indicator { margin: 0 0 4px; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; }
+.step-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+#menuChoice { display: grid; gap: 8px; }
+#newPageForm section[hidden] { display: none; }
+
+/* Wizard lists reuse the page-table look. */
+#radioList, #menuChoice { display: block; margin-bottom: 14px; }
+#radioList .table-wrap, #menuChoice .table-wrap { max-height: 46vh; overflow: auto; }
+
+/* Users dialogue. */
+#usersDialog form { margin-bottom: 8px; }
+#usersDialog #inviteLink { width: calc(100% - 100px); box-sizing: border-box; padding: 6px; }
+
+/* Important administrator recommendations (for example the data directory notice). */
+.important-note, .cms-dialog .scan-note.important-note { color: #b3141f; font-weight: 600; }
+
+/* Media library: upload, category tabs, and file cards. */
+.media-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 10px; }
+.media-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.media-tab[aria-selected="true"] { background: #3b6ea5 !important; border-color: #3b6ea5 !important; color: #fff !important; }
+.media-thumb { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; height: 130px; background: #eef2f5; color: #4a7bb7; font-weight: 600; font-size: 12px; }
+.media-thumb svg { width: 40px; height: 40px; }
+.media-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+#mediaUploadReport:empty { display: none; }
+
+/* New page wizard sits under the page list in the Pages dialogue. */
+#newPageSection { margin-top: 22px; padding-top: 6px; border-top: 1px solid #d4dde4; }

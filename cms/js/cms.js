@@ -76,14 +76,18 @@
             });
     }
 
+    /** Latest response from the users action. */
+    let usersData = null;
+
     /** Configure all jQuery UI dialogues once, leaving individual workflows to populate them. */
     function initialiseDialogs() {
-        $('.cms-dialog, #newPageDialog, #fileListDialog').hide();
-        $('.cms-dialog, #newPageDialog, #fileListDialog').not('#editModal').each(function () {
+        $('.cms-dialog, #fileListDialog').hide();
+        $('.cms-dialog, #fileListDialog').not('#editModal').each(function () {
             $(this).dialog({autoOpen: false, modal: true, width: Math.min(760, window.innerWidth - 30)});
         });
         // The page list is a wide table, so it gets a wider dialogue than the other tools.
         $('#fileListDialog').dialog('option', 'width', Math.min(1000, window.innerWidth - 30));
+        $('#fileListDialog').dialog('option', 'maxHeight', Math.round(window.innerHeight * 0.92));
         $('#editModal').dialog({
             autoOpen: false,
             modal: true,
@@ -96,9 +100,10 @@
     /** Connect toolbar controls and forms to their workflow handlers. */
     function bindToolbar() {
         $('#dashboardButton').on('click', function () { loadDashboard(true); });
-        $('#newPage').on('click', openNewPage);
         $('#selectPage').on('click', openPages);
-        $('#mediaButton').on('click', openMedia);
+        $('#mediaButton').on('click', function () { openMedia(); });
+        $('#mediaUploadButton').on('click', function () { $('#mediaFile').trigger('click'); });
+        $('#mediaFile').on('change', function () { const files = Array.from(this.files); this.value = ''; if (files.length) uploadMedia(files); });
         $('#seoButton').on('click', openSeo);
         $('#moreButton').on('click', function () { $('#toolsDialog').dialog('open'); });
         $('#revisionsButton').on('click', openRevisions);
@@ -106,18 +111,25 @@
         $('#sharedButton').on('click', openShared);
         $('#menusButton').on('click', openMenus);
         $('#siteScanButton').on('click', openSiteScan);
+        $('#usersButton').on('click', openUsers);
+        bindUsers();
         $('#siteScanApply').on('click', applySiteScan);
         $('#imageForm').on('submit', applyImage);
         $('#seoForm').on('submit', applySeo);
         $('#scheduleForm').on('submit', schedulePage);
         $('#sharedForm').on('submit', saveShared);
         $('#menuForm').on('submit', saveMenu);
+        $('#menuScanButton').on('click', scanForNavigation);
         $('#newPageForm').on('submit', createPage);
+        $('#newPageForm').on('click', '.step-next', function () { stepNewPage(1); });
+        $('#newPageForm').on('click', '.step-back', function () { stepNewPage(-1); });
         $('#pageSearch').on('input', filterPages);
         $('#logoutButton').on('click', logout);
         $('#closeEditorBtn').on('click', function () { $('#editModal').dialog('close'); });
         $('.viewport-button').on('click', function () {
             $('#frameContainer').css({width: $(this).data('width'), margin: '0 auto'});
+            $('.viewport-button').removeClass('active').attr('aria-pressed', 'false');
+            $(this).addClass('active').attr('aria-pressed', 'true');
         });
     }
 
@@ -139,7 +151,8 @@
             return;
         }
         revalidatedHref = null;
-        if (!draftWrite) {
+        // about:blank is only ever our own draft surface, so it must not reset the page path or draft state.
+        if (!draftWrite && href !== 'about:blank') {
             draftSaved = false;
             framePath = iframe.contentWindow.location.pathname;
         }
@@ -202,7 +215,14 @@
         tinymce.init({
             selector: '#editor', height: 360, branding: false, promotion: false, license_key: 'gpl',
             plugins: 'preview searchreplace autolink autosave directionality code visualblocks visualchars fullscreen image link media codesample table charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount quickbars emoticons help',
-            toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media table | code preview fullscreen',
+            toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media neomedia table | code preview fullscreen',
+            setup: function (editor) {
+                editor.ui.registry.addButton('neomedia', {
+                    text: 'Media library', icon: 'gallery', tooltip: 'Insert an uploaded image, document, video or audio file',
+                    onAction: function () { openMedia(function (item) { editor.insertContent(mediaHtml(item)); }); }
+                });
+            },
+            toolbar_mode: 'wrap',
             images_upload_handler: uploadImage,
             automatic_uploads: true,
             convert_urls: false
@@ -423,20 +443,23 @@
             $('#pageSearch').val('');
             $('#pageListEmpty').prop('hidden', true);
             pages.forEach(function (page) {
-                const row = $('<tr class="page-row">').attr('data-search', (page.name + ' ' + page.title).toLowerCase()).on('click', function () { navigateTo(page.url); });
+                const row = $('<tr class="page-row">').attr('data-search', (page.name + ' ' + page.title).toLowerCase()).on('click', function () { page.pending ? openPendingPage(page.url) : navigateTo(page.url); });
                 const name = $('<td class="page-cell">').append(docIcon());
                 $('<button type="button" class="page-open">').text(page.name).appendTo(name);
-                if (page.draft) $('<span class="badge-draft">').text('Draft').appendTo(name);
+                if (page.draft) $('<span class="badge-draft">').text(page.pending ? 'New - unpublished' : 'Draft').appendTo(name);
                 row.append(name, $('<td class="page-title">').text(page.title), $('<td class="page-date">').text(formatDate(page.modified)));
                 const actions = $('<td class="row-actions manage-col">').toggle(permissions.manage).appendTo(row);
-                if (permissions.manage) {
-                    [['Duplicate', 'duplicate'], ['Rename', 'rename'], ['Delete', 'delete']].forEach(function (action) {
+                if (permissions.manage && page.pending) {
+                    $('<button type="button" class="danger-text">').text('Discard').on('click', function (event) { event.stopPropagation(); discardNewPage(page.url); }).appendTo(actions);
+                } else if (permissions.manage) {
+                    [['Create Template', 'template'], ['Duplicate', 'duplicate'], ['Rename', 'rename'], ['Delete', 'delete']].forEach(function (action) {
                         $('<button type="button">').text(action[0]).toggleClass('danger-text', action[1] === 'delete')
-                            .on('click', function (event) { event.stopPropagation(); managePage(action[1], page.url); }).appendTo(actions);
+                            .on('click', function (event) { event.stopPropagation(); action[1] === 'template' ? setPageTemplate(page.url, true) : managePage(action[1], page.url); }).appendTo(actions);
                     });
                 }
                 body.append(row);
             });
+            await loadNewPage();
             $('#fileListDialog').dialog('open');
         } catch (error) { showMessage(error.message, 'error'); }
     }
@@ -511,26 +534,115 @@
         } catch (error) { showMessage(error.message, 'error'); }
     }
 
-    /** Load available templates and open the new-page dialogue. */
-    async function openNewPage() {
+    /** Fill the New page section of the Pages dialogue with templates and navigation groups, at step 1. */
+    async function loadNewPage() {
+        $('#newPageSection').toggle(permissions.manage);
+        if (!permissions.manage) return;
         try {
             const templates = await api('getTemplates');
+            const menus = permissions.manage ? await api('menus') : {};
+            // Both lists use the same table styling as the page picker; a row selects its radio button.
+            const pick = function (body, name, value, checked, cells) {
+                const row = $('<tr class="page-row">');
+                const radio = $('<input type="radio">').attr('name', name).val(value).prop('checked', checked).on('click', function (event) { event.stopPropagation(); });
+                row.on('click', function () { radio.prop('checked', true); });
+                $('<td class="check-cell">').append(radio).appendTo(row);
+                cells.forEach(function (cell) { row.append(cell); });
+                body.append(row);
+            };
             const list = $('#radioList').empty();
+            const templateBody = dataTable(list, ['', 'Template', 'Source', 'Actions']);
             templates.forEach(function (item, index) {
-                $('<label class="template-option">').append($('<input type="radio" name="item">').val(item.id).prop('checked', index === 0), docIcon(), $('<span>').text(item.name)).appendTo(list);
+                const name = $('<td class="page-cell">').append(docIcon(), $('<strong>').text(item.name));
+                const actions = $('<td class="row-actions">');
+                if (permissions.manage) actions.append(rowButton('Delete', function () { deleteTemplate(item); }, true));
+                pick(templateBody, 'item', item.id, index === 0, [name, $('<td class="page-title">').text(item.detail ? 'Page ' + item.detail : 'Template file'), actions]);
             });
-            $('#newPageDialog').dialog('open');
+            const groups = $('#menuChoice').empty();
+            const groupBody = dataTable(groups, ['', 'Navigation group', 'Items']);
+            pick(groupBody, 'menu', '', true, [$('<td class="page-cell">').append($('<strong>').text('None')), $('<td class="page-title">').text('Do not add to navigation')]);
+            Object.keys(menus).forEach(function (key) {
+                pick(groupBody, 'menu', key, false, [$('<td class="page-cell">').append(docIcon(), $('<strong>').text(menus[key].title || key)), $('<td class="page-title">').text(menus[key].items.length + ' link(s)')]);
+            });
+            $('#pageName').val('');
+            showNewPageStep(1);
         } catch (error) { showMessage(error.message, 'error'); }
     }
 
-    /** Create a template-based page and immediately navigate the preview to it. */
+    /** Show one step of the new-page wizard. */
+    function showNewPageStep(step) {
+        $('#newPageForm section').each(function () { $(this).prop('hidden', Number($(this).data('step')) !== step); });
+        $('#newPageStep').text('Step ' + step + ' of 3');
+        if (step > 1) $('#newPageForm section[data-step="' + step + '"]').find('input[type="text"]').first().trigger('focus');
+    }
+
+    /** Move between wizard steps, checking the current step is complete before going forward. */
+    function stepNewPage(direction) {
+        const step = Number($('#newPageForm section:not([hidden])').data('step'));
+        if (direction > 0 && step === 1 && !$('input[name="item"]:checked').length) { showMessage('Choose a template.', 'error'); return; }
+        if (direction > 0 && step === 2 && !$('#pageName').val().trim()) { showMessage('Enter a page name.', 'error'); return; }
+        showNewPageStep(step + direction);
+    }
+
+    /** Create the page as a private draft (nothing is public yet) and open it for editing. */
     async function createPage(event) {
         event.preventDefault();
         try {
-            const result = await api('newPage', {template: $('input[name="item"]:checked').val(), filename: $('#filename').val()}, 'POST');
-            $('#newPageDialog').dialog('close');
-            navigateTo(result.url);
+            const result = await api('newPage', {template: $('input[name="item"]:checked').val(), name: $('#pageName').val(), menu: $('input[name="menu"]:checked').val() || ''}, 'POST');
+            await openPendingPage(result.url);
             showMessage(result.message, 'success');
+        } catch (error) { showMessage(error.message, 'error'); }
+    }
+
+    /** Open a page that has never been published: it exists only as a draft, so it is written into the preview. */
+    async function openPendingPage(uri) {
+        if (dirty && !window.confirm('Discard unpublished changes?')) return;
+        try {
+            const draft = await api('getDraft', {uri: uri});
+            if (!draft.exists) throw new Error('This new page has no saved content.');
+            dirty = false;
+            framePath = basePath + uri;
+            loadedDrafts.add(uri);
+            writingDraft = true;
+            $('#fileListDialog').dialog('close');
+            $('#frameContainer').one('load.pending', function () {
+                writingDraft = true;
+                iframeDoc.open(); iframeDoc.write(withBase(draft.content, location.origin + basePath + uri)); iframeDoc.close();
+                // Writing into a blank frame does not raise a second load event, so bind the editing handlers directly.
+                writingDraft = true;
+                initialiseFrame();
+                draftSaved = true;
+                updateUrl();
+            });
+            $('#frameContainer').attr('src', 'about:blank');
+        } catch (error) { showMessage(error.message, 'error'); }
+    }
+
+    /** Remove a template: a template file is deleted; a page used as a template is only unmarked (the page stays). */
+    async function deleteTemplate(item) {
+        const isPage = item.id.indexOf('page:') === 0;
+        const message = isPage
+            ? 'Stop using ' + item.detail + ' as a template? The page itself is not deleted.'
+            : 'Delete the template file "' + item.name + '"? This cannot be undone. Pages already made from it are not affected.';
+        if (!window.confirm(message)) return;
+        try {
+            showMessage((await api('deleteTemplate', {template: item.id}, 'POST')).message, 'success');
+            loadNewPage();
+        } catch (error) { showMessage(error.message, 'error'); }
+    }
+
+    async function setPageTemplate(uri, on) {
+        try {
+            showMessage((await api('setPageTemplate', {uri: uri, value: on ? '1' : '0'}, 'POST')).message, 'success');
+            openPages();
+        } catch (error) { showMessage(error.message, 'error'); }
+    }
+
+    async function discardNewPage(uri) {
+        if (!window.confirm('Discard this unpublished page and its draft? This cannot be undone.')) return;
+        try {
+            showMessage((await api('discardNewPage', {uri: uri}, 'POST')).message, 'success');
+            openPages();
         } catch (error) { showMessage(error.message, 'error'); }
     }
 
@@ -568,42 +680,111 @@
         } catch (error) { showMessage(error.message, 'error'); }
     }
 
-    /** Build the media library with previews, metadata controls, use counts, and deletion. */
-    async function openMedia() {
+    /** Media categories in display order; the server derives each file's category from its extension. */
+    const MEDIA_CATEGORIES = [['imagery', 'Imagery'], ['documents', 'Documents'], ['video', 'Video'], ['audio', 'Audio']];
+    let mediaItems = [];
+    let mediaCategory = 'all';
+    /** When set, the library is open to choose a file for the editor: called with the chosen item. */
+    let mediaPick = null;
+
+    /** Open the media library, optionally to pick a file for the open editor. */
+    async function openMedia(pick) {
+        mediaPick = typeof pick === 'function' ? pick : null;
+        $('#mediaUploadReport').empty();
+        await loadMedia();
+        $('#mediaHint').text(mediaPick ? 'Choose a file to insert at the cursor.' : 'Upload files and organise them by type. Open a page and use the Media library button in the editor to insert them.');
+        $('#mediaDialog').dialog('open');
+    }
+
+    /** Fetch the library and draw the category tabs and cards. */
+    async function loadMedia() {
         try {
-            const media = await api('media');
-            const list = $('#mediaList').empty();
-            media.forEach(function (item) {
-                const card = $('<div class="media-card">');
-                $('<img>').attr({src: item.url, alt: item.alt || ''}).on('click', function () { insertMedia(item); }).appendTo(card);
-                $('<strong>').text(item.name).appendTo(card);
-                $('<small>').text(formatBytes(item.size) + ' - used ' + item.uses + ' time(s)').appendTo(card);
-                const alt = $('<input type="text" placeholder="Alternative text">').val(item.alt).appendTo(card);
-                $('<button>').text('Save alt text').on('click', async function () {
-                    try { showMessage((await api('updateMedia', {name: item.name, alt: alt.val()}, 'POST')).message, 'success'); } catch (error) { showMessage(error.message, 'error'); }
-                }).appendTo(card);
-                if (permissions.manage) $('<button class="danger-text">').text('Delete').on('click', function () { deleteMedia(item); }).appendTo(card);
-                list.append(card);
-            });
-            $('#mediaDialog').dialog('open');
+            mediaItems = await api('media');
+            renderMedia();
         } catch (error) { showMessage(error.message, 'error'); }
     }
 
-    /** Append a library image to the currently selected editable region. */
-    function insertMedia(item) {
-        if (!currentElement) {
-            showMessage('Open an editable region first, then select an image.', 'error');
-            return;
-        }
-        currentElement.append($('<img>').attr({src: item.url, alt: item.alt || ''}));
+    function mediaIcon(category) {
+        if (category === 'video') return svgIcon('<rect x="3" y="5" width="14" height="14" rx="2"/><path d="M17 10l4-2v8l-4-2z"/>');
+        if (category === 'audio') return svgIcon('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>');
+        return docIcon();
+    }
+
+    /** HTML inserted into the editor for a library file, by category. */
+    function mediaHtml(item) {
+        const label = item.alt || item.original || item.name;
+        if (item.category === 'imagery') return $('<img>').attr({src: item.url, alt: item.alt || ''})[0].outerHTML;
+        if (item.category === 'video') return $('<video controls preload="metadata" style="max-width:100%">').attr('src', item.url)[0].outerHTML;
+        if (item.category === 'audio') return $('<audio controls preload="none">').attr('src', item.url)[0].outerHTML;
+        return $('<a>').attr('href', item.url).text(label + ' (' + item.ext.toUpperCase() + ', ' + formatBytes(item.size) + ')')[0].outerHTML;
+    }
+
+    function renderMedia() {
+        const counts = {all: mediaItems.length};
+        MEDIA_CATEGORIES.forEach(function (c) { counts[c[0]] = mediaItems.filter(function (item) { return item.category === c[0]; }).length; });
+        const tabs = $('#mediaTabs').empty();
+        [['all', 'All']].concat(MEDIA_CATEGORIES).forEach(function (c) {
+            $('<button type="button" role="tab" class="media-tab">').text(c[1] + ' (' + counts[c[0]] + ')').attr('aria-selected', c[0] === mediaCategory ? 'true' : 'false')
+                .on('click', function () { mediaCategory = c[0]; renderMedia(); }).appendTo(tabs);
+        });
+        const list = $('#mediaList').empty();
+        const shown = mediaItems.filter(function (item) { return mediaCategory === 'all' || item.category === mediaCategory; });
+        if (!shown.length) $('<p class="empty-state">').text(mediaItems.length ? 'Nothing in this category yet.' : 'No media yet. Use Upload files to add some.').appendTo(list);
+        shown.forEach(function (item) {
+            const card = $('<div class="media-card">');
+            const thumb = item.category === 'imagery'
+                ? $('<img>').attr({src: item.url, alt: item.alt || ''})
+                : $('<div class="media-thumb">').append(mediaIcon(item.category), $('<span>').text(item.ext.toUpperCase()));
+            thumb.on('click', function () { if (mediaPick) chooseMedia(item); }).appendTo(card);
+            $('<strong>').text(item.original || item.name).attr('title', item.name).appendTo(card);
+            $('<small>').text(item.ext.toUpperCase() + ' - ' + formatBytes(item.size) + ' - used ' + item.uses + ' time(s)').appendTo(card);
+            const alt = $('<input type="text">').attr('placeholder', item.category === 'imagery' ? 'Alternative text' : 'Link text or description').val(item.alt).appendTo(card);
+            const actions = $('<div class="media-actions">').appendTo(card);
+            if (mediaPick) $('<button type="button">').text('Insert').addClass('media-insert').on('click', function () { item.alt = alt.val(); chooseMedia(item); }).appendTo(actions);
+            else $('<button type="button">').text('Copy link').on('click', function () { copyText(location.origin + item.url); }).appendTo(actions);
+            $('<button type="button">').text('Save description').on('click', async function () {
+                try { showMessage((await api('updateMedia', {name: item.name, alt: alt.val()}, 'POST')).message, 'success'); item.alt = alt.val(); } catch (error) { showMessage(error.message, 'error'); }
+            }).appendTo(actions);
+            if (permissions.manage) $('<button type="button" class="danger-text">').text('Delete').on('click', function () { deleteMedia(item); }).appendTo(actions);
+            list.append(card);
+        });
+    }
+
+    function chooseMedia(item) {
+        const pick = mediaPick;
+        mediaPick = null;
         $('#mediaDialog').dialog('close');
-        commitEdit();
+        if (pick) pick(item);
+    }
+
+    function copyText(text) {
+        (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { showMessage('Link copied.', 'success'); }, function () { window.prompt('Copy this link:', text); });
+    }
+
+    /** Upload the chosen files one request each; every refusal is reported with its reason. */
+    async function uploadMedia(files) {
+        const report = $('#mediaUploadReport').empty();
+        let done = 0;
+        for (const file of files) {
+            const form = new FormData();
+            form.append('file', file, file.name);
+            form.append('csrf_token', csrfToken);
+            try {
+                await $.ajax({url: basePath + '/cms/image_upload.php', method: 'POST', data: form, processData: false, contentType: false, dataType: 'json'});
+                done++;
+            } catch (xhr) {
+                $('<div class="issue">').text(file.name + ': ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'Upload failed')).appendTo(report);
+            }
+        }
+        if (done) showMessage('Uploaded ' + done + ' of ' + files.length + ' file(s).', 'success');
+        else showMessage('No files were uploaded.', 'error');
+        await loadMedia();
     }
 
     /** Delete a media file, warning more firmly when public pages still reference it. */
     async function deleteMedia(item) {
-        if (item.uses && !window.confirm('This image is used on ' + item.uses + ' page location(s). Delete it anyway?')) return;
-        try { showMessage((await api('deleteMedia', {name: item.name}, 'POST')).message, 'success'); openMedia(); } catch (error) { showMessage(error.message, 'error'); }
+        if (item.uses && !window.confirm('This file is used on ' + item.uses + ' page location(s). Delete it anyway?')) return;
+        try { showMessage((await api('deleteMedia', {name: item.name}, 'POST')).message, 'success'); await loadMedia(); } catch (error) { showMessage(error.message, 'error'); }
     }
 
     // Pages per request: small enough for smooth progress updates, large enough to keep request overhead low.
@@ -696,6 +877,19 @@
             [s.brokenRefs, 'broken references', 'Local image, CSS, or script files that do not exist.'],
             [s.seoGaps, 'missing title or description', ''], [scan.uploads.files + ' (' + scan.uploads.unused + ' unused)', 'uploaded files', '']
         ].forEach(function (stat) { $('<div class="stat">').attr('title', stat[2]).append($('<strong>').text(stat[0]), document.createTextNode(' ' + stat[1])).appendTo(stats); });
+        const menus = {};
+        scan.pages.forEach(function (page) {
+            (page.navs || []).forEach(function (nav) {
+                const menu = menus[nav.menu] = menus[nav.menu] || {pages: 0, links: nav.links, sigs: {}};
+                menu.pages++;
+                menu.sigs[nav.sig] = (menu.sigs[nav.sig] || 0) + 1;
+            });
+        });
+        const menuText = Object.keys(menus).map(function (name) {
+            const menu = menus[name], variants = Object.keys(menu.sigs).length;
+            return name + ' (' + menu.links + ' links on ' + menu.pages + ' pages' + (variants > 1 ? ', ' + variants + ' different versions' : '') + ')';
+        });
+        if (menuText.length) $('<p class="scan-note">').text('Navigation: ' + menuText.join(', ')).appendTo(summary);
         $('<p class="scan-note">').text('Folders: ' + Object.keys(scan.structure).map(function (dir) { return dir + ' (' + scan.structure[dir] + ')'; }).join(', ')).appendTo(summary);
 
         // After the first run only pages with something new to do are listed; finished pages stay out of the way.
@@ -728,7 +922,7 @@
         const uris = $('#siteScanPages tbody input:checked').map(function () { return $(this).val(); }).get();
         if (!uris.length) { showMessage('Select at least one page.', 'error'); return; }
         if (!window.confirm('Add editing markers to ' + uris.length + ' page(s)? A revision of each is kept.')) return;
-        const options = {content: $('#scanContent').is(':checked'), images: $('#scanImages').is(':checked'), seo: $('#scanSeo').is(':checked')};
+        const options = {content: $('#scanContent').is(':checked'), images: $('#scanImages').is(':checked'), seo: $('#scanSeo').is(':checked'), menus: $('#scanMenus').is(':checked')};
         setScanBusy(true);
         let updated = 0;
         try {
@@ -755,7 +949,7 @@
         $('#imageAlt').val(image.is('img') ? image.attr('alt') || '' : '');
         const picker = $('#imagePicker').empty();
         try {
-            (await api('media')).forEach(function (item) {
+            (await api('media')).filter(function (item) { return item.category === 'imagery'; }).forEach(function (item) {
                 $('<img>').attr({src: item.url, alt: item.alt || '', title: item.name}).on('click', function () {
                     $('#imageSrc').val(item.url);
                     if (!$('#imageAlt').val()) $('#imageAlt').val(item.alt || '');
@@ -898,25 +1092,188 @@
         } catch (error) { showMessage(error.message, 'error'); }
     }
 
+    /** Own account, role descriptions, and (administrators) account management. Secrets never come back from the server. */
+    async function openUsers() {
+        try {
+            $('#userForm, #confirmBox, #inviteResult').prop('hidden', true);
+            $('#profileCurrent, #pwCurrent, #pwNew, #pwConfirm').val('');
+            await loadUsers();
+            $('#toolsDialog').dialog('close');
+            $('#usersDialog').dialog('open');
+        } catch (error) { showMessage(error.message, 'error'); }
+    }
+
+    async function loadUsers() {
+        const data = await api('users');
+        usersData = data;
+        $('#profileLogin').val(data.me.username);
+        $('#profileName').val(data.me.name || data.me.username);
+        $('#profileEmail').val(data.me.email);
+        $('#passwordForm').prop('hidden', data.me.managed);
+        $('#passwordManaged').prop('hidden', !data.me.managed);
+        const roles = dataTable($('#rolesList').empty(), ['Role', 'What it can do']);
+        Object.keys(data.roles).forEach(function (role) {
+            const name = $('<td class="page-cell">').append(docIcon(), $('<strong>').text(role.charAt(0).toUpperCase() + role.slice(1)));
+            if (role === data.me.role) name.append($('<span class="badge-pending">').text('You'));
+            roles.append($('<tr>').append(name, $('<td class="page-title">').text(data.roles[role])));
+        });
+        $('#userAdmin').toggle(permissions.manage);
+        const list = $('#userList').empty();
+        if (!permissions.manage) return;
+        const body = dataTable(list, ['Name and login name', 'Email', 'Role', 'Status', 'Actions']);
+        data.users.forEach(function (account) {
+            const isMe = account.username === data.me.username;
+            const name = $('<td class="page-cell">').append(docIcon(), $('<strong>').text(account.name || account.username), $('<span class="page-sub">').text(account.username));
+            const status = $('<td>');
+            if (account.managed) $('<span class="badge-draft">').attr('title', 'Managed in config.local.php').text('Config').appendTo(status);
+            else if (account.status === 'blocked') $('<span class="badge-failed">').text('Blocked').appendTo(status);
+            else if (account.status === 'invited') $('<span class="badge-draft">').text(account.inviteExpired ? 'Invite expired' : 'Invited').appendTo(status);
+            else $('<span class="badge-pending">').text('Active').appendTo(status);
+            const actions = $('<td class="row-actions">');
+            if (!account.managed && !isMe) {
+                if (account.status === 'invited') actions.append(rowButton('Re-invite', function () { showUserForm('reinvite', account); }));
+                else actions.append(rowButton('Edit', function () { showUserForm('edit', account); }));
+                if (account.status !== 'invited') actions.append(rowButton(account.status === 'blocked' ? 'Unblock' : 'Block', function () { blockUser(account); }));
+                actions.append(rowButton('Delete', function () { deleteUser(account); }, true));
+            }
+            body.append($('<tr>').append(name, $('<td class="page-date">').text(account.email), $('<td>').text(account.role.charAt(0).toUpperCase() + account.role.slice(1)), status, actions));
+        });
+    }
+
+    /** Show the add/edit/invite form; the username and password fields appear only where they apply. */
+    function showUserForm(mode, account) {
+        const isNew = mode === 'add' || mode === 'invite';
+        const invite = mode === 'invite' || mode === 'reinvite';
+        $('#inviteResult, #confirmBox').prop('hidden', true);
+        $('#userForm').data('mode', mode).prop('hidden', false);
+        $('#userFormTitle').text({add: 'Add user', edit: 'Edit user', invite: 'Invite user', reinvite: 'Re-invite user'}[mode]);
+        $('#userExisting').val(isNew ? '' : account.username);
+        $('#userUsername').val('').prop('required', mode === 'add');
+        $('#userUsernameRow').prop('hidden', mode !== 'add');
+        $('#userName').val(isNew ? '' : account.name);
+        $('#userEmail').val(isNew ? '' : account.email).prop('required', invite);
+        $('#userRole').val(isNew ? 'editor' : account.role);
+        $('#userPassword').val('').prop('required', mode === 'add');
+        $('#userPasswordRow').prop('hidden', invite);
+        $('#userPasswordNote').text(mode === 'edit' ? '(leave blank to keep the current password; 12 to 72 characters)' : '(12 to 72 characters)');
+        $('#userConfirm').val('');
+        $('#userSubmit').text(invite ? 'Create invitation' : 'Save user');
+        $('#userName').trigger('focus');
+    }
+
+    async function saveUserForm(event) {
+        event.preventDefault();
+        const mode = $('#userForm').data('mode');
+        const invite = mode === 'invite' || mode === 'reinvite';
+        const data = {existing: $('#userExisting').val(), name: $('#userName').val(), email: $('#userEmail').val(), role: $('#userRole').val(), confirm_password: $('#userConfirm').val()};
+        if (!invite) { data.password = $('#userPassword').val(); if (mode === 'add') data.username = $('#userUsername').val(); }
+        try {
+            const result = await api(invite ? 'inviteUser' : 'saveUser', data, 'POST');
+            $('#userForm').prop('hidden', true);
+            $('#userPassword, #userConfirm').val('');
+            if (invite) {
+                $('#inviteLink').val(location.origin + result.link);
+                $('#inviteLogin').text(result.username);
+                $('#inviteResult').prop('hidden', false);
+            }
+            showMessage(result.message, 'success');
+            await loadUsers();
+        } catch (error) { showMessage(error.message, 'error'); }
+    }
+
+    /** Ask for the administrator's own password inline; resolves to the password, or null when cancelled. */
+    function askPassword(title) {
+        return new Promise(function (resolve) {
+            $('#userForm, #inviteResult').prop('hidden', true);
+            $('#confirmTitle').text(title);
+            $('#confirmPassword').val('');
+            $('#confirmBox').prop('hidden', false).off('submit.ask').on('submit.ask', function (event) {
+                event.preventDefault();
+                const value = $('#confirmPassword').val();
+                $('#confirmPassword').val('');
+                $('#confirmBox').prop('hidden', true);
+                resolve(value);
+            });
+            $('#confirmCancel').off('click.ask').on('click.ask', function () { $('#confirmPassword').val(''); $('#confirmBox').prop('hidden', true); resolve(null); });
+            $('#confirmPassword').trigger('focus');
+        });
+    }
+
+    async function blockUser(account) {
+        const blocking = account.status !== 'blocked';
+        const password = await askPassword((blocking ? 'Block ' : 'Unblock ') + account.username + '? Confirm with your password');
+        if (password === null) return;
+        try {
+            showMessage((await api('blockUser', {username: account.username, blocked: blocking ? '1' : '0', confirm_password: password}, 'POST')).message, 'success');
+            await loadUsers();
+        } catch (error) { showMessage(error.message, 'error'); }
+    }
+
+    async function deleteUser(account) {
+        if (!window.confirm('Delete ' + account.username + '? This cannot be undone.')) return;
+        const password = await askPassword('Delete ' + account.username + '? Confirm with your password');
+        if (password === null) return;
+        try {
+            showMessage((await api('deleteUser', {username: account.username, confirm_password: password}, 'POST')).message, 'success');
+            await loadUsers();
+        } catch (error) { showMessage(error.message, 'error'); }
+    }
+
+    /** Wire the Users dialogue forms once. */
+    function bindUsers() {
+        $('#profileForm').on('submit', async function (event) {
+            event.preventDefault();
+            try {
+                const result = await api('saveProfile', {name: $('#profileName').val(), email: $('#profileEmail').val(), current_password: $('#profileCurrent').val()}, 'POST');
+                $('#profileCurrent').val('');
+                $('#whoami').text(result.name);
+                showMessage(result.message, 'success');
+                await loadUsers();
+            } catch (error) { showMessage(error.message, 'error'); }
+        });
+        $('#passwordForm').on('submit', async function (event) {
+            event.preventDefault();
+            try {
+                const result = await api('changePassword', {current_password: $('#pwCurrent').val(), new_password: $('#pwNew').val(), confirm_password: $('#pwConfirm').val()}, 'POST');
+                $('#pwCurrent, #pwNew, #pwConfirm').val('');
+                showMessage(result.message, 'success');
+            } catch (error) { showMessage(error.message, 'error'); }
+        });
+        $('#userAddButton').on('click', function () { showUserForm('add'); });
+        $('#userInviteButton').on('click', function () { showUserForm('invite'); });
+        $('#userCancel').on('click', function () { $('#userForm').prop('hidden', true); $('#userPassword, #userConfirm').val(''); });
+        $('#userForm').on('submit', saveUserForm);
+        $('#inviteCopy').on('click', function () {
+            const field = $('#inviteLink')[0];
+            field.select();
+            (navigator.clipboard ? navigator.clipboard.writeText(field.value) : Promise.reject()).then(function () { showMessage('Invitation link copied.', 'success'); }, function () { document.execCommand('copy'); showMessage('Invitation link selected; press Ctrl+C to copy.', 'success'); });
+        });
+    }
+
     /** Load named navigation menus and their editable line-based representation. */
     async function openMenus() {
         try {
             const menus = await api('menus');
             const names = Object.keys(menus);
             const list = $('#menuList').empty();
+            $('#menuForm').prop('hidden', true);
             if (!names.length) {
-                $('<p class="empty-state">').text('No menus yet. Use the form below to create one.').appendTo(list);
+                $('<p class="empty-state">').text('No menus yet. Use "Scan site for new navigation" to find them.').appendTo(list);
             } else {
                 const body = dataTable(list, ['Menu', 'Items', 'Last updated', 'Actions']);
                 names.forEach(function (name) {
                     const load = function () {
                         $('#menuName').val(name);
+                        $('#menuKey').text(name);
+                        $('#menuTitle').val(menus[name].title || '');
+                        $('#menuForm').prop('hidden', false);
                         $('#menuItems').val(menus[name].items.map(function (item) { return item.label + ' | ' + item.url + (item.parent ? ' | ' + item.parent : ''); }).join('\n'));
                     };
                     const row = $('<tr class="page-row">').on('click', load);
-                    $('<td class="page-cell">').append(docIcon(), $('<strong>').text(name)).appendTo(row);
+                    const cell = $('<td class="page-cell">').append(docIcon(), $('<strong>').text(menus[name].title || name)).appendTo(row);
+                    if (menus[name].title) $('<span class="page-sub">').text(name).appendTo(cell);
                     row.append($('<td>').text(menus[name].items.length), $('<td class="page-date">').text(formatDate(menus[name].updated)),
-                        $('<td class="row-actions">').append(rowButton('Edit', load)));
+                        $('<td class="row-actions">').append(rowButton('Edit', load), rowButton('Delete', function () { deleteMenu(name); }, true)));
                     body.append(row);
                 });
             }
@@ -926,6 +1283,48 @@
     }
 
     /** Parse menu lines, save the structure, and optionally insert its rendered navigation. */
+    /** Find navigation blocks no menu is attached to yet (for example, one a developer added to a page) and offer to expose them. */
+    async function scanForNavigation() {
+        const button = $('#menuScanButton').prop('disabled', true).text('Scanning...');
+        try {
+            const listing = await api('listSitePages');
+            const found = {};
+            for (let i = 0; i < listing.pages.length; i += SCAN_BATCH) {
+                const batch = listing.pages.slice(i, i + SCAN_BATCH);
+                button.text('Scanning ' + Math.min(i + SCAN_BATCH, listing.pages.length) + ' of ' + listing.pages.length + '...');
+                (await api('analyseSitePages', {uris: JSON.stringify(batch), allNavs: 1})).pages.forEach(function (page) {
+                    page.navs.filter(function (nav) { return !nav.tagged; }).forEach(function (nav) {
+                        const entry = found[nav.menu] = found[nav.menu] || {links: nav.links, pages: []};
+                        entry.pages.push(page.uri);
+                    });
+                });
+            }
+            const names = Object.keys(found);
+            if (!names.length) { showMessage('No new navigation found. Every navigation block is already a menu.', 'success'); return; }
+            const known = await api('menus');
+            const summary = names.map(function (name) {
+                return '- ' + name + ': ' + found[name].links + ' links on ' + found[name].pages.length + ' page(s)' + (known[name] ? ' (joins the existing menu)' : ' (new menu)');
+            }).join('\n');
+            if (!window.confirm('New navigation found:\n' + summary + '\n\nAdd these to Navigation Menus? Each changed page keeps a revision.')) return;
+            const pages = Array.from(new Set([].concat.apply([], names.map(function (name) { return found[name].pages; }))));
+            for (let i = 0; i < pages.length; i += APPLY_BATCH) {
+                await api('applySiteTagging', {uris: JSON.stringify(pages.slice(i, i + APPLY_BATCH)), options: JSON.stringify({menus: true, allNavs: true})}, 'POST');
+            }
+            showMessage('Added ' + names.length + ' menu(s) from ' + pages.length + ' page(s).', 'success');
+            if (!dirty) document.getElementById('frameContainer').contentWindow.location.reload();
+            openMenus();
+        } catch (error) { showMessage(error.message, 'error'); }
+        finally { button.prop('disabled', false).text('Scan site for new navigation'); }
+    }
+
+    async function deleteMenu(name) {
+        if (!window.confirm("Delete the menu '" + name + "'? Pages keep the navigation they already have, but it will no longer update from this menu.")) return;
+        try {
+            showMessage((await api('deleteMenu', {name: name}, 'POST')).message, 'success');
+            openMenus();
+        } catch (error) { showMessage(error.message, 'error'); }
+    }
+
     async function saveMenu(event) {
         event.preventDefault();
         const items = $('#menuItems').val().split('\n').map(function (line) {
@@ -933,7 +1332,7 @@
             return {label: (parts[0] || '').trim(), url: (parts[1] || '').trim(), parent: (parts[2] || '').trim()};
         }).filter(function (item) { return item.url; });
         try {
-            const result = await api('saveMenu', {name: $('#menuName').val(), items: JSON.stringify(items)}, 'POST');
+            const result = await api('saveMenu', {name: $('#menuName').val(), title: $('#menuTitle').val(), items: JSON.stringify(items)}, 'POST');
             if (currentElement && window.confirm('Insert this menu into the currently selected editable region?')) {
                 currentElement.html(result.html);
                 await commitEdit(result.message + ' This page was also saved as a draft.');
@@ -987,6 +1386,15 @@
                 });
             }
 
+            if ((dashboard.deleted || []).length) {
+                $('<h3 class="dialog-section">').text('Deleted pages').appendTo(content);
+                const body = dataTable(content, ['Page', 'Deleted', 'By', 'Actions']);
+                dashboard.deleted.forEach(function (item) {
+                    body.append($('<tr>').append($('<td class="page-cell">').append(docIcon(), document.createTextNode(item.uri)), $('<td class="page-date">').text(formatDate(item.created)),
+                        $('<td>').text(item.user || ''), $('<td class="row-actions">').append(rowButton('Recover', function () { recoverPage(item); }))));
+                });
+            }
+
             $('<h3 class="dialog-section">').text('Recent activity').appendTo(content);
             if (!dashboard.activity.length) {
                 $('<p class="empty-state">').text('No activity has been recorded yet.').appendTo(content);
@@ -997,11 +1405,26 @@
                         $('<td>').text(entry.action), $('<td class="page-title">').text(entry.target)));
                 });
             }
+            if ((dashboard.notices || []).length) {
+                $('<h3 class="dialog-section important-note">').text('Recommendations').appendTo(content);
+                dashboard.notices.forEach(function (notice) { $('<p class="scan-note important-note">').text(notice).appendTo(content); });
+            }
             if (dashboard.problems.length) {
                 $('<h3 class="dialog-section">').text('System problems').appendTo(content);
                 dashboard.problems.forEach(function (problem) { $('<div class="issue">').text(problem).appendTo(content); });
             }
             if (open) $('#dashboardDialog').dialog('open');
+        } catch (error) { showMessage(error.message, 'error'); }
+    }
+
+    /** Recreate a deleted page from its snapshot, then open it. */
+    async function recoverPage(item) {
+        if (!window.confirm('Recover ' + item.uri + '? It will be published again as it was when deleted.')) return;
+        try {
+            const result = await api('restoreRevision', {id: item.id}, 'POST');
+            $('#dashboardDialog').dialog('close');
+            navigateTo(result.url);
+            showMessage('Page recovered: ' + result.url, 'success');
         } catch (error) { showMessage(error.message, 'error'); }
     }
 

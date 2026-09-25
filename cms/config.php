@@ -10,7 +10,8 @@ $config = [
     'authentication' => [
         // 'admin' => '$2y$10$replace-with-a-real-password-hash',
     ],
-    // Grant each user the least powerful role they need: editor, publisher, or administrator.
+    // Accounts here are the main administrators and are managed only in this file. Other accounts are created in the CMS (Tools > Users).
+    // Roles: editor (edit, publish, schedule) or administrator (everything, including users). The old 'publisher' role counts as editor.
     'roles' => [
         // 'admin' => 'administrator',
     ],

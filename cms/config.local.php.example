@@ -11,6 +11,9 @@ return [
     'roles' => [
         'admin' => 'administrator',
     ],
+    // Live sites: store CMS data (accounts, drafts, revisions) OUTSIDE the web root, as an absolute path PHP can write to,
+    // for example '/var/neocms-data'. The default cms/data/ is protected only by .htaccess.
+    // 'dataDirectory' => '/var/neocms-data',
     // Set this to true when HTTPS is terminated by a trusted reverse proxy.
     'security' => [
         'cookieSecure' => true,
