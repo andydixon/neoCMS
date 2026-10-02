@@ -29,7 +29,8 @@ Further technical documentation:
   deleted pages can be recovered from the Dashboard.
 * Page Management: Search, duplicate, rename, and delete editable HTML pages, including pages in subdirectories. The New page section of the Pages dialogue is a
   three-step wizard (template, page name, navigation group); the new page stays a private draft until it is published. Any page can
-  be offered as a template with Create Template.
+  be offered as a template with Create Template. Administrators can Lock a page to stop editors publishing, saving a draft, or
+  scheduling changes to it; administrators are never restricted by a lock.
 * Media Library: Upload images, documents, video, and audio; they are sorted into Imagery, Documents, Video, and Audio by file
   extension. Reuse them from the editor's Media library button, maintain alternative text or link text, see usage counts, and
   remove files. Executables and files containing code are refused.
@@ -137,7 +138,7 @@ There are two roles:
 | Role | Can do |
 | --- | --- |
 | `editor` | Edit content, save drafts, upload images, publish or schedule pages, and restore revisions or deleted pages. Cannot change the site structure or manage users. |
-| `administrator` | Everything an editor can, plus creating new pages, duplicate, rename and delete pages, templates, navigation menus, shared content, site scan, deleting media, and managing users. |
+| `administrator` | Everything an editor can, plus creating new pages, duplicate, rename, delete and lock pages, templates, navigation menus, shared content, site scan, deleting media, and managing users. |
 
 The former `publisher` role is now part of `editor`; existing `publisher` assignments are treated as `editor`. Users without an
 explicit valid role receive `editor`, the least powerful role.
@@ -285,6 +286,13 @@ schedule). Publishing creates the file and adds a link to the chosen menu on eve
 Templates are the files in `cms/templates/` plus any page you choose **Create Template** for in the Pages list. A template page
 is used live (later edits to it show in new pages), and the **Delete** action in the template list deletes a template file or
 stops using a page as a template (the page is kept).
+
+### Locking Pages
+
+Administrators can **Lock** a page from the Pages list to stop editors publishing, saving a draft, or scheduling a change to
+it; a **Locked** badge shows next to the page name for everyone. Administrators are never restricted by a lock, and locking
+is independent of Create Template, Duplicate, Rename, and Delete, which were already administrator-only. A lock follows a
+page when it is renamed, is cleared when the page is deleted, and is never copied onto a duplicate.
 
 ### Subfolder Installs
 
