@@ -435,6 +435,7 @@ body {
     margin-left: 10px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
     background: #fff3d6; color: #8a5a00; border: 1px solid #f0d58a;
 }
+.badge-locked { background: #fde2e1; color: #8a1f1f; border-color: #f3b4b2; }
 @media (max-width: 700px) { #fileList .page-title, #fileList th:nth-child(2), #fileList .page-date, #fileList th:nth-child(3) { display: none; } }
 
 /* Site scan progress bar and file count. */

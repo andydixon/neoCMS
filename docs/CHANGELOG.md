@@ -22,6 +22,12 @@ This round builds on pull request #39 (site scan, editor workflow, subfolder sup
 - **Pages as templates**: each row in the page list has a "Create Template" action (administrators). The page is then offered in New Page beside the files in `cms/templates/`; the new page is a private copy with its title replaced. Renaming or deleting a template page keeps the list in step.
 - **Template list**: the New Page template and navigation-group lists use the page-table styling; each template has a Delete action (a template file is deleted; a page used as a template is only unmarked).
 - **Device preview**: the Desktop/Tablet/Mobile buttons are icons (with tooltips and accessible names) and the active one is highlighted.
+- **Lock pages**: administrators can lock a page from the Pages list to stop editors publishing, saving a draft, or scheduling a change to it, without restricting administrators themselves. A "Locked" badge shows on the page for everyone; the Lock/Unlock action sits beside Create Template, Duplicate, Rename and Delete. State is stored in `cms/data/pagelocks.json`, keyed by page URI, and follows a page through rename (cleared on delete, never copied by Duplicate). New action `lockPage`; `getPages` items gain `locked`.
+
+### Fixed
+- **Verbose PHP errors**: `display_errors` and `display_startup_errors` are now disabled in `bootstrap.php`, so an uncaught engine error can never leak a stack trace or filesystem path to a client; every error still reaches PHP's own error log.
+- **Unbounded login-throttling state**: `LoginRateLimiter` now caps tracked address/identity buckets at 20,000, evicting the least recently active first, so a distributed flood of distinct addresses or login names cannot grow `login-attempts.json` without bound.
+- **Audit-log pruning cost**: `Logger` now prunes expired audit logs probabilistically (1-in-100 constructions) instead of scanning the whole logs directory on every single request.
 
 ### Migration notes
 - New Page is now a section of the Pages dialogue (there is no New Page toolbar button).
@@ -30,13 +36,15 @@ This round builds on pull request #39 (site scan, editor workflow, subfolder sup
 - Media: new uploads are named `slug-8hex.ext` and accept documents, video and audio; existing 32-hex image names keep working. Copy the updated `uploads/.htaccess` (outside `cms/`).
 - New optional setting `dataDirectory`: set it to a folder outside the web root on live sites. The default `cms/data/` keeps working.
 - Navigation menus can no longer be created from the CMS; they are discovered by the site scan (existing menus are kept). New pages are private drafts until published.
-- New API actions: `users`, `saveProfile`, `changePassword`, `saveUser`, `inviteUser`, `blockUser`, `deleteUser`, `newPage` (changed), `discardNewPage`, `setPageTemplate`, `deleteTemplate`, `deleteMenu`; the dashboard response gains `deleted` and `notices`; `media` items gain `category`, `ext` and `original`.
+- New API actions: `users`, `saveProfile`, `changePassword`, `saveUser`, `inviteUser`, `blockUser`, `deleteUser`, `newPage` (changed), `discardNewPage`, `setPageTemplate`, `deleteTemplate`, `deleteMenu`, `lockPage`; the dashboard response gains `deleted` and `notices`; `media` items gain `category`, `ext` and `original`; `getPages` items gain `locked`.
 
 ### Verification
 - The updated integration suite (`tests/run.php`, included in this contribution) passes, covering concurrency, site scan and tagging, menus, new pages
-  and templates, deleted-page recovery, users and roles, invitations, media type checks, and audit-log cases. Upstream's earlier `tests/run.php` expects
-  behaviour that has intentionally changed (editors cannot publish, menus can be created, New Page copies immediately), so the updated suite replaces it.
-  On Windows the Linux-only permission assertions are skipped.
+  and templates, deleted-page recovery, users and roles, invitations, media type checks, page locking (lock/unlock, rename moves the lock, delete clears
+  it, duplicate never copies it), and audit-log cases. Upstream's earlier `tests/run.php` expects behaviour that has intentionally changed (editors
+  cannot publish, menus can be created, New Page copies immediately), so the updated suite replaces it. On Windows the Linux-only permission assertions
+  are skipped.
+- A self-review security audit found no critical or high-severity issues; the three fixes above address its medium/low findings.
 
 ## Merged in pull request #39
 

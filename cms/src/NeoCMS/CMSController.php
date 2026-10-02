@@ -139,6 +139,7 @@ final class CMSController
     {
         $this->requirePost('publish');
         $uri = $this->requiredPost('uri');
+        $this->assertNotLockedForEditor($uri);
         $content = $this->requiredContentPost('content');
         $this->publishContent($uri, $content, 'Published page');
         $this->deleteDraft($uri);
@@ -150,6 +151,7 @@ final class CMSController
     {
         $this->requirePost('draft');
         $uri = $this->requiredPost('uri');
+        $this->assertNotLockedForEditor($uri);
         $content = $this->requiredContentPost('content');
         $this->storeDraft($uri, $content);
         $this->activity('Saved draft', $uri);
@@ -188,6 +190,7 @@ final class CMSController
     {
         $this->requirePost('schedule');
         $uri = $this->requiredPost('uri');
+        $this->assertNotLockedForEditor($uri);
         $content = $this->requiredContentPost('content');
         $this->assertPublishable($uri);
         $publishAt = new \DateTimeImmutable($this->requiredPost('publish_at'));
@@ -288,6 +291,25 @@ final class CMSController
         });
         $this->activity($on ? 'Marked page as template' : 'Unmarked page as template', $uri);
         $this->respond(['message' => $on ? 'Template created. It is now available in New Page.' : 'Page is no longer a template']);
+    }
+
+    /** Lock a page against editor changes, or unlock it; administrators only. */
+    private function lockPageAction(): void
+    {
+        $this->requirePost('manage');
+        $uri = $this->paths->normaliseUri($this->requiredPost('uri'));
+        $this->paths->existing($uri);
+        $on = ($_POST['value'] ?? '') === '1';
+        $this->store->update('pagelocks', function (array $locked) use ($uri, $on) {
+            if ($on) {
+                $locked[$uri] = ['user' => $this->user(), 'created' => date(DATE_ATOM)];
+            } else {
+                unset($locked[$uri]);
+            }
+            return $locked;
+        });
+        $this->activity($on ? 'Locked page' : 'Unlocked page', $uri);
+        $this->respond(['message' => $on ? 'Page locked. Editors can no longer edit it.' : 'Page unlocked']);
     }
 
     /**
@@ -458,6 +480,10 @@ final class CMSController
                 unset($marked[$sourceUri]);
                 return $marked;
             });
+            $this->store->update('pagelocks', function (array $locked) use ($sourceUri) {
+                unset($locked[$sourceUri]);
+                return $locked;
+            });
             $this->activity('Deleted page', $sourceUri);
             $this->respond(['message' => 'Page deleted']);
             return;
@@ -482,6 +508,13 @@ final class CMSController
                 }
                 return $marked;
             });
+            $this->store->update('pagelocks', function (array $locked) use ($sourceUri, $targetUri) {
+                if (isset($locked[$sourceUri])) {
+                    $locked[$targetUri] = $locked[$sourceUri];
+                    unset($locked[$sourceUri]);
+                }
+                return $locked;
+            });
         }
         $this->activity(ucfirst($operation) . 'd page', $sourceUri . ' -> ' . $targetUri);
         $this->respond(['message' => 'Page ' . $operation . 'd', 'url' => $targetUri]);
@@ -491,6 +524,7 @@ final class CMSController
     private function getPagesAction(): void
     {
         $drafts = $this->store->read('drafts');
+        $locked = $this->store->read('pagelocks');
         $pages = [];
         foreach ($this->paths->files() as $path) {
             $uri = $this->paths->uriFor($path);
@@ -504,10 +538,11 @@ final class CMSController
                 'title' => $this->extractTitle($html),
                 'modified' => date(DATE_ATOM, filemtime($path)),
                 'draft' => isset($drafts[$uri]),
+                'locked' => isset($locked[$uri]),
             ];
         }
         foreach ($this->store->read('newpages') as $uri => $entry) {
-            $pages[] = ['name' => $uri, 'url' => $uri, 'title' => (string) ($entry['title'] ?? ''), 'modified' => $entry['created'] ?? date(DATE_ATOM), 'draft' => true, 'pending' => true];
+            $pages[] = ['name' => $uri, 'url' => $uri, 'title' => (string) ($entry['title'] ?? ''), 'modified' => $entry['created'] ?? date(DATE_ATOM), 'draft' => true, 'pending' => true, 'locked' => isset($locked[$uri])];
         }
         usort($pages, fn(array $a, array $b) => strcmp($a['name'], $b['name']));
         $this->respond($pages);
@@ -1349,6 +1384,17 @@ final class CMSController
     {
         if (!$this->authentication->can($capability)) {
             throw new \RuntimeException('Your role cannot perform this action');
+        }
+    }
+
+    /** Refuse editors (never administrators) write access to a page an administrator has locked. */
+    private function assertNotLockedForEditor(string $uri): void
+    {
+        if ($this->authentication->can('manage')) {
+            return;
+        }
+        if (isset($this->store->read('pagelocks')[$this->paths->normaliseUri($uri)])) {
+            throw new \RuntimeException('This page is locked by an administrator and cannot be edited.');
         }
     }
 

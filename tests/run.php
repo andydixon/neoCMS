@@ -219,10 +219,15 @@ try {
 
     // Administrator page operations must support duplicate, rename, delete, and restoration.
     $request('page', ['operation' => 'duplicate', 'uri' => '/index.html', 'target' => '/copy.html'], 'POST');
+    assertTrue(!isset((new NeoCMS\FileStore($data))->read('pagelocks')['/copy.html']), 'Duplicating a page copied its lock');
+    $request('lockPage', ['uri' => '/copy.html', 'value' => '1'], 'POST');
     $request('page', ['operation' => 'rename', 'uri' => '/copy.html', 'target' => '/renamed.html'], 'POST');
     assertTrue(is_file($root . '/renamed.html'), 'Duplicate or rename failed');
+    $locksAfterRename = (new NeoCMS\FileStore($data))->read('pagelocks');
+    assertTrue(!isset($locksAfterRename['/copy.html']) && isset($locksAfterRename['/renamed.html']), 'Renaming a page did not move its lock entry');
     $request('page', ['operation' => 'delete', 'uri' => '/renamed.html'], 'POST');
     assertTrue(!is_file($root . '/renamed.html'), 'Page delete failed');
+    assertTrue(!isset((new NeoCMS\FileStore($data))->read('pagelocks')['/renamed.html']), 'Deleting a page left a stale lock entry');
     assertTrue(in_array('/renamed.html', array_column($request('dashboard')['deleted'], 'uri'), true), 'Deleted page was not listed on the dashboard');
     $deletedRevisions = $request('revisions', ['uri' => '/renamed.html']);
     $request('restoreRevision', ['id' => $deletedRevisions[0]['id']], 'POST');
@@ -535,6 +540,15 @@ try {
     foreach (['saveUser' => $newUser + ['username' => 'ed9', 'confirm_password' => 'correct horse 1'], 'inviteUser' => ['name' => 'X', 'email' => 'x@example.com', 'role' => 'editor', 'confirm_password' => 'correct horse 1'], 'blockUser' => ['username' => 'tester', 'blocked' => '1', 'confirm_password' => 'correct horse 1'], 'deleteUser' => ['username' => 'tester', 'confirm_password' => 'correct horse 1']] as $action => $params) {
         assertTrue(($as('ed1', $action, $params)['error'] ?? '') === 'Your role cannot perform this action', "An editor could run {$action}");
     }
+
+    // ---- Page locks: administrators toggle, only editors are blocked from editing ----
+    $ok($as('tester', 'lockPage', ['uri' => '/index.html', 'value' => '1']), 'Admin could not lock a page');
+    $pages = $as('tester', 'getPages', [], 'GET');
+    assertTrue((array_column($pages, 'locked', 'url'))['/index.html'] === true, 'Locked page was not reported as locked');
+    $err($as('ed1', 'saveDraft', ['uri' => '/index.html', 'content' => '<main class="cms-content">x</main>']), 'Editor saved a draft on a locked page');
+    $ok($as('tester', 'saveDraft', ['uri' => '/index.html', 'content' => '<main class="cms-content">x</main>']), 'Administrator was blocked by their own lock');
+    $ok($as('tester', 'lockPage', ['uri' => '/index.html', 'value' => '0']), 'Admin could not unlock a page');
+    $ok($as('ed1', 'saveDraft', ['uri' => '/index.html', 'content' => '<main class="cms-content">x</main>']), 'Editor still blocked after unlock');
 
     // Self-service: display name freely, email and password need the current password.
     $ok($as('ed1', 'saveProfile', ['name' => 'Edward Example', 'email' => 'ed@example.com']), 'Editor could not change their display name');

@@ -58,6 +58,7 @@ Published content stays in the web document root. NeoCMS stores supporting data 
 | `menus.json` | Named menus: `{key: {items: [{label, url, parent}], updated, title?}}`; seeded by the site scan, never created by the CMS. |
 | `newpages.json` | Pending (unpublished) pages: title, chosen menu, template, author, created. |
 | `pagetemplates.json` | Pages offered as templates in the New page section of Pages. |
+| `pagelocks.json` | Pages an administrator has locked against editor changes. |
 | `users.json` | CMS-created accounts and profile overlays for config accounts (`{users: {...}, profiles: {...}}`). |
 | `media.json` | Per-file description (alt text or link text), original filename, and uploader. |
 | `activity.json` | The latest 250 dashboard activity entries. |
