@@ -16,6 +16,9 @@ final class LoginRateLimiter
     private int $maxIdentityAttempts;
     private int $maxAddressAttempts;
 
+    /** Hard ceiling on tracked buckets, so a distributed flood of distinct addresses or login names cannot grow the state file without bound. */
+    private const MAX_TRACKED_KEYS = 20000;
+
     /** Configure the protected state file and throttling thresholds. */
     public function __construct(string $dataDirectory, array $options = [])
     {
@@ -93,6 +96,16 @@ final class LoginRateLimiter
             }
         }
         unset($record);
+
+        if (count($state) > self::MAX_TRACKED_KEYS) {
+            // Evict the least recently active buckets first; an evicted bucket simply restarts its count.
+            uasort($state, static function (array $a, array $b): int {
+                $lastA = max((int) ($a['locked_until'] ?? 0), $a['attempts'] ? (int) end($a['attempts']) : 0);
+                $lastB = max((int) ($b['locked_until'] ?? 0), $b['attempts'] ? (int) end($b['attempts']) : 0);
+                return $lastA <=> $lastB;
+            });
+            $state = array_slice($state, -self::MAX_TRACKED_KEYS, null, true);
+        }
     }
 
     /** Serialise state updates beneath an exclusive lock to avoid concurrent lost updates. */
