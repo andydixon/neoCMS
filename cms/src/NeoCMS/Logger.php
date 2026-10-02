@@ -42,7 +42,9 @@ class Logger
         }
         @chmod($this->logsDir, 0700);
 
-        if ($this->auditEnabled) {
+        // Pruning scans every rotated log file; a Logger is built on every request, so do this
+        // occasionally rather than on each one (the same probabilistic approach as PHP's own session GC).
+        if ($this->auditEnabled && random_int(1, 100) === 1) {
             $this->pruneExpiredLogs();
         }
     }

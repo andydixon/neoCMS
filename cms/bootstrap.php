@@ -1,6 +1,12 @@
 <?php
 /** Shared entry-point setup: loads configuration into $config and registers the NeoCMS class autoloader. */
 
+// Keep stack traces and filesystem paths out of responses; every engine warning still reaches PHP's own error log.
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+ini_set('log_errors', '1');
+
 require_once __DIR__ . '/config.php';
 
 // URL prefix of the site root: "/neocms" for http://localhost/neocms/, "" for a site at the domain root.
