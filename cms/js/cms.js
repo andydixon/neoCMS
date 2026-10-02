@@ -447,6 +447,7 @@
                 const name = $('<td class="page-cell">').append(docIcon());
                 $('<button type="button" class="page-open">').text(page.name).appendTo(name);
                 if (page.draft) $('<span class="badge-draft">').text(page.pending ? 'New - unpublished' : 'Draft').appendTo(name);
+                if (page.locked) $('<span class="badge-draft badge-locked">').text('Locked').appendTo(name);
                 row.append(name, $('<td class="page-title">').text(page.title), $('<td class="page-date">').text(formatDate(page.modified)));
                 const actions = $('<td class="row-actions manage-col">').toggle(permissions.manage).appendTo(row);
                 if (permissions.manage && page.pending) {
@@ -456,6 +457,8 @@
                         $('<button type="button">').text(action[0]).toggleClass('danger-text', action[1] === 'delete')
                             .on('click', function (event) { event.stopPropagation(); action[1] === 'template' ? setPageTemplate(page.url, true) : managePage(action[1], page.url); }).appendTo(actions);
                     });
+                    $('<button type="button">').text(page.locked ? 'Unlock' : 'Lock')
+                        .on('click', function (event) { event.stopPropagation(); lockPage(page.url, !page.locked); }).appendTo(actions);
                 }
                 body.append(row);
             });
@@ -634,6 +637,13 @@
     async function setPageTemplate(uri, on) {
         try {
             showMessage((await api('setPageTemplate', {uri: uri, value: on ? '1' : '0'}, 'POST')).message, 'success');
+            openPages();
+        } catch (error) { showMessage(error.message, 'error'); }
+    }
+
+    async function lockPage(uri, on) {
+        try {
+            showMessage((await api('lockPage', {uri: uri, value: on ? '1' : '0'}, 'POST')).message, 'success');
             openPages();
         } catch (error) { showMessage(error.message, 'error'); }
     }
